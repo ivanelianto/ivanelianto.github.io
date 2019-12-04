@@ -102,6 +102,7 @@ body {
     font-weight: 600;
     letter-spacing: 1.5px;
     margin-top: .5em;
+    text-align: center;
     background: radial-gradient(#0f2027, #203a43, #2c5364);
     -webkit-text-fill-color: transparent;
     -webkit-background-clip: text;
