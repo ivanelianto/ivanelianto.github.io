@@ -1,0 +1,156 @@
+:root {
+  --primary: #1ca7ec;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  flex-direction: column;
+}
+
+.section-wrapper {
+  margin: 1em;
+  border-radius: 8px;
+  box-shadow: 0px 4px 16px #ddd;
+  padding-bottom: 0.25em;
+  width: 800px;
+  color: black;
+  display: block;
+  text-decoration: none;
+}
+
+.section-wrapper > h2 {
+  position: relative;
+  padding: 1em;
+}
+
+.section-wrapper > h2::after {
+  content: "";
+  position: absolute;
+  left: 1em;
+  bottom: 0.5em;
+  width: 3em;
+  height: 3px;
+  background: var(--primary);
+}
+
+.description {
+  line-height: 1.5;
+  margin-bottom: 1em;
+  padding: 1em 2em;
+  border-top: 2px solid #eee;
+  width: 100%;
+}
+
+.description .footer {
+  border-top: 2px solid #eee;
+  margin-top: 1em;
+  padding-top: 1em;
+}
+
+.image-manager {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+}
+
+.image-wrapper {
+  text-decoration: none;
+  color: black;
+  max-width: 410px;
+  height: 230px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  border-radius: 5px;
+  margin: 1em;
+  position: relative;
+}
+
+.image-wrapper img {
+  width: 100%;
+  height: 100%;
+}
+
+.image-hint-text {
+  font-size: 0.8rem;
+  color: #eee;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 1) 100%
+  );
+  width: 100%;
+  padding: 1em;
+  position: absolute;
+  bottom: 0;
+}
+
+li {
+  margin-left: 1em;
+}
+
+@media screen and (max-width: 481px) {
+  .section-wrapper {
+    width: 100%;
+  }
+
+  .image-wrapper {
+    width: 100%;
+  }
+
+  .image-wrapper img {
+    width: 819px;
+    height: 460px;
+    position: absolute;
+  }
+
+  .sm-profile {
+    top: -32%;
+    left: -75%;
+  }
+
+  .sm-character-list {
+    top: -39px;
+    left: -37%;
+  }
+
+  .sm-weapon {
+    top: -18%;
+    left: -35%;
+  }
+
+  .image-hint-text {
+    font-size: 1rem;
+  }
+
+  .sm-talent {
+    position: absolute;
+    right: -13%;
+    top: -18%;
+  }
+
+  .sm-wish-exchange {
+    position: absolute;
+    right: 0%;
+    top: 0%;
+  }
+
+  .sm-wings {
+    position: absolute;
+    right: -5%;
+    top: 0%;
+  }
+}
