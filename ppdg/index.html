@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pominton Product Descrption Generator</title>
+    <link rel="stylesheet" href="./css/core.css" />
+    <link rel="stylesheet" href="./css/index.css" />
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="input-container">
+        <h3>Product Name</h3>
+        <textarea id="product-name"></textarea>
+      </div>
+
+      <div class="input-container">
+        <h3>Short Description</h3>
+        <textarea id="description"></textarea>
+      </div>
+
+      <div class="input-container">
+        <h3>Specification</h3>
+        <textarea id="specification"></textarea>
+      </div>
+
+      <div class="action-container">
+        <button id="marketplace" onclick="generateMarketplaceDescription()">
+          Marketplace
+        </button>
+        
+        <button id="facebook" onclick="generateFacebookDescription()">
+          Facebook
+        </button>
+      </div>
+    </div>
+  </body>
+  <script src="./js/index.js"></script>
+</html>
