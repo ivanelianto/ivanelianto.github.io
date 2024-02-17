@@ -19,6 +19,7 @@
     <div id="hdn"></div>
     <div id="ind"></div>
     <div id="healthList"></div>
+    <div id="career"></div>
   </body>
 
   <script src="rn.js"></script>
@@ -51,6 +52,8 @@
       describeInd();
 
       describeHealth();
+
+      describeCareer();
     }
 
     function calculate() {
@@ -72,6 +75,7 @@
           insideNumbers[0].toString() + insideNumbers[1].toString(),
         ),
       );
+
       insideNumbers.push(
         getSingleDigit(
           insideNumbers[2].toString() + insideNumbers[3].toString(),
@@ -89,6 +93,7 @@
           insideNumbers[0].toString() + insideNumbers[4].toString(),
         ),
       );
+
       outsideNumbers.push(
         getSingleDigit(
           insideNumbers[1].toString() + insideNumbers[4].toString(),
@@ -100,6 +105,7 @@
           insideNumbers[2].toString() + insideNumbers[5].toString(),
         ),
       );
+
       outsideNumbers.push(
         getSingleDigit(
           insideNumbers[3].toString() + insideNumbers[5].toString(),
@@ -111,6 +117,7 @@
           insideNumbers[5].toString() + insideNumbers[6].toString(),
         ),
       );
+
       outsideNumbers.push(
         getSingleDigit(
           insideNumbers[4].toString() + insideNumbers[6].toString(),
@@ -476,6 +483,24 @@
       }
 
       healthList.innerHTML = healthList.innerHTML.replace(';', '- \n');
+    }
+
+    function describeCareer() {
+      const career = document.getElementById('career');
+      const userElement = elements[insideNumbers[6] - 1];
+
+      const sweetWordsCareerSection = [
+        'You will most likely to VERY SUCCEED from this career:',
+        'You will most likely to SUCCEED from this career:',
+        'You will okay from this career:',
+        'You will going nowhere from this career:',
+        'You will most likely to FAIL HARD from this career:',
+      ];
+
+      careerElementPriorities[userElement].forEach((elem, i) => {
+        career.innerHTML += wrapP(sweetWordsCareerSection[i]);
+        career.innerHTML += wrapP(careerOptions[elem]);
+      });
     }
 
     function getSingleDigit(n) {
