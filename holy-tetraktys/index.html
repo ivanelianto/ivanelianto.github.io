@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Holy Tetraktys</title>
+  </head>
+
+  <body>
+    <div>
+      <span>Date of Birth:</span>
+      <input type="date" id="dob" value="1971-08-01" />
+      <input type="button" value="Calculate" onclick="execute()" />
+    </div>
+
+    <div id="rnd"></div>
+    <div id="lpd"></div>
+    <div id="exd"></div>
+    <div id="hdn"></div>
+    <div id="ind"></div>
+    <div id="healthList"></div>
+  </body>
+
+  <script src="rn.js"></script>
+  <script src="lp.js"></script>
+  <script src="snrhs.js"></script>
+  <script src="hdn.js"></script>
+  <script src="avatar.js"></script>
+  <script>
+    let insideNumbers = [];
+    let outsideNumbers = [];
+
+    function execute() {
+      insideNumbers = [];
+      outsideNumbers = [];
+      document.getElementById('rnd').innerHTML = '';
+      document.getElementById('lpd').innerHTML = '';
+      document.getElementById('exd').innerHTML = '';
+      document.getElementById('hdn').innerHTML = '';
+      document.getElementById('ind').innerHTML = '';
+      document.getElementById('healthList').innerHTML = '';
+
+      calculate();
+
+      describeCommon();
+
+      describeExtras();
+
+      describeHdn();
+
+      describeInd();
+
+      describeHealth();
+    }
+
+    function calculate() {
+      const dob = document.getElementById('dob').value.toString();
+      const date = dob.substring(
+        dob.lastIndexOf('-') + 1,
+        dob.lastIndexOf('-') + 3,
+      );
+      const month = dob.substring(dob.indexOf('-') + 1, dob.indexOf('-') + 3);
+      const year = dob.substring(0, 4);
+
+      insideNumbers.push(getSingleDigit(date));
+      insideNumbers.push(getSingleDigit(month));
+      insideNumbers.push(getSingleDigit(year.substring(0, 2)));
+      insideNumbers.push(getSingleDigit(year.substring(2, 4)));
+
+      insideNumbers.push(
+        getSingleDigit(
+          insideNumbers[0].toString() + insideNumbers[1].toString(),
+        ),
+      );
+      insideNumbers.push(
+        getSingleDigit(
+          insideNumbers[2].toString() + insideNumbers[3].toString(),
+        ),
+      );
+
+      insideNumbers.push(
+        getSingleDigit(
+          insideNumbers[4].toString() + insideNumbers[5].toString(),
+        ),
+      );
+
+      outsideNumbers.push(
+        getSingleDigit(
+          insideNumbers[0].toString() + insideNumbers[4].toString(),
+        ),
+      );
+      outsideNumbers.push(
+        getSingleDigit(
+          insideNumbers[1].toString() + insideNumbers[4].toString(),
+        ),
+      );
+
+      outsideNumbers.push(
+        getSingleDigit(
+          insideNumbers[2].toString() + insideNumbers[5].toString(),
+        ),
+      );
+      outsideNumbers.push(
+        getSingleDigit(
+          insideNumbers[3].toString() + insideNumbers[5].toString(),
+        ),
+      );
+
+      outsideNumbers.push(
+        getSingleDigit(
+          insideNumbers[5].toString() + insideNumbers[6].toString(),
+        ),
+      );
+      outsideNumbers.push(
+        getSingleDigit(
+          insideNumbers[4].toString() + insideNumbers[6].toString(),
+        ),
+      );
+
+      outsideNumbers.push(
+        getSingleDigit(
+          outsideNumbers[4].toString() + outsideNumbers[5].toString(),
+        ),
+      );
+
+      console.log('Inside Numbers', insideNumbers);
+      console.log('Outside Numbers', outsideNumbers);
+
+      console.log(`Your Root Number: ${insideNumbers[6]}`);
+    }
+
+    function describeCommon() {
+      document.getElementById('rnd').innerHTML =
+        rnd[
+          getSingleDigit(
+            insideNumbers[4].toString() + insideNumbers[5].toString(),
+          ) - 1
+        ];
+
+      const lpd = document.getElementById('lpd');
+
+      // 2nd Desc
+      console.log(insideNumbers[0], insideNumbers[1]);
+      lpd.innerHTML +=
+        '<p>' + lp[`${insideNumbers[0]}`][`${insideNumbers[1]}`] + '</p>';
+
+      // 3rd Desc
+      console.log(insideNumbers[2], insideNumbers[3]);
+      lpd.innerHTML +=
+        '<p>' + lp[`${insideNumbers[2]}`][`${insideNumbers[3]}`] + '</p>';
+
+      // 4th Desc
+      console.log(insideNumbers[4], insideNumbers[5]);
+      lpd.innerHTML +=
+        '<p>' + lp[`${insideNumbers[4]}`][`${insideNumbers[5]}`] + '</p>';
+
+      // 5th Desc
+      console.log(outsideNumbers[0], outsideNumbers[1]);
+      lpd.innerHTML +=
+        '<p>' + lp[`${outsideNumbers[0]}`][`${outsideNumbers[1]}`] + '</p>';
+
+      // 6th Desc
+      console.log(outsideNumbers[2], outsideNumbers[3]);
+      lpd.innerHTML +=
+        '<p>' + lp[`${outsideNumbers[2]}`][`${outsideNumbers[3]}`] + '</p>';
+
+      // 7th Desc
+      console.log(outsideNumbers[4], outsideNumbers[5]);
+      lpd.innerHTML +=
+        '<p>' + lp[`${outsideNumbers[4]}`][`${outsideNumbers[5]}`] + '</p>';
+
+      // 8th Desc
+      console.log(insideNumbers[3], insideNumbers[5]);
+      lpd.innerHTML +=
+        '<p>' + lp[`${insideNumbers[3]}`][`${insideNumbers[5]}`] + '</p>';
+
+      // 9th Desc
+      console.log(insideNumbers[5]);
+      lpd.innerHTML += '<p>' + snrhs[`${insideNumbers[5] - 1}`] + '</p>';
+
+      // 10th Desc
+      console.log(insideNumbers[5], insideNumbers[6]);
+      lpd.innerHTML +=
+        '<p>' + lp[`${insideNumbers[5]}`][`${insideNumbers[6]}`] + '</p>';
+
+      // 11st Desc
+      console.log(insideNumbers[6], outsideNumbers[4]);
+      lpd.innerHTML +=
+        '<p>' + lp[`${insideNumbers[6]}`][`${outsideNumbers[4]}`] + '</p>';
+    }
+
+    function describeExtras() {
+      /**
+       *  START: Extra Description Section
+       */
+
+      const exd = document.getElementById('exd');
+
+      if (
+        insideNumbers[1] === 1 &&
+        insideNumbers[2] === 1 &&
+        insideNumbers[5] === 1
+      ) {
+        exd.innerHTML +=
+          '<p>' +
+          'The individual will be accident‐prone. Such accidents may involve cars, motor bikes or some kind of small vehicles' +
+          '</p>';
+      }
+
+      if (
+        insideNumbers[1] === 6 &&
+        insideNumbers[2] === 1 &&
+        insideNumbers[5] === 6
+      ) {
+        exd.innerHTML +=
+          '<p>' +
+          'This individual will be accident prone and the accident may involve Trailers, Big Buses or a very serious accident' +
+          '</p>';
+      }
+
+      if (insideNumbers[4] === 1 && insideNumbers[6] === 1) {
+        exd.innerHTML +=
+          '<p>' +
+          'This Individual may have some light mental problems. Perhaps have weird thoughts' +
+          '</p>';
+      }
+
+      if (insideNumbers[4] === 6 && insideNumbers[6] === 6) {
+        exd.innerHTML +=
+          '<p>' +
+          'This individual is likely to have serious mental problems' +
+          '</p>';
+      }
+
+      if (
+        insideNumbers[0] === 3 &&
+        insideNumbers[4] === 3 &&
+        insideNumbers[6] === 3
+      ) {
+        exd.innerHTML += '<p>' + 'A very hot temper individual' + '</p>';
+      }
+
+      if (
+        insideNumbers[0] === 3 &&
+        insideNumbers[4] === 3 &&
+        insideNumbers[6] === 3
+      ) {
+        exd.innerHTML +=
+          '<p>' + 'Hot temper person but the temper is a "cool" one.' + '</p>';
+      }
+
+      if (
+        insideNumbers[0] === 8 &&
+        insideNumbers[4] === 8 &&
+        insideNumbers[6] === 8
+      ) {
+        exd.innerHTML +=
+          '<p>' + 'Hot temper person but the temper is a "cool" one.' + '</p>';
+      }
+
+      if (
+        insideNumbers[0] === 2 &&
+        insideNumbers[4] === 2 &&
+        insideNumbers[6] === 2
+      ) {
+        exd.innerHTML +=
+          '<p>' +
+          'This person should avoid swimming. Accidents may occur in a small pool or a small waterfall or a small river.' +
+          '</p>';
+      }
+
+      if (
+        insideNumbers[0] === 7 &&
+        insideNumbers[4] === 7 &&
+        insideNumbers[6] === 7
+      ) {
+        exd.innerHTML +=
+          '<p>' +
+          'This person should avoid going to the sea or swim in the deep area of an Olympic‐size pool or a big river' +
+          '</p>';
+      }
+
+      /**
+       *  END: Extra Description Section
+       */
+    }
+
+    function describeHdn() {
+      /**
+       * START: Hdn
+       */
+
+      const hdn = document.getElementById('hdn');
+      const hdnv = getSingleDigit(
+        insideNumbers[1].toString() + insideNumbers[2].toString(),
+      );
+
+      console.log('H: ', hdnv);
+      hdn.innerHTML += wrapP(hdnd[hdnv - 1]);
+
+      /**
+       * END: Hdn
+       */
+    }
+
+    function describeInd() {
+      /**
+       * START: Ind
+       */
+      const ind = document.getElementById('ind');
+
+      if (
+        insideNumbers[4] === 1 &&
+        insideNumbers[5] === 1 &&
+        insideNumbers[6] === 2
+      ) {
+        ind.innerHTML += wrapP(
+          'In business, good as a middleman and/or broker',
+        );
+        ind.innerHTML += wrapP('Good as a peace maker');
+        ind.innerHTML += wrapP('Split personality');
+        ind.innerHTML += wrapP('Good Public Relation building');
+      }
+
+      if (
+        insideNumbers[4] === 2 &&
+        insideNumbers[5] === 2 &&
+        insideNumbers[6] === 4
+      ) {
+        ind.innerHTML += wrapP('A very straight forward being');
+        ind.innerHTML += wrapP('Not able to keep confidential matters');
+        ind.innerHTML += wrapP(
+          'Listen to both parties and can create 2 different stories',
+        );
+        ind.innerHTML += wrapP(
+          'If this is a male, he is "soft" – towards feminine (female) – easily tricked',
+        );
+        ind.innerHTML += wrapP(
+          'Take more often than giving in. Do not like to plan and contribute ideas',
+        );
+        ind.innerHTML += wrapP('If this a female, very outspoken');
+      }
+
+      if (
+        insideNumbers[4] === 3 &&
+        insideNumbers[5] === 3 &&
+        insideNumbers[6] === 6
+      ) {
+        ind.innerHTML += wrapP('A spiritual being');
+        ind.innerHTML += wrapP("Talk to one's self");
+        ind.innerHTML += wrapP('Very emotional');
+        ind.innerHTML += wrapP(
+          'Cannot handle matters and cannot achieve much in work',
+        );
+      }
+
+      if (
+        insideNumbers[4] === 4 &&
+        insideNumbers[5] === 4 &&
+        insideNumbers[6] === 8
+      ) {
+        ind.innerHTML += wrapP('Loves to be pampered');
+        ind.innerHTML += wrapP('A "book‐worm"');
+        ind.innerHTML += wrapP(
+          'Intelligent and Smart – Sometimes cannot wait to show how smart he/she is',
+        );
+        ind.innerHTML += wrapP('Has a purpose to succeed');
+      }
+
+      if (
+        insideNumbers[4] === 5 &&
+        insideNumbers[5] === 5 &&
+        insideNumbers[6] === 1
+      ) {
+        ind.innerHTML += wrapP('Very stubborn and selfish');
+        ind.innerHTML += wrapP('Normally wear glasses or contact lenses');
+        ind.innerHTML += wrapP('Very old fashioned and no ideas');
+        ind.innerHTML += wrapP(
+          'A "Police Informer" – will leak out information',
+        );
+      }
+
+      if (
+        insideNumbers[4] === 6 &&
+        insideNumbers[5] === 6 &&
+        insideNumbers[6] === 3
+      ) {
+        ind.innerHTML += wrapP(
+          'A very shy person but 80% of these people are con‐man [Confidence Trickster]',
+        );
+        ind.innerHTML += wrapP('50% of these people likes to "talk big"');
+        ind.innerHTML += wrapP(
+          'Always want to be different from others like to go against the norm',
+        );
+        ind.innerHTML += wrapP('Very quick temper and very impatient');
+        ind.innerHTML += wrapP('Always want to be "No 1" instead of "No 2"');
+      }
+
+      if (
+        insideNumbers[4] === 7 &&
+        insideNumbers[5] === 7 &&
+        insideNumbers[6] === 5
+      ) {
+        ind.innerHTML += wrapP('A very lucky person');
+        ind.innerHTML += wrapP('Lots of friends and supporters');
+        ind.innerHTML += wrapP('Strong leadership but dictatorship style');
+        ind.innerHTML += wrapP('Make use of people');
+        ind.innerHTML += wrapP(
+          'Attracts a lot of supporters – normally the opposite sex',
+        );
+      }
+
+      if (
+        insideNumbers[4] === 8 &&
+        insideNumbers[5] === 8 &&
+        insideNumbers[6] === 7
+      ) {
+        ind.innerHTML += wrapP('Very stressful');
+        ind.innerHTML += wrapP(
+          'Not focus in life and ‘couldn’t care less’ attitude after the age of 30 onwards',
+        );
+        ind.innerHTML += wrapP('Will divorce in life');
+        ind.innerHTML += wrapP('Normally have big eyes');
+      }
+
+      if (
+        insideNumbers[4] === 9 &&
+        insideNumbers[5] === 9 &&
+        insideNumbers[6] === 9
+      ) {
+        ind.innerHTML += wrapP('Can be very greedy');
+        ind.innerHTML += wrapP(
+          'Lots of ideas but ideas ae all to his/her benefits',
+        );
+        ind.innerHTML += wrapP(
+          'Good in P.R. and smart to ‘buy’ people’s heart',
+        );
+        ind.innerHTML += wrapP(
+          'Not a good boss. Will always make staff to work',
+        );
+        ind.innerHTML += wrapP('Later life, a very lonely person');
+      }
+      /**
+       * END: Ind
+       */
+    }
+
+    function describeHealth() {
+      const healthList = document.getElementById('healthList');
+      const insideIndexes = [4, 5, 6];
+      const outsideIndexes = [4, 5, 6];
+
+      const userRawElements = insideIndexes
+        .map((i) => elements[insideNumbers[i] - 1])
+        .concat(outsideIndexes.map((i) => elements[outsideNumbers[i] - 1]));
+
+      const userElements = Array.from(new Set(userRawElements));
+
+      const userLackElements = Array.from(
+        new Set(elements.filter((elem) => userElements.indexOf(elem) === -1)),
+      );
+
+      console.log('Lack Elems:', userLackElements);
+
+      healthList.innerHTML += wrapP('Health Problem Potential Area(s):');
+
+      if (userElements.length === 1) {
+        healthList.innerHTML += wrapP(lackness[userElements[0]]);
+      } else if (userLackElements.length > 0) {
+        userLackElements.forEach((e) => {
+          healthList.innerHTML += wrapP(lackness[e]);
+        });
+      } else if (userLackElements.length < 1) {
+        healthList.innerHTML += wrapP('Your health problem is hereditary.');
+        healthList.innerHTML += wrapP(lackness[elements[insideNumbers[0] - 1]]);
+      }
+
+      healthList.innerHTML = healthList.innerHTML.replace(';', '- \n');
+    }
+
+    function getSingleDigit(n) {
+      if (+n[0] === 0 && +n[1] === 0) return 5;
+
+      let i = 0;
+      i = +n[0] + +n[1];
+
+      if (i.toString().length > 1) {
+        const fd = +i.toString()[0];
+        const sd = +i.toString()[1];
+
+        return fd + sd;
+      }
+
+      return i;
+    }
+
+    function wrapP(desc) {
+      return '<p>' + desc + '</p>';
+    }
+  </script>
+</html>
