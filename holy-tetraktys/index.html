@@ -10,8 +10,16 @@
     <div>
       <span>Date of Birth:</span>
       <input type="date" id="dob" value="2000-01-01" />
-      <input type="button" value="Calculate" onclick="execute()" />
+      <input type="button" value="Predict Me" onclick="execute()" />
     </div>
+
+    <div id="rnd"></div>
+    <div id="lpd"></div>
+    <div id="exd"></div>
+    <div id="ind"></div>
+    <div id="hdn"></div>
+    <div id="healthList"></div>
+    <div id="career"></div>
 
     <fieldset>
       <legend>Partner Possibilities:</legend>
@@ -21,14 +29,6 @@
 
       <div id="partnerResult"></div>
     </fieldset>
-
-    <div id="rnd"></div>
-    <div id="lpd"></div>
-    <div id="exd"></div>
-    <div id="ind"></div>
-    <div id="hdn"></div>
-    <div id="healthList"></div>
-    <div id="career"></div>
   </body>
 
   <script src="rn.js"></script>
@@ -149,7 +149,8 @@
     }
 
     function describeCommon(insideNumbers, outsideNumbers) {
-      document.getElementById('rnd').innerHTML =
+      const descriptions = [];
+      const mainTrait =
         rnd[
           getSingleDigit(
             insideNumbers[4].toString() + insideNumbers[5].toString(),
@@ -160,55 +161,55 @@
 
       // 2nd Desc
       console.log(insideNumbers[0], insideNumbers[1]);
-      lpd.innerHTML +=
-        '<p>' + lp[`${insideNumbers[0]}`][`${insideNumbers[1]}`] + '</p>';
+      descriptions.push(lp[`${insideNumbers[0]}`][`${insideNumbers[1]}`]);
 
       // 3rd Desc
       console.log(insideNumbers[2], insideNumbers[3]);
-      lpd.innerHTML +=
-        '<p>' + lp[`${insideNumbers[2]}`][`${insideNumbers[3]}`] + '</p>';
+      descriptions.push(lp[`${insideNumbers[2]}`][`${insideNumbers[3]}`]);
 
       // 4th Desc
       console.log(insideNumbers[4], insideNumbers[5]);
-      lpd.innerHTML +=
-        '<p>' + lp[`${insideNumbers[4]}`][`${insideNumbers[5]}`] + '</p>';
+      descriptions.push(lp[`${insideNumbers[4]}`][`${insideNumbers[5]}`]);
 
       // 5th Desc
       console.log(outsideNumbers[0], outsideNumbers[1]);
-      lpd.innerHTML +=
-        '<p>' + lp[`${outsideNumbers[0]}`][`${outsideNumbers[1]}`] + '</p>';
+      descriptions.push(lp[`${outsideNumbers[0]}`][`${outsideNumbers[1]}`]);
 
       // 6th Desc
       console.log(outsideNumbers[2], outsideNumbers[3]);
-      lpd.innerHTML +=
-        '<p>' + lp[`${outsideNumbers[2]}`][`${outsideNumbers[3]}`] + '</p>';
+      descriptions.push(lp[`${outsideNumbers[2]}`][`${outsideNumbers[3]}`]);
 
       // 7th Desc
       console.log(outsideNumbers[4], outsideNumbers[5]);
-      lpd.innerHTML +=
-        '<p>' + lp[`${outsideNumbers[4]}`][`${outsideNumbers[5]}`] + '</p>';
+      descriptions.push(lp[`${outsideNumbers[4]}`][`${outsideNumbers[5]}`]);
 
       // 8th Desc
       console.log(insideNumbers[3], insideNumbers[5]);
-      lpd.innerHTML +=
-        '<p>' + lp[`${insideNumbers[3]}`][`${insideNumbers[5]}`] + '</p>';
+      descriptions.push(lp[`${insideNumbers[3]}`][`${insideNumbers[5]}`]);
 
       // 9th Desc
       console.log(insideNumbers[5]);
-      lpd.innerHTML += '<p>' + snrhs[`${insideNumbers[5] - 1}`] + '</p>';
+      descriptions.push(snrhs[`${insideNumbers[5] - 1}`]);
 
       // 10th Desc
       console.log(insideNumbers[5], insideNumbers[6]);
-      lpd.innerHTML +=
-        '<p>' + lp[`${insideNumbers[5]}`][`${insideNumbers[6]}`] + '</p>';
+      descriptions.push(lp[`${insideNumbers[5]}`][`${insideNumbers[6]}`]);
 
       // 11st Desc
       console.log(insideNumbers[6], outsideNumbers[4]);
-      lpd.innerHTML +=
-        '<p>' + lp[`${insideNumbers[6]}`][`${outsideNumbers[4]}`] + '</p>';
+      descriptions.push(lp[`${insideNumbers[6]}`][`${outsideNumbers[4]}`]);
+
+      lpd.innerHTML += wrap(
+        'ul',
+        Array.from(new Set(descriptions))
+          .map((desc) => wrap('li', desc))
+          .toString()
+          .replaceAll(',', ''),
+      );
     }
 
     function describeExtras(insideNumbers, outsideNumbers) {
+      const descriptions = [];
       /**
        *  START: Extra Description Section
        */
@@ -220,10 +221,9 @@
         insideNumbers[2] === 1 &&
         insideNumbers[5] === 1
       ) {
-        exd.innerHTML +=
-          '<p>' +
-          'The individual will be accident‐prone. Such accidents may involve cars, motor bikes or some kind of small vehicles' +
-          '</p>';
+        descriptions.push(
+          'The individual will be accident‐prone. Such accidents may involve cars, motor bikes or some kind of small vehicles',
+        );
       }
 
       if (
@@ -231,24 +231,21 @@
         insideNumbers[2] === 1 &&
         insideNumbers[5] === 6
       ) {
-        exd.innerHTML +=
-          '<p>' +
-          'This individual will be accident prone and the accident may involve Trailers, Big Buses or a very serious accident' +
-          '</p>';
+        descriptions.push(
+          'This individual will be accident prone and the accident may involve Trailers, Big Buses or a very serious accident',
+        );
       }
 
       if (insideNumbers[4] === 1 && insideNumbers[6] === 1) {
-        exd.innerHTML +=
-          '<p>' +
-          'This Individual may have some light mental problems. Perhaps have weird thoughts' +
-          '</p>';
+        descriptions.push(
+          'This Individual may have some light mental problems. Perhaps have weird thoughts',
+        );
       }
 
       if (insideNumbers[4] === 6 && insideNumbers[6] === 6) {
-        exd.innerHTML +=
-          '<p>' +
-          'This individual is likely to have serious mental problems' +
-          '</p>';
+        descriptions.push(
+          'This individual is likely to have serious mental problems',
+        );
       }
 
       if (
@@ -256,7 +253,7 @@
         insideNumbers[4] === 3 &&
         insideNumbers[6] === 3
       ) {
-        exd.innerHTML += '<p>' + 'A very hot temper individual' + '</p>';
+        descriptions.push('A very hot temper individual');
       }
 
       if (
@@ -264,8 +261,7 @@
         insideNumbers[4] === 3 &&
         insideNumbers[6] === 3
       ) {
-        exd.innerHTML +=
-          '<p>' + 'Hot temper person but the temper is a "cool" one.' + '</p>';
+        descriptions.push('Hot temper person but the temper is a "cool" one.');
       }
 
       if (
@@ -273,8 +269,7 @@
         insideNumbers[4] === 8 &&
         insideNumbers[6] === 8
       ) {
-        exd.innerHTML +=
-          '<p>' + 'Hot temper person but the temper is a "cool" one.' + '</p>';
+        descriptions.push('Hot temper person but the temper is a "cool" one.');
       }
 
       if (
@@ -282,10 +277,9 @@
         insideNumbers[4] === 2 &&
         insideNumbers[6] === 2
       ) {
-        exd.innerHTML +=
-          '<p>' +
-          'This person should avoid swimming. Accidents may occur in a small pool or a small waterfall or a small river.' +
-          '</p>';
+        descriptions.push(
+          'This person should avoid swimming. Accidents may occur in a small pool or a small waterfall or a small river.',
+        );
       }
 
       if (
@@ -293,11 +287,18 @@
         insideNumbers[4] === 7 &&
         insideNumbers[6] === 7
       ) {
-        exd.innerHTML +=
-          '<p>' +
-          'This person should avoid going to the sea or swim in the deep area of an Olympic‐size pool or a big river' +
-          '</p>';
+        descriptions.push(
+          'This person should avoid going to the sea or swim in the deep area of an Olympic‐size pool or a big river',
+        );
       }
+
+      exd.innerHTML += wrap(
+        'ul',
+        Array.from(new Set(descriptions))
+          .map((desc) => wrap('li', desc))
+          .toString()
+          .replaceAll(',', ''),
+      );
 
       /**
        *  END: Extra Description Section
@@ -314,8 +315,19 @@
         insideNumbers[1].toString() + insideNumbers[2].toString(),
       );
 
-      console.log('H: ', hdnv);
-      hdn.innerHTML += wrapP(hdnd[hdnv - 1]);
+      console.log('Hidden: ', hdnv);
+      hdn.innerHTML += wrap(
+        'ul',
+        wrap(
+          'li',
+          [
+            'When you are old, or at your current age, you may realize sometimes you are ',
+            hdnd[hdnv - 1].toLowerCase(),
+          ]
+            .toString()
+            .replaceAll(',', ''),
+        ),
+      );
 
       /**
        * END: Hdn
@@ -326,6 +338,7 @@
       /**
        * START: Ind
        */
+      const descriptions = [];
       const ind = document.getElementById('ind');
 
       if (
@@ -333,12 +346,10 @@
         insideNumbers[5] === 1 &&
         insideNumbers[6] === 2
       ) {
-        ind.innerHTML += wrapP(
-          'In business, good as a middleman and/or broker',
-        );
-        ind.innerHTML += wrapP('Good as a peace maker');
-        ind.innerHTML += wrapP('Split personality');
-        ind.innerHTML += wrapP('Good Public Relation building');
+        descriptions.push('In business, good as a middleman and/or broker');
+        descriptions.push('Good as a peace maker');
+        descriptions.push('Split personality');
+        descriptions.push('Good Public Relation building');
       }
 
       if (
@@ -346,18 +357,18 @@
         insideNumbers[5] === 2 &&
         insideNumbers[6] === 4
       ) {
-        ind.innerHTML += wrapP('A very straight forward being');
-        ind.innerHTML += wrapP('Not able to keep confidential matters');
-        ind.innerHTML += wrapP(
+        descriptions.push('A very straight forward being');
+        descriptions.push('Not able to keep confidential matters');
+        descriptions.push(
           'Listen to both parties and can create 2 different stories',
         );
-        ind.innerHTML += wrapP(
+        descriptions.push(
           'If this is a male, he is "soft" – towards feminine (female) – easily tricked',
         );
-        ind.innerHTML += wrapP(
+        descriptions.push(
           'Take more often than giving in. Do not like to plan and contribute ideas',
         );
-        ind.innerHTML += wrapP('If this a female, very outspoken');
+        descriptions.push('If this a female, very outspoken');
       }
 
       if (
@@ -365,10 +376,10 @@
         insideNumbers[5] === 3 &&
         insideNumbers[6] === 6
       ) {
-        ind.innerHTML += wrapP('A spiritual being');
-        ind.innerHTML += wrapP("Talk to one's self");
-        ind.innerHTML += wrapP('Very emotional');
-        ind.innerHTML += wrapP(
+        descriptions.push('A spiritual being');
+        descriptions.push("Talk to one's self");
+        descriptions.push('Very emotional');
+        descriptions.push(
           'Cannot handle matters and cannot achieve much in work',
         );
       }
@@ -378,12 +389,12 @@
         insideNumbers[5] === 4 &&
         insideNumbers[6] === 8
       ) {
-        ind.innerHTML += wrapP('Loves to be pampered');
-        ind.innerHTML += wrapP('A "book‐worm"');
-        ind.innerHTML += wrapP(
+        descriptions.push('Loves to be pampered');
+        descriptions.push('A "book‐worm"');
+        descriptions.push(
           'Intelligent and Smart – Sometimes cannot wait to show how smart he/she is',
         );
-        ind.innerHTML += wrapP('Has a purpose to succeed');
+        descriptions.push('Has a purpose to succeed');
       }
 
       if (
@@ -391,12 +402,10 @@
         insideNumbers[5] === 5 &&
         insideNumbers[6] === 1
       ) {
-        ind.innerHTML += wrapP('Very stubborn and selfish');
-        ind.innerHTML += wrapP('Normally wear glasses or contact lenses');
-        ind.innerHTML += wrapP('Very old fashioned and no ideas');
-        ind.innerHTML += wrapP(
-          'A "Police Informer" – will leak out information',
-        );
+        descriptions.push('Very stubborn and selfish');
+        descriptions.push('Normally wear glasses or contact lenses');
+        descriptions.push('Very old fashioned and no ideas');
+        descriptions.push('A "Police Informer" – will leak out information');
       }
 
       if (
@@ -404,15 +413,15 @@
         insideNumbers[5] === 6 &&
         insideNumbers[6] === 3
       ) {
-        ind.innerHTML += wrapP(
+        descriptions.push(
           'A very shy person but 80% of these people are con‐man [Confidence Trickster]',
         );
-        ind.innerHTML += wrapP('50% of these people likes to "talk big"');
-        ind.innerHTML += wrapP(
+        descriptions.push('50% of these people likes to "talk big"');
+        descriptions.push(
           'Always want to be different from others like to go against the norm',
         );
-        ind.innerHTML += wrapP('Very quick temper and very impatient');
-        ind.innerHTML += wrapP('Always want to be "No 1" instead of "No 2"');
+        descriptions.push('Very quick temper and very impatient');
+        descriptions.push('Always want to be "No 1" instead of "No 2"');
       }
 
       if (
@@ -420,11 +429,11 @@
         insideNumbers[5] === 7 &&
         insideNumbers[6] === 5
       ) {
-        ind.innerHTML += wrapP('A very lucky person');
-        ind.innerHTML += wrapP('Lots of friends and supporters');
-        ind.innerHTML += wrapP('Strong leadership but dictatorship style');
-        ind.innerHTML += wrapP('Make use of people');
-        ind.innerHTML += wrapP(
+        descriptions.push('A very lucky person');
+        descriptions.push('Lots of friends and supporters');
+        descriptions.push('Strong leadership but dictatorship style');
+        descriptions.push('Make use of people');
+        descriptions.push(
           'Attracts a lot of supporters – normally the opposite sex',
         );
       }
@@ -434,12 +443,12 @@
         insideNumbers[5] === 8 &&
         insideNumbers[6] === 7
       ) {
-        ind.innerHTML += wrapP('Very stressful');
-        ind.innerHTML += wrapP(
+        descriptions.push('Very stressful');
+        descriptions.push(
           'Not focus in life and ‘couldn’t care less’ attitude after the age of 30 onwards',
         );
-        ind.innerHTML += wrapP('Will divorce in life');
-        ind.innerHTML += wrapP('Normally have big eyes');
+        descriptions.push('Will divorce in life');
+        descriptions.push('Normally have big eyes');
       }
 
       if (
@@ -447,18 +456,22 @@
         insideNumbers[5] === 9 &&
         insideNumbers[6] === 9
       ) {
-        ind.innerHTML += wrapP('Can be very greedy');
-        ind.innerHTML += wrapP(
-          'Lots of ideas but ideas ae all to his/her benefits',
+        descriptions.push('Can be very greedy');
+        descriptions.push(
+          'Lots of ideas but ideas are all to his/her benefits',
         );
-        ind.innerHTML += wrapP(
-          'Good in P.R. and smart to ‘buy’ people’s heart',
-        );
-        ind.innerHTML += wrapP(
-          'Not a good boss. Will always make staff to work',
-        );
-        ind.innerHTML += wrapP('Later life, a very lonely person');
+        descriptions.push('Good in P.R. and smart to ‘buy’ people’s heart');
+        descriptions.push('Not a good boss. Will always make staff to work');
+        descriptions.push('Later life, a very lonely person');
       }
+
+      ind.innerHTML += wrap(
+        'ul',
+        descriptions
+          .map((desc) => wrap('li', desc))
+          .toString()
+          .replaceAll(',', ''),
+      );
       /**
        * END: Ind
        */
@@ -479,22 +492,45 @@
         new Set(elements.filter((elem) => userElements.indexOf(elem) === -1)),
       );
 
-      console.log('Lack Elems:', userLackElements);
+      const flattenDiseases = (diseases) =>
+        diseases
+          .split(';')
+          .map((disease) => wrap('li', disease))
+          .toString()
+          .replaceAll(',', '');
 
-      healthList.innerHTML += wrapP('Health Problem Potential Area(s):');
+      healthList.innerHTML += wrap(
+        'ul',
+        wrap('li', 'Potential health problems:'),
+      );
 
       if (userElements.length === 1) {
-        healthList.innerHTML += wrapP(lackness[userElements[0]]);
+        healthList.innerHTML += wrap(
+          'ul',
+          wrap('ul', flattenDiseases(lackness[userElements[0]])),
+        );
       } else if (userLackElements.length > 0) {
-        userLackElements.forEach((e) => {
-          healthList.innerHTML += wrapP(lackness[e]);
-        });
+        healthList.innerHTML += wrap(
+          'ul',
+          userLackElements
+            .map((e) => wrap('ul', flattenDiseases(lackness[e])))
+            .toString()
+            .replaceAll(',', ''),
+        );
       } else if (userLackElements.length < 1) {
-        healthList.innerHTML += wrapP('Your health problem is hereditary.');
-        healthList.innerHTML += wrapP(lackness[elements[insideNumbers[0] - 1]]);
+        healthList.innerHTML += wrap(
+          'ul',
+          wrap(
+            'ul',
+            [
+              wrap('li', '(Your health problem is hereditary)'),
+              flattenDiseases(lackness[elements[insideNumbers[0] - 1]]),
+            ]
+              .toString()
+              .replaceAll(',', ''),
+          ),
+        );
       }
-
-      healthList.innerHTML = healthList.innerHTML.replace(';', '- \n');
     }
 
     function describeCareer(insideNumbers, outsideNumbers) {
@@ -510,8 +546,31 @@
       ];
 
       careerElementPriorities[userElement].forEach((elem, i) => {
-        career.innerHTML += wrapP(sweetWordsCareerSection[i]);
-        career.innerHTML += wrapP(careerOptions[elem]);
+        career.innerHTML += wrap(
+          'ul',
+          [
+            wrap('li', sweetWordsCareerSection[i]),
+            careerOptions[elem]
+              .replace('Profession:', '')
+              .split('Business:')
+              .map((careerType, i) =>
+                wrap(
+                  'ul',
+                  [
+                    wrap('li', i === 0 ? 'Profession:' : 'Business'),
+                    wrap(
+                      'ul',
+                      careerType.split(',').map((c) => wrap('li', c)),
+                    ),
+                  ]
+                    .toString()
+                    .replace(',', ''),
+                ),
+              ),
+          ]
+            .toString()
+            .replaceAll(',', ''),
+        );
       });
     }
 
@@ -531,8 +590,8 @@
       return i;
     }
 
-    function wrapP(desc) {
-      return '<p>' + desc + '</p>';
+    function wrap(tag, content) {
+      return `<${tag}>${content}</${tag}>`;
     }
 
     function calculatePartnership() {
