@@ -9,15 +9,24 @@
   <body>
     <div>
       <span>Date of Birth:</span>
-      <input type="date" id="dob" value="1971-08-01" />
+      <input type="date" id="dob" value="2000-01-01" />
       <input type="button" value="Calculate" onclick="execute()" />
     </div>
+
+    <fieldset>
+      <legend>Partner Possibilities:</legend>
+      <label>Partner Date of Birth</label>
+      <input type="date" id="dobPartner" value="2000-01-01" />
+      <input type="submit" value="Check" onclick="calculatePartnership()" />
+
+      <div id="partnerResult"></div>
+    </fieldset>
 
     <div id="rnd"></div>
     <div id="lpd"></div>
     <div id="exd"></div>
-    <div id="hdn"></div>
     <div id="ind"></div>
+    <div id="hdn"></div>
     <div id="healthList"></div>
     <div id="career"></div>
   </body>
@@ -27,13 +36,9 @@
   <script src="snrhs.js"></script>
   <script src="hdn.js"></script>
   <script src="avatar.js"></script>
+  <script src="crn.js"></script>
   <script>
-    let insideNumbers = [];
-    let outsideNumbers = [];
-
     function execute() {
-      insideNumbers = [];
-      outsideNumbers = [];
       document.getElementById('rnd').innerHTML = '';
       document.getElementById('lpd').innerHTML = '';
       document.getElementById('exd').innerHTML = '';
@@ -42,29 +47,36 @@
       document.getElementById('healthList').innerHTML = '';
       document.getElementById('career').innerHTML = '';
 
-      calculate();
+      const dob = document.getElementById('dob').value.toString();
 
-      describeCommon();
+      const { insideNumbers, outsideNumbers } = calculate(dob);
 
-      describeExtras();
+      console.log('Inside Numbers', insideNumbers);
+      console.log('Outside Numbers', outsideNumbers);
 
-      describeHdn();
+      describeCommon(insideNumbers, outsideNumbers);
 
-      describeInd();
+      describeExtras(insideNumbers, outsideNumbers);
 
-      describeHealth();
+      describeHdn(insideNumbers, outsideNumbers);
 
-      describeCareer();
+      describeInd(insideNumbers, outsideNumbers);
+
+      describeHealth(insideNumbers, outsideNumbers);
+
+      describeCareer(insideNumbers, outsideNumbers);
     }
 
-    function calculate() {
-      const dob = document.getElementById('dob').value.toString();
+    function calculate(dob) {
       const date = dob.substring(
         dob.lastIndexOf('-') + 1,
         dob.lastIndexOf('-') + 3,
       );
       const month = dob.substring(dob.indexOf('-') + 1, dob.indexOf('-') + 3);
       const year = dob.substring(0, 4);
+
+      const insideNumbers = [];
+      const outsideNumbers = [];
 
       insideNumbers.push(getSingleDigit(date));
       insideNumbers.push(getSingleDigit(month));
@@ -131,13 +143,12 @@
         ),
       );
 
-      console.log('Inside Numbers', insideNumbers);
-      console.log('Outside Numbers', outsideNumbers);
-
       console.log(`Your Root Number: ${insideNumbers[6]}`);
+
+      return { insideNumbers, outsideNumbers };
     }
 
-    function describeCommon() {
+    function describeCommon(insideNumbers, outsideNumbers) {
       document.getElementById('rnd').innerHTML =
         rnd[
           getSingleDigit(
@@ -197,7 +208,7 @@
         '<p>' + lp[`${insideNumbers[6]}`][`${outsideNumbers[4]}`] + '</p>';
     }
 
-    function describeExtras() {
+    function describeExtras(insideNumbers, outsideNumbers) {
       /**
        *  START: Extra Description Section
        */
@@ -293,7 +304,7 @@
        */
     }
 
-    function describeHdn() {
+    function describeHdn(insideNumbers, outsideNumbers) {
       /**
        * START: Hdn
        */
@@ -311,7 +322,7 @@
        */
     }
 
-    function describeInd() {
+    function describeInd(insideNumbers, outsideNumbers) {
       /**
        * START: Ind
        */
@@ -453,7 +464,7 @@
        */
     }
 
-    function describeHealth() {
+    function describeHealth(insideNumbers, outsideNumbers) {
       const healthList = document.getElementById('healthList');
       const insideIndexes = [4, 5, 6];
       const outsideIndexes = [4, 5, 6];
@@ -486,7 +497,7 @@
       healthList.innerHTML = healthList.innerHTML.replace(';', '- \n');
     }
 
-    function describeCareer() {
+    function describeCareer(insideNumbers, outsideNumbers) {
       const career = document.getElementById('career');
       const userElement = elements[insideNumbers[6] - 1];
 
@@ -522,6 +533,22 @@
 
     function wrapP(desc) {
       return '<p>' + desc + '</p>';
+    }
+
+    function calculatePartnership() {
+      const dob = document.getElementById('dob').value.toString();
+      const { insideNumbers } = calculate(dob);
+
+      const dobPartner = document.getElementById('dobPartner').value.toString();
+      const { insideNumbers: insideNumbersPartner } = calculate(dobPartner);
+
+      const crn = getSingleDigit(
+        `${insideNumbers[6]}${insideNumbersPartner[6]}`,
+      );
+
+      console.log('Combined: ', crn);
+
+      document.getElementById('partnerResult').innerHTML = crnList[crn - 1];
     }
   </script>
 </html>
