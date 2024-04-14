@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tokenomics Calculator</title>
+  </head>
+  <body>
+    <div>
+      <label>Current Price:</label>
+      <input type="number" id="currentPrice" />
+    </div>
+
+    <div>
+      <label>Current Circulating Supply:</label>
+      <input type="number" id="circSupply" />
+    </div>
+
+    <div>
+      <label>Price Target:</label>
+      <input type="number" id="priceTarget" />
+    </div>
+
+    <div>
+      <label>Current Market Cap: <span id="currentMarketCap"></span></label>
+    </div>
+
+    <div>
+      <label
+        >Final Market Cap Required to Reach Target Price:
+        <span id="requiredInvestement"></span
+      ></label>
+    </div>
+
+    <button onclick="calculate()">Calculate</button>
+  </body>
+
+  <script>
+    function calculate() {
+      currentPrice = +document.querySelector('#currentPrice').value;
+      circSupply = +document.querySelector('#circSupply').value;
+      marketcap = document.querySelector('#currentMarketCap');
+
+      marketcap.innerHTML = (currentPrice * circSupply).toLocaleString();
+
+      priceTarget = +document.querySelector('#priceTarget').value;
+      deltaMarketCap = priceTarget * circSupply - currentPrice * circSupply;
+
+      document.querySelector(
+        '#requiredInvestement',
+      ).innerHTML = deltaMarketCap.toLocaleString();
+    }
+  </script>
+</html>
+​
