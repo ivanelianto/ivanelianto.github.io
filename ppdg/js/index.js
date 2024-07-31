@@ -17,9 +17,12 @@ async function generateMarketplaceDescription() {
   const footer = await readFile(FOOTER_MARKETPLACE_URL);
 
   const result = `${productName}
-  
+
 ${shortDescription}
 
+========
+Spesifikasi
+========
 ${specification}
 
 ${footer}`;
@@ -35,7 +38,7 @@ async function generateFacebookDescription() {
   const footer = await readFile(FOOTER_FACEBOOK_URL);
 
   const result = `${productName}
-  
+
 ${shortDescription}
 
 ${footer}`;

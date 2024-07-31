@@ -22,14 +22,24 @@
     </div>
 
     <div>
+      <label
+        >Price Diff. Percentage: <strong id="diffPercentage"></strong
+      ></label>
+    </div>
+
+    <div>
       <label>Current Market Cap: <span id="currentMarketCap"></span></label>
     </div>
 
     <div>
       <label
-        >Final Market Cap Required to Reach Target Price:
-        <span id="requiredInvestement"></span
+        >Required Money to Reach Price Target:
+        <strong id="requiredInvestement"></strong
       ></label>
+    </div>
+
+    <div>
+      <label>Final Market Cap: <span id="finalMarketCap"></span></label>
     </div>
 
     <button onclick="calculate()">Calculate</button>
@@ -41,14 +51,24 @@
       circSupply = +document.querySelector('#circSupply').value;
       marketcap = document.querySelector('#currentMarketCap');
 
-      marketcap.innerHTML = (currentPrice * circSupply).toLocaleString();
+      marketcap.innerHTML = '$' + (currentPrice * circSupply).toLocaleString();
 
       priceTarget = +document.querySelector('#priceTarget').value;
+
+      diffPercentage = document.querySelector('#diffPercentage');
+      diffPercentage.innerHTML =
+        ((priceTarget / currentPrice - 1) * 100).toFixed(2) + '%';
+
       deltaMarketCap = priceTarget * circSupply - currentPrice * circSupply;
 
       document.querySelector(
         '#requiredInvestement',
-      ).innerHTML = deltaMarketCap.toLocaleString();
+      ).innerHTML = `$${deltaMarketCap.toLocaleString()}`;
+
+      document.querySelector('#finalMarketCap').innerHTML = `$${(
+        currentPrice * circSupply +
+        deltaMarketCap
+      ).toLocaleString()}`;
     }
   </script>
 </html>
