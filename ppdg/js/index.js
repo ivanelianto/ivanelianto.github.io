@@ -20,10 +20,12 @@ async function generateMarketplaceDescription() {
 
 ${shortDescription}
 
-========
+${specification ??
+`========
 Spesifikasi
 ========
 ${specification}
+`}
 
 ${footer}`;
 
