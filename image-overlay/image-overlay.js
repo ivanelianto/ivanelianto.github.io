@@ -80,6 +80,12 @@ function previewLogo() {
       // Remove any existing event listener and add new one
       logoPreview.removeEventListener('mousedown', startDrag);
       logoPreview.addEventListener('mousedown', startDrag);
+
+      if (!layers.includes(logoPreview)) {
+        layers.push(logoPreview);
+        updateZIndices();
+        updateLayerList();
+      }
     };
     reader.readAsDataURL(input.files[0]);
   }
@@ -143,6 +149,12 @@ function addRectangle() {
 
   container.appendChild(rect);
   rectangles.push(rect);
+
+  container.appendChild(rect);
+  rectangles.push(rect);
+  layers.push(rect);
+  updateZIndices();
+  updateLayerList();
 }
 
 function addText() {
@@ -163,6 +175,12 @@ function addText() {
 
   container.appendChild(text);
   texts.push(text);
+
+  container.appendChild(text);
+  texts.push(text);
+  layers.push(text);
+  updateZIndices();
+  updateLayerList();
 }
 
 function startResize(e) {
@@ -266,3 +284,87 @@ function renderElements(ctx, scale) {
     ctx.fillText(text.innerText, textLeft * scale, (textTop + parseInt(text.style.fontSize)) * scale);
   });
 }
+
+// Add these to the existing global variables
+let layers = [];
+let selectedLayer = null;
+
+// Add this function to initialize layers
+function initializeLayers() {
+  const container = document.getElementById('previewContainer');
+  layers = Array.from(container.children);
+  updateZIndices();
+}
+
+// Add this function to update z-indices
+function updateZIndices() {
+  layers.forEach((layer, index) => {
+    layer.style.zIndex = index;
+  });
+}
+
+function updateLayerList() {
+  const layerList = document.getElementById('layerList');
+  layerList.innerHTML = '';
+
+  layers.slice().reverse().forEach((layer, index) => {
+    const layerItem = document.createElement('div');
+    layerItem.className = `layer-item${layer === selectedLayer ? ' selected' : ''}`;
+
+    let layerName = 'Layer';
+    if (layer.id === 'logoPreview') layerName = 'Logo';
+    else if (layer.className === 'text-element') layerName = `Text: ${layer.innerText}`;
+    else if (layer.className === 'rectangle') layerName = 'Rectangle';
+
+    layerItem.innerHTML = `
+      <span>${layerName}</span>
+      <div class="layer-controls">
+        <button class="layer-button" onclick="moveLayer(${layers.length - 1 - index}, 'up')">&uarr;</button>
+        <button class="layer-button" onclick="moveLayer(${layers.length - 1 - index}, 'down')">&darr;</button>
+        <button class="layer-button delete-button" onclick="deleteLayer(${layers.length - 1 - index})">🗑️</button>
+      </div>
+    `;
+
+    layerItem.addEventListener('click', () => {
+      selectedLayer = layer;
+      updateLayerList();
+    });
+
+    layerList.appendChild(layerItem);
+  });
+}
+
+function deleteLayer(index) {
+  const layer = layers[index];
+  if (layer) {
+    if (layer.id === 'logoPreview') {
+      layer.style.display = 'none';
+      layer.src = '';  // Reset source
+      logoImage = null;
+      // Reset logo input so it can be reused
+      document.getElementById('logoUpload').value = '';
+    } else if (layer.className === 'rectangle') {
+      rectangles = rectangles.filter(r => r !== layer);
+    } else if (layer.className === 'text-element') {
+      texts = texts.filter(t => t !== layer);
+    }
+    layer.remove();
+    layers.splice(index, 1);
+    selectedLayer = null;
+    updateZIndices();
+    updateLayerList();
+  }
+}
+
+function moveLayer(index, direction) {
+  const newIndex = direction === 'up' ? index + 1 : index - 1;
+
+  if (newIndex >= 0 && newIndex < layers.length) {
+    [layers[index], layers[newIndex]] = [layers[newIndex], layers[index]];
+    updateZIndices();
+    updateLayerList();
+  }
+}
+
+// Add to the end of your window.onload or initialization code
+initializeLayers();

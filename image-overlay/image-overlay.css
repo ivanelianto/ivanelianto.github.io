@@ -35,6 +35,7 @@ body {
 
 .input-group {
   margin-bottom: 20px;
+  width: 100%;
 }
 
 label {
@@ -48,6 +49,7 @@ input[type="number"],
 select,
 input[type="color"],
 input[type="text"] {
+  width: 100%;
   padding: 10px;
   margin: 5px 0;
   border: 1px solid #ddd;
@@ -153,6 +155,41 @@ button:hover {
   width: 50px;
   height: 40px;
   padding: 0;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.layer-list {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 10px;
+}
+
+.layer-item {
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  background: #f5f5f5;
+  margin: 5px 0;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.layer-item.selected {
+  background: #e0e0e0;
+}
+
+.layer-controls {
+  margin-left: auto;
+  display: flex;
+  gap: 5px;
+}
+
+.layer-button {
+  padding: 5px;
+  background: #4CAF50;
+  color: white;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
 }
