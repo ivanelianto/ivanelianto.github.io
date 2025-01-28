@@ -132,6 +132,12 @@ button:hover {
   display: block;
 }
 
+.color-input-wrapper {
+  display: flex;
+  gap: 3em;
+  width: 100%;
+}
+
 .color-input-group {
   display: flex;
   gap: 10px;

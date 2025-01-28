@@ -25,8 +25,17 @@ function startDrag(e) {
 
   function onMouseMove(e) {
     if (isDragging && selectedElement) {
-      selectedElement.style.left = `${e.clientX - previewContainer.offsetLeft - offsetX}px`;
-      selectedElement.style.top = `${e.clientY - previewContainer.offsetTop - offsetY}px`;
+      const left = e.clientX - previewContainer.offsetLeft - offsetX;
+      const top = e.clientY - previewContainer.offsetTop - offsetY;
+      selectedElement.style.left = `${left}px`;
+      selectedElement.style.top = `${top}px`;
+
+      if (selectedElement.id === 'logoPreview') {
+        document.getElementById('positionType').value = 'custom';
+        document.getElementById('customPosition').classList.add('active');
+        document.getElementById('posX').value = left;
+        document.getElementById('posY').value = top;
+      }
     }
   }
 
