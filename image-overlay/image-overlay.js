@@ -59,7 +59,6 @@ function previewBase() {
     reader.onload = function (e) {
       preview.src = e.target.result;
       baseImage = e.target.result;
-      updateLogoPreview();
     };
     reader.readAsDataURL(input.files[0]);
   }
@@ -160,7 +159,7 @@ function addRectangle() {
 function addText() {
   const container = document.getElementById('previewContainer');
   const text = document.createElement('div');
-  text.className = 'text-element';
+  text.className = 'textElement';
   text.innerText = document.getElementById('textInput').value;
   text.style.fontSize = `${document.getElementById('fontSize').value}px`;
   text.style.cursor = 'move';
@@ -207,6 +206,7 @@ function startResize(e) {
   document.addEventListener('mouseup', onMouseUp);
 }
 
+// Update downloadImage function
 function downloadImage() {
   if (!baseImage) {
     alert('Please upload the base image first');
@@ -222,67 +222,89 @@ function downloadImage() {
     canvas.height = baseImg.height;
     ctx.drawImage(baseImg, 0, 0);
 
-    if (logoImage) {
-      const logoImg = new Image();
-      logoImg.onload = function () {
-        const size = parseInt(document.getElementById('logoSize').value);
-        const logoPreview = document.getElementById('logoPreview');
-        const scale = baseImg.width / document.getElementById('basePreview').offsetWidth;
+    const scale = baseImg.width / document.getElementById('basePreview').offsetWidth;
 
-        // Get actual position from the logo preview element
-        const logoLeft = parseInt(logoPreview.style.left || 0);
-        const logoTop = parseInt(logoPreview.style.top || 0);
+    const renderPromises = layers.map(layer => {
+      return new Promise((resolve) => {
+        if (layer.classList.contains('overlayImage')) {
+          const img = new Image();
+          img.onload = function () {
+            const left = parseInt(layer.style.left || 0);
+            const top = parseInt(layer.style.top || 0);
+            const width = layer.offsetWidth;
+            const height = layer.offsetHeight;
 
-        // Scale the position to match the actual image dimensions
-        const scaledX = logoLeft * scale;
-        const scaledY = logoTop * scale;
+            ctx.drawImage(
+              img,
+              left * scale,
+              top * scale,
+              width * scale,
+              height * scale
+            );
+            resolve();
+          };
+          img.src = layer.src;
+        }
+        else if (layer.className === 'rectangle') {
+          const rectLeft = parseInt(layer.style.left || 0);
+          const rectTop = parseInt(layer.style.top || 0);
+          const rectWidth = layer.offsetWidth;
+          const rectHeight = layer.offsetHeight;
 
-        ctx.drawImage(logoImg, scaledX, scaledY, size * scale, size * scale);
+          ctx.fillStyle = layer.style.backgroundColor;
+          ctx.strokeStyle = layer.style.borderColor;
+          ctx.fillRect(rectLeft * scale, rectTop * scale, rectWidth * scale, rectHeight * scale);
+          ctx.strokeRect(rectLeft * scale, rectTop * scale, rectWidth * scale, rectHeight * scale);
+          resolve();
+        }
+        else if (layer.classList.contains('textElement')) {
+          const textLeft = parseInt(layer.style.left || 0);
+          const textTop = parseInt(layer.style.top || 0);
+          const fontSize = parseInt(layer.style.fontSize);
 
-        // Render rectangles and texts
-        renderElements(ctx, scale);
+          ctx.font = `${fontSize * scale}px ${window.getComputedStyle(layer).fontFamily}`;
+          ctx.fillStyle = window.getComputedStyle(layer).color;
+          ctx.fillText(layer.innerText, textLeft * scale, (textTop + fontSize) * scale);
+          resolve();
+        }
+        else {
+          resolve();
+        }
+      });
+    });
 
-        // Download the image
-        const link = document.createElement('a');
-        link.download = 'combined-image.png';
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-      };
-      logoImg.src = logoImage;
-    } else {
-      renderElements(ctx, baseImg.width / document.getElementById('basePreview').offsetWidth);
+    Promise.all(renderPromises).then(() => {
       const link = document.createElement('a');
       link.download = 'combined-image.png';
       link.href = canvas.toDataURL('image/png');
       link.click();
-    }
+    });
   };
   baseImg.src = baseImage;
 }
 
-function renderElements(ctx, scale) {
+function renderRectangle(ctx, rect, scale) {
   // Render rectangles
-  rectangles.forEach(rect => {
-    const rectLeft = parseInt(rect.style.left || 0);
-    const rectTop = parseInt(rect.style.top || 0);
-    const rectWidth = rect.offsetWidth;
-    const rectHeight = rect.offsetHeight;
+  const rectLeft = parseInt(rect.style.left || 0);
+  const rectTop = parseInt(rect.style.top || 0);
+  const rectWidth = rect.offsetWidth;
+  const rectHeight = rect.offsetHeight;
 
-    ctx.strokeStyle = rect.style.borderColor;
-    ctx.fillStyle = rect.style.backgroundColor;
-    ctx.fillRect(rectLeft * scale, rectTop * scale, rectWidth * scale, rectHeight * scale);
-    ctx.strokeRect(rectLeft * scale, rectTop * scale, rectWidth * scale, rectHeight * scale);
-  });
+  ctx.strokeStyle = rect.style.borderColor;
+  ctx.fillStyle = rect.style.backgroundColor;
+  ctx.fillRect(rectLeft * scale, rectTop * scale, rectWidth * scale, rectHeight * scale);
+  ctx.strokeRect(rectLeft * scale, rectTop * scale, rectWidth * scale, rectHeight * scale);
+}
 
+function renderText(ctx, text, scale) {
   // Render texts
-  texts.forEach(text => {
-    const textLeft = parseInt(text.style.left || 0);
-    const textTop = parseInt(text.style.top || 0);
+  const textLeft = parseInt(text.style.left || 0);
+  const textTop = parseInt(text.style.top || 0);
 
-    ctx.font = `${parseInt(text.style.fontSize) * scale}px ${window.getComputedStyle(text).fontFamily}`;
-    ctx.fillStyle = window.getComputedStyle(text).color;
-    ctx.fillText(text.innerText, textLeft * scale, (textTop + parseInt(text.style.fontSize)) * scale);
-  });
+  ctx.font = `${parseInt(text.style.fontSize) * scale}px ${window.getComputedStyle(text).fontFamily}`;
+  ctx.fillStyle = window.getComputedStyle(text).color;
+  ctx.fillText(text.innerText, textLeft * scale, (textTop + parseInt(text.style.fontSize)) * scale);
+
 }
 
 // Add these to the existing global variables
@@ -313,7 +335,7 @@ function updateLayerList() {
 
     let layerName = 'Layer';
     if (layer.id === 'logoPreview') layerName = 'Logo';
-    else if (layer.className === 'text-element') layerName = `Text: ${layer.innerText}`;
+    else if (layer.className === 'textElement') layerName = `Text: ${layer.innerText}`;
     else if (layer.className === 'rectangle') layerName = 'Rectangle';
 
     layerItem.innerHTML = `
@@ -347,7 +369,7 @@ function deleteLayer(index) {
       document.getElementById('posY').value = 0;
     } else if (layer.className === 'rectangle') {
       rectangles = rectangles.filter(r => r !== layer);
-    } else if (layer.className === 'text-element') {
+    } else if (layer.className === 'textElement') {
       texts = texts.filter(t => t !== layer);
     }
 
@@ -375,3 +397,52 @@ function moveLayer(index, direction) {
 
 // Add to the end of your window.onload or initialization code
 initializeLayers();
+
+function updateSelectedImageSize() {
+  const size = document.getElementById('imageSize').value;
+  if (selectedElement && selectedElement.classList.contains('overlayImage')) {
+    console.log('cahngeee');
+    updateImageSize(selectedElement, size);
+  }
+}
+
+function createImageElement(src, size = 100) {
+  const img = document.createElement('img');
+  img.src = src;
+  img.style.position = 'absolute';
+  img.style.width = `${size}px`;
+  img.style.height = `${size}px`;
+  img.style.display = 'block';
+  img.style.cursor = 'move';
+  img.style.left = '0';
+  img.style.top = '0';
+  img.className = 'overlayImage';
+  img.addEventListener('mousedown', startDrag);
+  return img;
+}
+
+function previewImage(file) {
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const container = document.getElementById('previewContainer');
+    const img = createImageElement(e.target.result);
+    container.appendChild(img);
+
+    layers.push(img);
+    updateZIndices();
+    updateLayerList();
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleImageUpload(event) {
+  const files = event.target.files;
+  for (let i = 0; i < files.length; i++) {
+    previewImage(files[i]);
+  }
+}
+
+function updateImageSize(element, size) {
+  element.style.width = `${size}px`;
+  element.style.height = `${size}px`;
+}

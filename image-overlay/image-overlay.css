@@ -83,7 +83,6 @@ input[type="text"] {
   height: 100px;
   object-fit: cover;
   display: none;
-  background-color: white;
   cursor: move;
 }
 

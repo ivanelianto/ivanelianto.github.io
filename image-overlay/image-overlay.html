@@ -21,23 +21,15 @@
             </div>
 
             <div class="input-group">
-                <label for="logoUpload">Upload Logo:</label>
-                <input type="file" id="logoUpload" accept="image/*" onchange="previewLogo()">
+                <label for="imageUpload">Upload Images:</label>
+                <input type="file" id="imageUpload" accept="image/*" multiple onchange="handleImageUpload(event)">
             </div>
 
             <div class="controls">
                 <div class="input-group">
-                    <label for="logoSize">Logo Size (px):</label>
-                    <input type="number" id="logoSize" value="100" min="10" max="1000" onchange="updateLogoPreview()">
-                </div>
-
-                <div class="input-group">
-                    <label for="positionType">Position:</label>
-                    <select id="positionType" onchange="togglePositionInputs()">
-                        <option value="topLeft">Top Left</option>
-                        <option value="topRight">Top Right</option>
-                        <option value="custom">Custom Position</option>
-                    </select>
+                    <label for="imageSize">Image Size (px):</label>
+                    <input type="number" id="imageSize" value="100" min="10" max="1000"
+                        onchange="updateSelectedImageSize()">
                 </div>
             </div>
 
