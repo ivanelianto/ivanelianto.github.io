@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Logo Overlay Tool</title>
+    <link rel="stylesheet" href="./image-overlay.css">
+    <script src="./image-overlay.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Input Section -->
+        <div class="input-section">
+            <h1>Image Logo Overlay Tool</h1>
+
+            <div class="input-group">
+                <label for="baseImage">Upload Base Image:</label>
+                <input type="file" id="baseImage" accept="image/*" onchange="previewBase()">
+            </div>
+
+            <div class="input-group">
+                <label for="logoUpload">Upload Logo:</label>
+                <input type="file" id="logoUpload" accept="image/*" onchange="previewLogo()">
+            </div>
+
+            <div class="controls">
+                <div class="input-group">
+                    <label for="logoSize">Logo Size (px):</label>
+                    <input type="number" id="logoSize" value="100" min="10" max="1000" onchange="updateLogoPreview()">
+                </div>
+
+                <div class="input-group">
+                    <label for="positionType">Position:</label>
+                    <select id="positionType" onchange="togglePositionInputs()">
+                        <option value="topLeft">Top Left</option>
+                        <option value="topRight">Top Right</option>
+                        <option value="custom">Custom Position</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="customPosition" class="position-inputs">
+                <div class="controls">
+                    <div class="input-group">
+                        <label for="posX">X Position (px):</label>
+                        <input type="number" id="posX" value="0" onchange="updateLogoPreview()">
+                    </div>
+                    <div class="input-group">
+                        <label for="posY">Y Position (px):</label>
+                        <input type="number" id="posY" value="0" onchange="updateLogoPreview()">
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>Rectangle Colors:</label>
+                <div class="color-input-group">
+                    <label for="rectangleStrokeColor">Stroke:</label>
+                    <input type="color" id="rectangleStrokeColor" value="#ffffff">
+                </div>
+                <div class="color-input-group">
+                    <label for="rectangleFillColor">Fill:</label>
+                    <input type="color" id="rectangleFillColor" value="#ffffff">
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label for="textInput">Text:</label>
+                <input type="text" id="textInput" placeholder="Enter text">
+            </div>
+
+            <div class="input-group">
+                <label for="fontSize">Font Size (px):</label>
+                <input type="number" id="fontSize" value="20" min="10" max="100">
+            </div>
+
+            <button onclick="addRectangle()">Add Rectangle</button>
+            <button onclick="addText()">Add Text</button>
+
+            <button onclick="downloadImage()">Download Combined Image</button>
+        </div>
+
+        <!-- Preview Section -->
+        <div class="preview-section">
+            <div class="preview-container" id="previewContainer">
+                <img id="basePreview" alt="Preview will appear here">
+                <img id="logoPreview" alt="Logo overlay">
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
