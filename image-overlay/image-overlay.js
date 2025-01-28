@@ -343,14 +343,21 @@ function deleteLayer(index) {
       logoImage = null;
       // Reset logo input so it can be reused
       document.getElementById('logoUpload').value = '';
+      document.getElementById('posX').value = 0;
+      document.getElementById('posY').value = 0;
     } else if (layer.className === 'rectangle') {
       rectangles = rectangles.filter(r => r !== layer);
     } else if (layer.className === 'text-element') {
       texts = texts.filter(t => t !== layer);
     }
-    layer.remove();
+
+    if (layer.id !== 'logoPreview') {
+      layer.remove();
+    }
+
     layers.splice(index, 1);
     selectedLayer = null;
+
     updateZIndices();
     updateLayerList();
   }
