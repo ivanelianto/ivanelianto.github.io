@@ -290,7 +290,9 @@ function renderDashboard() {
 
   const scheduleMatches = matches.filter((m) => m.scheduleId === activeSchedule?.id);
 
+
   const schedulePlayersSet = new Set(activeSchedule?.playerIds ?? []);
+
   const activePlayersToday = players.filter((p) => schedulePlayersSet.has(p.id)).length;
   const totalMatchesToday = scheduleMatches.length;
 
@@ -649,6 +651,7 @@ function renderStartSchedule() {
 }
 
 function renderScheduleMatches() {
+
   const view = $('#view-schedule');
   const sch = getActiveSchedule();
   const matchesWrapId = 'schedule-matches-wrap';
@@ -1167,9 +1170,11 @@ function switchView(key) {
     dashboard: 'view-dashboard',
     players: 'view-players',
     schedule: 'view-schedule',
+    'manage-match': 'view-manage-match',
     payments: 'view-payments',
     io: 'view-io',
   };
+
   const viewId = map[key];
   if (!viewId) return;
 
@@ -1183,9 +1188,14 @@ function switchView(key) {
   if (key === 'players') renderPlayers();
   if (key === 'schedule') {
     renderStartSchedule();
-    setTimeout(() => renderScheduleMatches(), 50);
-    setTimeout(() => renderPlayersForSuggestion(), 50);
   }
+  if (key === 'manage-match') {
+    // Manage Match page (implementation pending)
+    if (typeof renderManageMatch === 'function') renderManageMatch();
+    else toast('Manage Match not implemented yet');
+  }
+
+
   if (key === 'payments') renderPayments();
   if (key === 'io') renderImportExport();
 }
@@ -1214,4 +1224,5 @@ async function main() {
 }
 
 main();
+
 
