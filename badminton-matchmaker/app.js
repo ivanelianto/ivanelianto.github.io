@@ -1,4 +1,5 @@
 import { PLAYERS_SEED } from './playersSeed.js';
+import { COURT_FEE, SHUTTLE_FEE_PER, buildCollectPaymentMessage } from './config.js';
 
 const STORAGE_FILES = {
   players: 'players.json',
@@ -38,6 +39,21 @@ function formatDateNice(iso) {
   if (!iso) return '';
   const [y, m, d] = iso.split('-');
   return `${d}/${m}/${y}`;
+}
+
+function formatDateLongID(iso) {
+  if (!iso) return '';
+  // iso: yyyy-mm-dd
+  const [y, m, d] = iso.split('-').map((x) => Number(x));
+  if (!y || !m || !d) return iso;
+
+  const dt = new Date(Date.UTC(y, m - 1, d, 12, 0, 0)); // noon to avoid TZ off-by-one
+  return new Intl.DateTimeFormat('id-ID', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(dt);
 }
 
 function parseQueryJSON(str, fallback) {
@@ -232,22 +248,22 @@ function suggestMatchesForSchedule({ schedule, allPlayers, matches, playerNameBl
 
 function inferGreetingByTime(d = new Date()) {
   const h = d.getHours();
-  if (h >= 4 && h < 10) return 'Morning';
-  if (h >= 10 && h < 15) return 'Afternoon';
-  if (h >= 15 && h < 19) return 'Evening';
-  return 'Night';
+  if (h >= 4 && h < 10) return 'Pagi';
+  if (h >= 10 && h < 15) return 'Siang';
+  if (h >= 15 && h < 19) return 'Sore';
+  return 'Malam';
 }
 
 function computeTotalPayment({ shuttlecockUsage, playerName }) {
   const shuttles = Number(shuttlecockUsage?.shuttles ?? shuttlecockUsage ?? 0);
-  const courtFee = 15000;
+  const courtFee = COURT_FEE;
 
   const free = /^(mei|asrofi)$/i.test(playerName.trim());
   const specialShuttleOnly = /^(kelvinsen|miftah|ivan)$/i.test(playerName.trim());
 
   if (free) return 0;
 
-  const shuttleFee = shuttles * 4000;
+  const shuttleFee = shuttles * SHUTTLE_FEE_PER;
   const total = shuttleFee + (specialShuttleOnly ? 0 : courtFee);
   return total;
 }
@@ -1706,7 +1722,13 @@ function renderPayments() {
       const p = appState.data.payments.find((x) => x.id === collectId);
       if (!p) return;
       const greeting = inferGreetingByTime();
-      const message = `${greeting} ${p.playerName},\n\nFor the badminton session on ${formatDateNice(p.scheduleDateISO)},\n\nYour total payment is *Rp${p.totalPayment.toLocaleString('id-ID')}* 🙏\n\nYou can transfer the payment to:\n\nBCA\n5271595931\na/n Ivan Favian Elianto`;
+      const message = buildCollectPaymentMessage({
+        greeting,
+        playerName: p.playerName,
+        scheduleDateISO: formatDateLongID(p.scheduleDateISO),
+        totalPayment: p.totalPayment,
+        formatDateNice,
+      });
 
       openModal(`
         <h3>Collect Payment Message</h3>
