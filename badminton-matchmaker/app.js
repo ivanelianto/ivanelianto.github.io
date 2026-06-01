@@ -1,3 +1,5 @@
+import { PLAYERS_SEED } from './playersSeed.js';
+
 const STORAGE_FILES = {
   players: 'players.json',
   schedules: 'schedules.json',
@@ -152,12 +154,14 @@ function suggestMatchesForSchedule({ schedule, allPlayers, matches }) {
       .concat(teamB)
       .reduce((acc, p) => acc + (playedCountsByName[p.name] ?? 0), 0);
 
-    // overall score: balance primary, fairness secondary
-    const overall = balance * 10 + fairness;
+    // overall score: class balance is primary.
+    // Increase balance weight to reduce cases where class imbalance slips through.
+    const overall = balance * 100 + fairness;
+
 
     // Shuttlecock usage: keep simple defaults
     const shuttlecockUsage = {
-      shuttles: 2,
+      shuttles: 0,
     };
 
     suggestions.push({
@@ -221,16 +225,12 @@ function ensureSeededDemoData() {
   // Only for first run: if no players exist, create a couple.
   const has = localStorage.getItem(`bbmm:${STORAGE_FILES.players}`);
   if (has) return;
-  const seedPlayers = [
-    { id: uuid(), name: 'Mei', class: 'A', note: '' },
-    { id: uuid(), name: 'Asrofi', class: 'B', note: '' },
-    { id: uuid(), name: 'Ivan', class: 'S', note: '' },
-    { id: uuid(), name: 'Kelvinsen', class: 'A', note: '' },
-    { id: uuid(), name: 'Miftah', class: 'B', note: '' },
-    { id: uuid(), name: 'Budi', class: 'C', note: '' },
-    { id: uuid(), name: 'Siti', class: 'A', note: '' },
-    { id: uuid(), name: 'Rama', class: 'B', note: '' },
-  ];
+  const seedPlayers = PLAYERS_SEED.map((p) => ({
+    id: uuid(),
+    name: p.name,
+    class: p.class,
+    note: p.note ?? '',
+  }));
   localStorage.setItem(`bbmm:${STORAGE_FILES.players}`, JSON.stringify(seedPlayers, null, 2));
   localStorage.setItem(`bbmm:${STORAGE_FILES.schedules}`, JSON.stringify([], null, 2));
   localStorage.setItem(`bbmm:${STORAGE_FILES.matches}`, JSON.stringify([], null, 2));
@@ -250,6 +250,16 @@ function openModal(html) {
   const modal = $('#modal');
   modal.innerHTML = `<form method="dialog"><div class="modal-inner">${html}</div></form>`;
   modal.showModal();
+
+  // Close when clicking outside the modal box (backdrop)
+  modal.addEventListener(
+    'click',
+    (e) => {
+      const modalInner = e.target?.closest?.('.modal-inner');
+      if (!modalInner) closeModal();
+    },
+    { once: true },
+  );
 }
 
 function closeModal() {
@@ -263,6 +273,31 @@ function renderOptionsFromClasses(selectEl, value) {
   `).join('');
 }
 
+function capitalizeEachWord(s) {
+  const str = String(s ?? '').trim();
+  if (!str) return '';
+  return str
+    .split(/(\s+)/)
+    .map((part) => {
+      if (/^\s+$/.test(part)) return part;
+      return part
+        .split('-')
+        .map((chunk) => (chunk ? chunk[0].toUpperCase() + chunk.slice(1).toLowerCase() : chunk))
+        .join('-');
+    })
+    .join('');
+}
+
+function formatClassBadge(cls) {
+  return `<span class="badge">${cls}</span>`;
+}
+
+function renderPlayerNameWithClass(p) {
+  if (!p) return '';
+  return `${formatClassBadge(p.class)} ${capitalizeEachWord(p.name)}`;
+}
+
+
 // ---- App state ----
 let appState = {
   data: { players: [], schedules: [], matches: [], payments: [] },
@@ -270,6 +305,7 @@ let appState = {
 };
 
 let scheduleDelegatedBound = false;
+let manageMatchDelegatedBound = false;
 
 
 function getActiveSchedule() {
@@ -347,7 +383,7 @@ function renderPlayers() {
     .join('');
 
   view.innerHTML = `
-    <div class="grid grid-2">
+    <div class="grid" style="grid-template-columns:1fr;">
       <div class="card">
         <h2>Add / Update Player</h2>
         <div class="grid" style="gap:10px;">
@@ -461,9 +497,14 @@ function renderStartSchedule() {
   const lastSchedule = schedules.slice().sort((a, b) => b.createdAt - a.createdAt)[0];
 
   const scheduleSelect = `
-    <div>
-      <label>Active Schedule</label>
-      <select id="active-schedule"></select>
+    <div class="row" style="justify-content:space-between; gap:10px;">
+      <div style="flex:1;">
+        <label>Active Schedule</label>
+        <select id="active-schedule"></select>
+      </div>
+      <div style="align-self:flex-end;">
+        <button class="btn danger" id="sched-close" title="Remove schedule from active">Close</button>
+      </div>
     </div>
   `;
 
@@ -479,13 +520,19 @@ function renderStartSchedule() {
         <h2>Start / Select Schedule</h2>
         <div class="grid" style="gap:10px;">
           ${scheduleSelect}
+
           <div>
             <label>Schedule Date</label>
-            <input type="date" id="sched-date" value="${todayISO()}" />
+            <div class="row" style="gap:10px;">
+              <div style="flex:1;">
+                <input type="date" id="sched-date" value="${todayISO()}" style="width:100%;" />
+              </div>
+              <div style="align-self:flex-end;">
+                <button class="btn primary" id="sched-create">Create</button>
+              </div>
+            </div>
           </div>
-          <div class="row">
-            <button class="btn primary" id="sched-create">Create New Schedule</button>
-          </div>
+
           <div style="color:var(--muted); font-size:13px;">
             Players added will be reused from <span style="font-weight:800;">players.json</span> if name matches.
           </div>
@@ -512,18 +559,11 @@ function renderStartSchedule() {
 
     <div class="card">
       <h2>Players in Active Schedule</h2>
-      <div style="overflow:auto;">
-        <table class="table">
-          <thead>
-            <tr><th>Name</th><th>Class</th><th>Join Time</th><th style="width:26%">Actions</th></tr>
-          </thead>
-          <tbody id="sched-player-table"></tbody>
-        </table>
-      </div>
+      <div id="sched-player-list" style="display:grid; gap:10px;"></div>
     </div>
   `;
 
-  renderOptionsFromClasses($('#sp-class'), 'A');
+  renderOptionsFromClasses($('#sp-class'), 'C');
 
   const activeSel = $('#active-schedule');
   activeSel.innerHTML = schedules.map((s) => `<option value="${s.id}">${formatDateNice(s.dateISO)} · ${s.title ?? ''}</option>`).join('');
@@ -537,9 +577,10 @@ function renderStartSchedule() {
 
   const renderSchedulePlayers = () => {
     const sch = getActiveSchedule();
-    const tbody = $('#sched-player-table');
+    const list = $('#sched-player-list');
+
     if (!sch) {
-      tbody.innerHTML = `<tr><td colspan="4" style="color:var(--muted)">No active schedule. Create one.</td></tr>`;
+      list.innerHTML = `<div style="color:var(--muted); font-size:13px;">No active schedule. Create one.</div>`;
       return;
     }
 
@@ -549,27 +590,52 @@ function renderStartSchedule() {
     const rows = (sch.playerIds ?? []).map((pid) => {
       const p = playerById.get(pid);
       const joinTime = joinMap.get(pid);
+      const arriveTime = joinTime ? new Date(joinTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-';
+
       return `
-        <tr>
-          <td><strong>${p?.name ?? '(missing)'}</strong></td>
-          <td><span class="badge">${p?.class ?? '-'}</span></td>
-          <td style="color:var(--muted)">${joinTime ? new Date(joinTime).toLocaleString() : '-'}</td>
-          <td>
-            <div class="row" style="justify-content:flex-end;">
-              <button class="btn" data-remove="${pid}">Remove</button>
+        <div class="card" style="background:rgba(255,255,255,.03); margin:0; border-radius:14px;">
+          <div class="row" style="justify-content:space-between; align-items: center;">
+            <div style="flex:1;">
+              <div>${p?.class ? formatClassBadge(p.class) : ''} ${capitalizeEachWord(p?.name ?? '')} - arrive ${arriveTime}</div>
             </div>
-          </td>
-        </tr>
+            <div>
+              <button class="btn danger" data-remove="${pid}">X</button>
+            </div>
+          </div>
+        </div>
       `;
     });
-    tbody.innerHTML = rows.join('') || `<tr><td colspan="4" style="color:var(--muted)">No players added yet.</td></tr>`;
+
+    list.innerHTML =
+      rows.join('') || `<div style="color:var(--muted); font-size:13px;">No players added yet.</div>`;
   };
 
   activeSel.addEventListener('change', async () => {
     appState.activeScheduleId = activeSel.value || null;
     renderSchedulePlayers();
-    renderScheduleMatches();
-    renderPlayersForSuggestion();
+  });
+
+  $('#sched-close').addEventListener('click', async () => {
+    const current = getActiveSchedule();
+    if (!current?.id) {
+      toast('No active schedule');
+      return;
+    }
+    if (!confirm('Close this schedule? This will remove it and its matches/payments.')) return;
+
+    // Remove schedule
+    appState.data.schedules = appState.data.schedules.filter((s) => s.id !== current.id);
+
+    // Remove matches & payments for that schedule
+    appState.data.matches = appState.data.matches.filter((m) => m.scheduleId !== current.id);
+    appState.data.payments = appState.data.payments.filter((p) => p.scheduleId !== current.id);
+
+    appState.activeScheduleId = null;
+
+    await storage.saveAll(appState.data);
+    await reloadData();
+    renderStartSchedule();
+    toast('Schedule closed');
   });
 
   $('#sched-create').addEventListener('click', async () => {
@@ -620,34 +686,356 @@ function renderStartSchedule() {
     toast('Player added');
   });
 
-  view.addEventListener('click', async (e) => {
-    const pid = e.target?.getAttribute?.('data-remove');
-    if (!pid) return;
-    const sch = getActiveSchedule();
-    if (!sch) return;
-    if (!confirm('Remove player from schedule?')) return;
+  // Bind remove handler only once to avoid duplicated confirmation dialogs
+  if (!scheduleDelegatedBound) {
+    scheduleDelegatedBound = true;
+    view.addEventListener('click', async (e) => {
+      const pid = e.target?.getAttribute?.('data-remove');
+      if (!pid) return;
+      const sch = getActiveSchedule();
+      if (!sch) return;
 
-    sch.playerIds = (sch.playerIds ?? []).filter((x) => x !== pid);
-    sch.joins = (sch.joins ?? []).filter((j) => j.playerId !== pid);
+      if (!confirm('Remove player from schedule?')) return;
 
-    // Also cancel any matches containing this player's name
-    const removed = appState.data.players.find((p) => p.id === pid);
-    const removedName = removed?.name;
+      sch.playerIds = (sch.playerIds ?? []).filter((x) => x !== pid);
+      sch.joins = (sch.joins ?? []).filter((j) => j.playerId !== pid);
 
-    appState.data.matches = appState.data.matches.filter((m) => {
-      if (!removedName) return true;
-      return !m.playerNames.includes(removedName);
+      // Also cancel any matches containing this player's name
+      const removed = appState.data.players.find((p) => p.id === pid);
+      const removedName = removed?.name;
+
+      appState.data.matches = appState.data.matches.filter((m) => {
+        if (!removedName) return true;
+        return !m.playerNames.includes(removedName);
+      });
+
+      await storage.saveAll(appState.data);
+      await reloadData();
+      renderStartSchedule();
+      toast('Removed');
     });
-
-    await storage.saveAll(appState.data);
-    await reloadData();
-    renderStartSchedule();
-    renderScheduleMatches();
-    renderPlayersForSuggestion();
-    toast('Removed');
-  });
+  }
 
   renderSchedulePlayers();
+}
+
+function updatePaymentsTotalsForSchedule(scheduleId) {
+  // Recalculate totalPayment for each payment record based on current matches.
+  // Keep paymentMethod intact (do not remove payments).
+  const schedule = appState.data.schedules.find((s) => s.id === scheduleId);
+  if (!schedule) return;
+
+  const schMatches = appState.data.matches.filter((m) => m.scheduleId === scheduleId);
+
+  const shuttleByPlayer = {};
+  for (const m of schMatches) {
+    const sh = Number(m.shuttlecockUsage?.shuttles ?? 0);
+    for (const pn of m.playerNames) {
+      shuttleByPlayer[pn] = (shuttleByPlayer[pn] ?? 0) + sh;
+    }
+  }
+
+  for (const p of appState.data.payments) {
+    if (p.scheduleId !== scheduleId) continue;
+    const shuttlecockUsage = { shuttles: shuttleByPlayer[p.playerName] ?? 0 };
+    p.shuttlecockUsage = shuttlecockUsage;
+    p.totalPayment = computeTotalPayment({ shuttlecockUsage, playerName: p.playerName });
+    p.scheduleDateISO = schedule.dateISO;
+  }
+}
+
+function renderManageMatch() {
+  const view = $('#view-manage-match');
+  if (!view) return;
+
+  const sch = getActiveSchedule();
+
+  const scheduleOptions = appState.data.schedules
+    .slice()
+    .sort((a, b) => (a.dateISO ?? '').localeCompare(b.dateISO ?? ''))
+    .map(
+      (s) =>
+        `<option value="${s.id}" ${sch && sch.id === s.id ? 'selected' : ''}>${formatDateNice(s.dateISO)} · ${s.title ?? 'Schedule'}</option>`,
+    )
+    .join('');
+
+  const historyTitle = 'Match History';
+
+  view.innerHTML = `
+    <div class="grid" style="grid-template-columns:1fr; gap:12px;">
+      <div class="card" style="background:rgba(15,25,48,.65);">
+        <h2>Schedule Selection</h2>
+        <div class="grid" style="gap:10px;">
+          <label>Active Schedule</label>
+          <select id="mm-schedule">${scheduleOptions}</select>
+        </div>
+        <hr class="sep" />
+        <div class="row" style="justify-content:flex-start;">
+          <button class="btn primary" id="mm-add">+ Add Match</button>
+          <button class="btn good" id="mm-suggest">⭐ See Suggestions</button>
+        </div>
+      </div>
+
+      <div class="card" style="background:rgba(15,25,48,.65);">
+        <h2>${historyTitle}</h2>
+        <div id="mm-history"></div>
+      </div>
+    </div>
+  `;
+
+  const renderHistory = () => {
+    const current = getActiveSchedule();
+    const history = $('#mm-history');
+    if (!current) {
+      history.innerHTML = `<div style="color:var(--muted); font-size:13px;">No active schedule selected.</div>`;
+      return;
+    }
+
+    const scheduleMatches = appState.data.matches
+      .filter((m) => m.scheduleId === current.id)
+      .slice()
+      .sort((a, b) => a.matchNumber - b.matchNumber);
+
+    history.innerHTML =
+      scheduleMatches.length === 0
+        ? `<div style="color:var(--muted); font-size:13px;">No matches yet.</div>`
+        : scheduleMatches
+            .map((m) => {
+              const playersText = `${m.playerNames.slice(0, 2).join(' + ')} vs ${m.playerNames.slice(2, 4).join(' + ')}`;
+              return `
+                <div class="card" style="background:rgba(255,255,255,.03); margin-bottom:10px;">
+                  <div class="row" style="justify-content:space-between;">
+                    <div>
+                      <strong>Match #${m.matchNumber}</strong>
+                      <div style="color:var(--muted); font-size:13px; margin-top:4px;">${playersText}</div>
+                      <div style="color:var(--muted); font-size:13px; margin-top:4px;">
+                        Shuttlecock: <span data-shuttleval="${m.id}">${m.shuttlecockUsage?.shuttles ?? 0}</span>
+                      </div>
+                    </div>
+                    <div class="row" style="justify-content:flex-end;">
+                      <button class="btn" data-shuttle-minus="${m.id}" title="Decrement shuttles">[-1 🏸]</button>
+                      <button class="btn good" data-shuttle-plus="${m.id}" title="Increment shuttles">[+1 🏸]</button>
+                      <button class="btn danger" data-cancel="${m.id}" title="Cancel match">[X Cancel]</button>
+                    </div>
+                  </div>
+                </div>
+              `;
+            })
+            .join('');
+    };
+
+  const refreshAll = async () => {
+    await reloadData();
+    renderHistory();
+  };
+
+  $('#mm-schedule').addEventListener('change', async () => {
+    appState.activeScheduleId = $('#mm-schedule').value || null;
+    await storage.saveAll(appState.data);
+    await reloadData();
+    renderManageMatch();
+  });
+
+  $('#mm-add').addEventListener('click', () => {
+    const current = getActiveSchedule();
+    if (!current) {
+      toast('Select a schedule first');
+      return;
+    }
+
+    openModal(`
+      <h3>Add Match (Manual)</h3>
+      <div style="color:var(--muted); font-size:13px; margin-bottom:10px;">
+        Enter 4 player names (Team A: p1+p2, Team B: p3+p4).
+      </div>
+
+      <div class="grid" style="gap:10px;">
+        <div><label>Team A - Player 1</label><input id="mm-p1" placeholder="Name" /></div>
+        <div><label>Team A - Player 2</label><input id="mm-p2" placeholder="Name" /></div>
+        <div><label>Team B - Player 1</label><input id="mm-p3" placeholder="Name" /></div>
+        <div><label>Team B - Player 2</label><input id="mm-p4" placeholder="Name" /></div>
+      </div>
+
+      <div class="modal-actions" style="margin-top:12px;">
+        <button type="submit" class="btn" id="mm-manual-cancel" value="cancel" formmethod="dialog">Cancel</button>
+        <button type="button" class="btn primary" id="mm-manual-save">Add Match</button>
+      </div>
+    `);
+
+    const p1El = $('#mm-p1');
+    const p2El = $('#mm-p2');
+    const p3El = $('#mm-p3');
+    const p4El = $('#mm-p4');
+
+    $('#mm-manual-save').addEventListener('click', async () => {
+      const p1 = normalizeName(p1El.value);
+      const p2 = normalizeName(p2El.value);
+      const p3 = normalizeName(p3El.value);
+      const p4 = normalizeName(p4El.value);
+
+      if (!p1 || !p2 || !p3 || !p4) return toast('All 4 player names are required');
+
+      const sch2 = getActiveSchedule();
+      if (!sch2) return toast('Select a schedule first');
+
+      const nextNumber =
+        (appState.data.matches.filter((m) => m.scheduleId === sch2.id).reduce((a, b) => Math.max(a, b.matchNumber), 0) || 0) + 1;
+
+      appState.data.matches.push({
+        id: uuid(),
+        scheduleId: sch2.id,
+        matchNumber: nextNumber,
+        playerNames: [p1, p2, p3, p4],
+        shuttlecockUsage: { shuttles: 0 },
+        createdAt: nowTimestamp(),
+      });
+
+      await autoEnsurePaymentsForSchedule(sch2.id);
+      await storage.saveAll(appState.data);
+      await reloadData();
+
+      closeModal();
+      renderManageMatch();
+      toast('Match added');
+    });
+  });
+
+  $('#mm-suggest').addEventListener('click', async () => {
+    const current = getActiveSchedule();
+    if (!current) {
+      toast('Select a schedule first');
+      return;
+    }
+
+    const suggestions = suggestMatchesForSchedule({
+      schedule: current,
+      allPlayers: appState.data.players,
+      matches: appState.data.matches,
+    });
+
+    openModal(`
+      <h3 style="margin-bottom:8px;">Match Suggestions</h3>
+      <div style="display:grid; gap:12px; grid-template-columns:1fr;">
+        ${suggestions
+          .map((s) => {
+            const teamAPlayers = s.teamA.join(' + ');
+            const teamBPlayers = s.teamB.join(' + ');
+            return `
+              <div class="card" style="background:rgba(255,255,255,.03); margin-bottom:0;">
+                <div class="row" style="justify-content:space-between;">
+                  <h2 style="margin:0; font-size:14px;">Suggestion #${s.suggestionNo}</h2>
+                  <div class="pill">Balance: ${s.overallBalanceScore}</div>
+                </div>
+                <div style="margin-top:10px; color:var(--muted); font-weight:800; font-size:12px;">Team A</div>
+                <div class="row" style="margin-top:6px;">${teamAPlayers}</div>
+                <div style="margin-top:10px; color:var(--muted); font-weight:800; font-size:12px;">Team B</div>
+                <div class="row" style="margin-top:6px;">${teamBPlayers}</div>
+                <div class="row" style="justify-content:flex-end; margin-top:12px;">
+                  <button class="btn good" data-pick="${s.suggestionNo}" type="button">Select This Match</button>
+                </div>
+              </div>
+            `;
+          })
+          .join('')}
+      </div>
+      <div class="modal-actions" style="margin-top:12px;">
+        <button value="close" class="btn" formmethod="dialog">Close</button>
+      </div>
+    `);
+
+    const modal = $('#modal');
+    modal.addEventListener(
+      'click',
+      async (e) => {
+        const pickNo = e.target?.getAttribute?.('data-pick');
+        if (!pickNo) return;
+
+        const latest = suggestions ?? [];
+        const pick = latest.find((x) => x.suggestionNo === Number(pickNo));
+        if (!pick) return;
+
+        const sch2 = getActiveSchedule();
+        if (!sch2) return;
+
+        const nextNumber =
+          (appState.data.matches.filter((m) => m.scheduleId === sch2.id).reduce((a, b) => Math.max(a, b.matchNumber), 0) || 0) + 1;
+
+        const playerNames = [...pick.teamA, ...pick.teamB];
+
+        appState.data.matches.push({
+          id: uuid(),
+          scheduleId: sch2.id,
+          matchNumber: nextNumber,
+          playerNames,
+          shuttlecockUsage: pick.shuttlecockUsage,
+          createdAt: nowTimestamp(),
+        });
+
+        await autoEnsurePaymentsForSchedule(sch2.id);
+        await storage.saveAll(appState.data);
+        await reloadData();
+
+        // Close modal
+        closeModal();
+
+        renderManageMatch();
+        toast('Match added');
+      },
+      { once: true },
+    );
+  });
+
+  // Bind cancel handler only once to prevent duplicate confirmation dialogs
+  if (!manageMatchDelegatedBound) {
+    manageMatchDelegatedBound = true;
+    view.addEventListener('click', async (e) => {
+      const cancelId = e.target?.getAttribute?.('data-cancel');
+      const plusId = e.target?.getAttribute?.('data-shuttle-plus');
+      const minusId = e.target?.getAttribute?.('data-shuttle-minus');
+
+      if (!(cancelId || plusId || minusId)) return;
+
+      const current = getActiveSchedule();
+      if (!current?.id) {
+        toast('Select a schedule first');
+        return;
+      }
+
+      // Cancel match (existing behavior)
+      if (cancelId) {
+        if (!confirm('Cancel this match?')) return;
+
+        appState.data.matches = appState.data.matches.filter((m) => m.id !== cancelId);
+
+        appState.data.payments = appState.data.payments.filter((p) => p.scheduleId !== current.id);
+        await autoEnsurePaymentsForSchedule(current.id);
+
+        await storage.saveAll(appState.data);
+        await refreshAll();
+        toast('Cancelled');
+        return;
+      }
+
+      // +/- shuttlecock usage (min 0), recompute payment totals for this schedule
+      const matchId = plusId || minusId;
+      const match = appState.data.matches.find((m) => m.id === matchId);
+      if (!match) return;
+
+      const cur = Number(match.shuttlecockUsage?.shuttles ?? 0);
+      const delta = plusId ? 1 : -1;
+      const next = Math.max(0, cur + delta);
+
+      match.shuttlecockUsage = { shuttles: next };
+
+      updatePaymentsTotalsForSchedule(current.id);
+
+      await storage.saveAll(appState.data);
+      await refreshAll();
+      toast('Shuttlecock updated');
+    });
+  }
+
+  renderHistory();
 }
 
 function renderScheduleMatches() {
@@ -743,11 +1131,15 @@ function renderScheduleMatches() {
             <div>
               <strong>Match #${m.matchNumber}</strong>
               <div style="color:var(--muted); font-size:13px; margin-top:4px;">${playersText}</div>
-              <div style="color:var(--muted); font-size:13px; margin-top:4px;">Shuttlecock: ${m.shuttlecockUsage?.shuttles ?? 0}</div>
-            </div>
-            <button class="btn danger" data-cancel="${m.id}">Cancel</button>
-          </div>
-        </div>
+                      <div style="color:var(--muted); font-size:13px; margin-top:4px;">Shuttlecock: ${m.shuttlecockUsage?.shuttles ?? 0}</div>
+                    </div>
+                    <div class="row" style="justify-content:flex-end;">
+                      <button class="btn" data-shuttle-minus="${m.id}" title="Decrement shuttles">[-1 Shuttlecock Logo]</button>
+                      <button class="btn good" data-shuttle-plus="${m.id}" title="Increment shuttles">[+1 Shuttlecock Logo]</button>
+                      <button class="btn danger" data-cancel="${m.id}" title="Cancel match">[X Cancel]</button>
+                    </div>
+                  </div>
+                </div>
       `;
     })
     .join('');
@@ -895,7 +1287,8 @@ function suggestMatchesForScheduleWithBlacklist(schedule, allPlayers, matches, b
 
     const balance = balanceScoreForTeams({ teamA, teamB });
     const fairness = teamA.concat(teamB).reduce((acc, p) => acc + (playedCountsByName[p.name] ?? 0), 0);
-    const overall = balance * 10 + fairness;
+    const overall = balance * 100 + fairness;
+
 
     suggestions.push({ teamA: [p1.name, p2.name], teamB: [p3.name, p4.name], overallBalanceScore: overall, shuttlecockUsage: { shuttles: 2 }, _meta: { ids } });
     usedCombos.add(ids);
@@ -1174,6 +1567,7 @@ function switchView(key) {
     payments: 'view-payments',
     io: 'view-io',
   };
+
 
   const viewId = map[key];
   if (!viewId) return;
