@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Badminton Matchmaker</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div>
+          <h1 class="brand">Badminton Matchmaker</h1>
+          <p class="subtitle">Simple file-based scheduling & payments</p>
+        </div>
+        <nav class="tabs" aria-label="Main">
+          <button class="tab" data-view="dashboard">Dashboard</button>
+          <button class="tab" data-view="players">Manage Players</button>
+          <button class="tab" data-view="schedule">Start New Schedule</button>
+          <button class="tab" data-view="payments">Manage Payments</button>
+          <button class="tab" data-view="io">Import / Export</button>
+        </nav>
+      </header>
+
+      <main class="content">
+        <section id="view-dashboard" class="view" aria-live="polite"></section>
+        <section id="view-players" class="view" aria-live="polite"></section>
+        <section id="view-schedule" class="view" aria-live="polite"></section>
+        <section id="view-payments" class="view" aria-live="polite"></section>
+        <section id="view-io" class="view" aria-live="polite"></section>
+      </main>
+
+      <footer class="footer">
+        <span>Local JSON storage · No database server</span>
+      </footer>
+    </div>
+
+    <dialog id="modal" class="modal" aria-modal="true"></dialog>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
+
