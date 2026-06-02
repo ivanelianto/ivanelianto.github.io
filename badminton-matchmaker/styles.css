@@ -4,7 +4,16 @@
   --panel2: #0f1930;
   --text: #e8eefc;
   --muted: #a9b4d0;
-  --border: rgba(255, 255, 255, .10);
+  --border: rgba(255, 255, 255, .20);
+
+  /* base typography scale (Material-ish baseline) */
+  --font-base: 16px;
+  --font-surface: 0.875rem; /* 14px */
+  --font-body: 1rem;         /* 16px */
+  --font-title: 1.125rem;   /* 18px */
+  --font-h6: 0.8125rem;      /* 13px */
+  --font-h5: 0.875rem;       /* 14px */
+
   --accent: #4f8cff;
   --accent2: #56d364;
   --danger: #ff4d4d;
@@ -25,6 +34,8 @@ body {
 body {
   margin: 0;
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  font-size: var(--font-body); /* 1rem = 16px */
+  line-height: 1.5;
   background: radial-gradient(620px 340px at 20% -8%, rgba(79, 140, 255, .26), transparent 62%),
     radial-gradient(520px 280px at 90% 0%, rgba(86, 211, 100, .14), transparent 58%),
     var(--bg);
@@ -62,7 +73,7 @@ body {
 
 .mobile-header h1 {
   margin: 0;
-  font-size: 17px;
+  font-size: 1.0625rem; /* 17px */
   font-weight: 800;
   text-align: center;
   letter-spacing: 0;
@@ -79,7 +90,7 @@ body {
   height: 44px;
   border-radius: 50%;
   cursor: pointer;
-  font-size: 24px;
+  font-size: 1.5rem; /* 24px */
   line-height: 1;
 }
 
@@ -141,10 +152,10 @@ body {
 .drawer-profile {
   display: flex;
   align-items: flex-end;
-  gap: 12px;
+  gap: 0.75rem; /* 12px */
   min-height: 118px;
-  margin: 0 -12px 14px;
-  padding: 18px 16px 16px;
+  margin: 0 -0.75rem 0.875rem; /* -12px and 14px */
+  padding: 1.125rem 1rem 1rem; /* 18px 16px 16px */
   border-bottom: 1px solid #e7ebf0;
 }
 
@@ -157,7 +168,7 @@ body {
   border-radius: 50%;
   color: #fff;
   background: linear-gradient(135deg, #4f8cff, #56d364);
-  font-size: 20px;
+  font-size: 1.25rem; /* 20px */
   font-weight: 900;
 }
 
@@ -175,7 +186,7 @@ body {
 
 .drawer-profile-copy span {
   color: #6b7280;
-  font-size: 12px;
+  font-size: 0.75rem; /* 12px */
 }
 
 .drawer-arrow {
@@ -195,16 +206,16 @@ body {
   appearance: none;
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 1.125rem; /* 18px */
   width: 100%;
   min-height: 48px;
   border: 0;
   border-radius: 0 24px 24px 0;
-  padding: 0 18px;
+  padding: 0 1.125rem; /* 18px */
   background: transparent;
   color: #2f3642;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 0.875rem; /* 14px */
   font-weight: 700;
   text-align: left;
 }
@@ -231,12 +242,12 @@ body {
 }
 
 .content {
-  margin-top: calc(64px + 12px);
+  margin-top: calc(4rem + 0.75rem); /* 64px + 12px */
 }
 
 .view {
   display: none;
-  padding: 16px;
+  padding: 1rem; /* 16px */
   background: rgba(17, 28, 51, .75);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -249,7 +260,7 @@ body {
 
 .grid {
   display: grid;
-  gap: 12px;
+  gap: 0.75rem; /* 12px */
 }
 
 .grid-2,
@@ -261,33 +272,33 @@ body {
   background: rgba(15, 25, 48, .9);
   border: 1px solid var(--border);
   border-radius: 14px;
-  padding: 14px;
+  padding: 0.875rem; /* 14px */
 }
 
 .card h2 {
-  margin: 0 0 10px;
-  font-size: 15px;
+  margin: 0 0 0.625rem; /* 10px */
+  font-size: 0.9375rem; /* 15px */
 }
 
 .row {
   display: flex;
-  gap: 10px;
+  gap: 0.625rem; /* 10px */
   align-items: center;
   flex-wrap: wrap;
 }
 
 label {
   display: block;
-  font-size: 12px;
+  font-size: 0.75rem; /* 12px */
   color: var(--muted);
-  margin-bottom: 6px;
+  margin-bottom: 0.375rem; /* 6px */
 }
 
 input,
 select,
 textarea {
   width: 100%;
-  padding: 11px 12px;
+  padding: 0.6875rem 0.75rem; /* 11px 12px */
   border-radius: 12px;
   border: 1px solid var(--border);
   background: rgba(255, 255, 255, .04);
@@ -296,7 +307,7 @@ textarea {
 }
 
 textarea {
-  min-height: 120px;
+  min-height: 7.5rem; /* 120px */
   resize: vertical;
 }
 
@@ -326,7 +337,7 @@ textarea {
   background: rgba(255, 255, 255, .04);
   color: var(--text);
   font-weight: 800;
-  font-size: 13px;
+  font-size: 0.8125rem; /* 13px */
   cursor: pointer;
   user-select: none;
 }
@@ -343,10 +354,10 @@ textarea {
   border: 1px solid var(--border);
   background: rgba(255, 255, 255, .04);
   color: var(--text);
-  padding: 10px 12px;
+  padding: 0.625rem 0.75rem; /* 10px 12px */
   border-radius: 12px;
   font-weight: 700;
-  font-size: 13px;
+  font-size: 0.8125rem; /* 13px */
 }
 
 .btn:hover {
@@ -382,9 +393,9 @@ textarea {
 
 .table th,
 .table td {
-  padding: 10px 10px;
+  padding: 0.625rem 0.625rem; /* 10px 10px */
   border-bottom: 1px solid rgba(255, 255, 255, .08);
-  font-size: 13px;
+  font-size: 0.8125rem; /* 13px */
   text-align: left;
 }
 
@@ -396,29 +407,29 @@ textarea {
 .pill {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
+  gap: 0.5rem; /* 8px */
+  padding: 0.375rem 0.625rem; /* 6px 10px */
   border-radius: 999px;
   border: 1px solid var(--border);
   background: rgba(255, 255, 255, .04);
   font-weight: 800;
-  font-size: 12px;
+  font-size: 0.75rem; /* 12px */
 }
 
 .badge {
   display: inline-flex;
-  padding: 4px 8px;
+  padding: 0.25rem 0.5rem; /* 4px 8px */
   border-radius: 999px;
   border: 1px solid var(--border);
   background: rgba(255, 255, 255, .04);
   font-weight: 800;
-  font-size: 12px;
+  font-size: 0.75rem; /* 12px */
 }
 
 hr.sep {
   border: none;
   border-top: 1px solid rgba(255, 255, 255, .10);
-  margin: 14px 0;
+  margin: 0.875rem 0; /* 14px */
 }
 
 .modal {
@@ -437,19 +448,19 @@ hr.sep {
 }
 
 .modal-inner {
-  padding: 16px;
+  padding: 1rem; /* 16px */
 }
 
 .modal h3 {
-  margin: 0 0 8px;
+  margin: 0 0 0.5rem; /* 8px */
 }
 
 .modal-actions {
   display: flex;
-  gap: 10px;
+  gap: 0.625rem; /* 10px */
   justify-content: flex-end;
   flex-wrap: wrap;
-  margin-top: 12px;
+  margin-top: 0.75rem; /* 12px */
 }
 
 .confirm-dialog {
@@ -481,13 +492,13 @@ hr.sep {
   position: absolute;
   left: 0;
   right: 0;
-  top: calc(100% + 6px);
+  top: calc(100% + 0.375rem); /* 6px */
   z-index: 60;
   display: grid;
-  gap: 4px;
-  max-height: 220px;
+  gap: 0.25rem; /* 4px */
+  max-height: 220px; /* keep layout height as-is */
   overflow: auto;
-  padding: 8px;
+  padding: 0.5rem; /* 8px */
   border: 1px solid var(--border);
   border-radius: 12px;
   background: rgba(11, 18, 32, .98);
@@ -504,9 +515,9 @@ hr.sep {
   background: rgba(255, 255, 255, .04);
   color: var(--text);
   border-radius: 10px;
-  padding: 10px 12px;
+  padding: 0.625rem 0.75rem; /* 10px 12px */
   text-align: left;
-  font-size: 13px;
+  font-size: 0.8125rem; /* 13px */
   font-weight: 700;
   cursor: pointer;
 }
@@ -537,8 +548,60 @@ hr.sep {
 }
 
 .footer {
-  padding: .5em;
+  padding: .5em; /* keep em (font-relative) */
   display: flex;
   justify-content: center;
   align-items: center;
 }
+
+/* Utility classes added to replace inline styles from JS templates */
+.u-justify-between { justify-content: space-between; }
+.u-justify-start { justify-content: flex-start; }
+.u-justify-end { justify-content: flex-end; }
+.u-align-center { align-items: center; }
+.u-align-end { align-self: flex-end; }
+.u-flex-1 { flex: 1; }
+.u-min-width-0 { min-width: 0; }
+.u-gap-10 { gap: 10px; }
+.u-gap-8 { gap: 8px; }
+.u-gap-12 { gap: 12px; }
+.u-mt-4 { margin-top: 4px; }
+.u-mt-6 { margin-top: 6px; }
+.u-mt-10 { margin-top: 10px; }
+.u-mb-0 { margin-bottom: 0; }
+.u-mb-10 { margin-bottom: 10px; }
+.u-margin-0 { margin: 0; }
+.u-overflow-auto { overflow: auto; }
+.u-w-100 { width: 100%; }
+.u-text-muted { color: var(--muted); }
+.u-font-13 { font-size: 13px; }
+.u-font-12 { font-size: 12px; }
+.u-font-14 { font-size: 14px; }
+.u-font-15 { font-size: 15px; }
+.fw-900 { font-weight: 900; }
+.mb-4 { margin-bottom: 4px; }
+.mb-8 { margin-bottom: 8px; }
+.padding-right-6 { padding-right: 6px; }
+.maxh-52vh { max-height: 52vh; }
+.radius-14 { border-radius: 14px; }
+
+/* Card variants used in templates */
+.card--muted { background: rgba(255,255,255,.03); }
+.card--overlay { background: rgba(15,25,48,.65); }
+.no-margin { margin: 0; }
+
+/* Grid helper */
+.grid-cols-1 { grid-template-columns: 1fr; }
+
+/* Width helpers */
+.w-30 { width: 30%; }
+.w-12 { width: 12%; }
+.w-22 { width: 22%; }
+.mr-05em { margin-right: 0.5em; }
+.u-mt-12 { margin-top: 12px; }
+.u-h2-14 { margin: 0; font-size: 14px; }
+.u-mt-2 { margin-top: 2px; }
+.u-border-top-subtle { border-top: 1px solid rgba(255,255,255,.10); }
+.fw-800 { font-weight: 800; }
+.u-mt-8 { margin-top: 8px; }
+.u-align-start { align-items: flex-start; }
