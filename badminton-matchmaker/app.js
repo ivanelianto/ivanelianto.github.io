@@ -71,7 +71,7 @@ function suggestMatchesForSchedule({ schedule, allPlayers, matches, playerNameBl
     }
   }
 
-  const joinByPlayerId = new Map((schedule.joins ?? []).map((j) => [j.playerId, Number(j.joinTime)]));
+  const joinByPlayerId = new Map((schedule.joins ?? []).map((j) => [j.playerId, { joinTime: Number(j.joinTime), team: j.team ?? null }]));
   const schedulePlayerSet = new Set(schedule.playerIds ?? []);
 
   const candidates = allPlayers
@@ -79,7 +79,8 @@ function suggestMatchesForSchedule({ schedule, allPlayers, matches, playerNameBl
     .map((p) => ({
       ...p,
       played: playedCountsByName[p.name] ?? 0,
-      arriveTime: joinByPlayerId.get(p.id) ?? Number.POSITIVE_INFINITY,
+      arriveTime: (joinByPlayerId.get(p.id)?.joinTime) ?? Number.POSITIVE_INFINITY,
+      team: joinByPlayerId.get(p.id)?.team ?? null,
     }))
     .sort((a, b) => (a.played - b.played) || (a.arriveTime - b.arriveTime));
 
@@ -145,12 +146,52 @@ function suggestMatchesForSchedule({ schedule, allPlayers, matches, playerNameBl
   };
 
   // Deterministic sampling: top N combos from sorted candidates
-  for (let i = 0; i < candidates.length; i++) {
-    for (let j = i + 1; j < candidates.length; j++) {
-      for (let k = j + 1; k < candidates.length; k++) {
-        for (let l = k + 1; l < candidates.length; l++) {
-          if (suggestions.length >= 80) break;
-          tryAddCombo(candidates[i], candidates[j], candidates[k], candidates[l]);
+  if (schedule.isSparringMode) {
+    // Split candidates by team based on join.team values
+    const teamAName = schedule.teamA || 'Team A';
+    const teamBName = schedule.teamB || 'Team B';
+    const teamAList = candidates.filter((c) => c.team === teamAName);
+    const teamBList = candidates.filter((c) => c.team === teamBName);
+
+    for (let i = 0; i < teamAList.length; i++) {
+      for (let j = i + 1; j < teamAList.length; j++) {
+        for (let k = 0; k < teamBList.length; k++) {
+          for (let l = k + 1; l < teamBList.length; l++) {
+            if (suggestions.length >= 80) break;
+            const pa1 = teamAList[i];
+            const pa2 = teamAList[j];
+            const pb1 = teamBList[k];
+            const pb2 = teamBList[l];
+
+            const ids = [pa1.id, pa2.id, pb1.id, pb2.id].slice().sort().join('|');
+            if (usedCombos.has(ids)) continue;
+            usedCombos.add(ids);
+
+            const teamAPlayers = [pa1, pa2];
+            const teamBPlayers = [pb1, pb2];
+            const playedSum = teamAPlayers.concat(teamBPlayers).reduce((acc, p) => acc + (p.played ?? 0), 0);
+            const classDiff = balanceScoreForTeams({ teamA: teamAPlayers, teamB: teamBPlayers });
+            const overall = classDiff * 1000 + playedSum;
+
+            suggestions.push({
+              teamA: teamAPlayers.map((p) => p.name),
+              teamB: teamBPlayers.map((p) => p.name),
+              overallBalanceScore: overall,
+              _meta: { pids: ids, classDiff },
+              shuttlecockUsage: { shuttles: 0 },
+            });
+          }
+        }
+      }
+    }
+  } else {
+    for (let i = 0; i < candidates.length; i++) {
+      for (let j = i + 1; j < candidates.length; j++) {
+        for (let k = j + 1; k < candidates.length; k++) {
+          for (let l = k + 1; l < candidates.length; l++) {
+            if (suggestions.length >= 80) break;
+            tryAddCombo(candidates[i], candidates[j], candidates[k], candidates[l]);
+          }
         }
       }
     }
@@ -614,6 +655,38 @@ function renderStartSchedule() {
     `);
 
     const modal = $('#modal');
+
+    // If sparring mode, render team filter buttons
+    if (schedule.isSparringMode) {
+      const teamAName = schedule.teamA || 'Team A';
+      const teamBName = schedule.teamB || 'Team B';
+      const wrap = $('#mm-team-filter-wrap');
+      if (wrap) {
+        wrap.innerHTML = `
+          <div class="row u-gap-8 u-mb-8" id="mm-team-filter">
+            <button type="button" class="btn primary" data-team="${teamAName}">${teamAName}</button>
+            <button type="button" class="btn" data-team="${teamBName}">${teamBName}</button>
+            <button type="button" class="btn" data-team="all">All</button>
+          </div>
+        `;
+
+        const teamFilter = $('#mm-team-filter');
+        teamFilter.addEventListener('click', (ev) => {
+          const btn = ev.target?.closest?.('button[data-team]');
+          if (!btn) return;
+          const team = btn.getAttribute('data-team');
+          if (team === 'all') currentTeamFilter = null;
+          else currentTeamFilter = team;
+
+          // update active class
+          $$('#mm-team-filter button').forEach((b) => b.classList.remove('primary'));
+          if (team === 'all') btn.classList.add('primary');
+          else btn.classList.add('primary');
+
+          renderPickList();
+        });
+      }
+    }
     const spar = $('#ns-sparring');
     const teamsWrap = $('#ns-teams');
     spar.addEventListener('change', () => {
@@ -910,20 +983,23 @@ function renderManageMatch() {
     }
 
     const playerById = new Map(appState.data.players.map((p) => [p.id, p]));
-    const joinByPid = new Map((schedule.joins ?? []).map((j) => [j.playerId, j.joinTime]));
+    const joinByPid = new Map((schedule.joins ?? []).map((j) => [j.playerId, { joinTime: j.joinTime, team: j.team ?? null }]));
 
     // Build candidates: players in active schedule only
     const candidates = (schedule.playerIds ?? [])
       .map((pid) => {
         const p = playerById.get(pid);
-        const joinTime = joinByPid.get(pid);
+        const joinObj = joinByPid.get(pid);
+        const joinTime = joinObj ? Number(joinObj.joinTime) : null;
+        const team = joinObj?.team ?? null;
         if (!p) return null;
         return {
           id: pid,
           name: p.name,
           class: p.class,
-          joinTime: joinTime ? Number(joinTime) : null,
+          joinTime,
           played: playedCountByPlayerName[p.name] ?? 0,
+          team,
         };
       })
       .filter(Boolean);
@@ -945,14 +1021,28 @@ function renderManageMatch() {
       return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     };
 
+    let currentTeamFilter = schedule.isSparringMode ? (schedule.teamA || null) : null;
+
+    const candidatesByName = new Map(candidates.map((c) => [c.name, c]));
+
     const renderPickList = () => {
       const wrap = $('#mm-pick-list');
       if (!wrap) return;
 
-      wrap.innerHTML = candidates
+      const filteredCandidates = !schedule.isSparringMode || !currentTeamFilter ? candidates : candidates.filter((c) => c.team === currentTeamFilter);
+
+      // compute current counts per team from picks
+      const counts = {};
+      for (const name of picks) {
+        const team = candidatesByName.get(name)?.team ?? null;
+        counts[team] = (counts[team] ?? 0) + 1;
+      }
+
+      wrap.innerHTML = filteredCandidates
         .map((c) => {
           const picked = pickedSet.has(c.name);
-          const canPick = !picked && picks.length < 4;
+          const maxReachedForTeam = schedule.isSparringMode && c.team != null && (counts[c.team] ?? 0) >= 2;
+          const canPick = !picked && picks.length < 4 && !(schedule.isSparringMode && maxReachedForTeam);
           const buttonDisabled = !picked && !canPick;
 
           const btnClass = picked ? 'btn danger' : 'btn good';
@@ -979,6 +1069,7 @@ function renderManageMatch() {
                     class="${btnClass}"
                     data-pickname="${c.name}"
                     data-picknow="${picked ? '0' : '1'}"
+                    data-team="${c.team ?? ''}"
                     ${picked ? '' : buttonDisabled ? 'disabled' : ''}
                   >
                     ${btnText}
@@ -999,6 +1090,7 @@ function renderManageMatch() {
         Pick 4 players from the current active schedule (sorted by total matches played, then arrival).
       </div>
 
+      <div id="mm-team-filter-wrap"></div>
       <div id="mm-pick-list" class="grid grid-cols-1 u-gap-10 maxh-52vh u-overflow-auto padding-right-6"></div>
 
       <div class="u-mt-12 u-border-top-subtle"></div>
@@ -1010,6 +1102,38 @@ function renderManageMatch() {
     `);
 
     const modal = $('#modal');
+
+    // If sparring mode, wire up the team filter buttons (rendered above pick list)
+    if (schedule.isSparringMode) {
+      const teamAName = schedule.teamA || 'Team A';
+      const teamBName = schedule.teamB || 'Team B';
+      const wrap = $('#mm-team-filter-wrap');
+      if (wrap) {
+        wrap.innerHTML = `
+          <div class="row u-gap-8 u-mb-8" id="mm-team-filter">
+            <button type="button" class="btn primary" data-team="${teamAName}">${teamAName}</button>
+            <button type="button" class="btn" data-team="${teamBName}">${teamBName}</button>
+            <button type="button" class="btn" data-team="all">All</button>
+          </div>
+        `;
+
+        const teamFilter = $('#mm-team-filter');
+        teamFilter.addEventListener('click', (ev) => {
+          const btn = ev.target?.closest?.('button[data-team]');
+          if (!btn) return;
+          const team = btn.getAttribute('data-team');
+          if (team === 'all') currentTeamFilter = null;
+          else currentTeamFilter = team;
+
+          // update active styling
+          $$('#mm-team-filter button').forEach((b) => b.classList.remove('primary'));
+          if (team === 'all') teamFilter.querySelector('button[data-team="all"]').classList.add('primary');
+          else btn.classList.add('primary');
+
+          renderPickList();
+        });
+      }
+    }
 
     // Safety: ensure Cancel + outside click always close this dialog
     const manualCancel = $('#mm-manual-cancel');
@@ -1026,7 +1150,28 @@ function renderManageMatch() {
     const updateButtons = () => {
       const save = $('#mm-manual-save');
       if (!save) return;
-      save.disabled = picks.length !== 4;
+
+      if (!schedule.isSparringMode) {
+        save.disabled = picks.length !== 4;
+        return;
+      }
+
+      // For sparring mode, enable only when exactly 4 picks and distribution is 2/2
+      const mapByName = new Map(candidates.map((c) => [c.name, c]));
+      const teamAName = schedule.teamA || 'Team A';
+      const teamBName = schedule.teamB || 'Team B';
+      const counts = { [teamAName]: 0, [teamBName]: 0 };
+      for (const name of picks) {
+        const c = mapByName.get(name);
+        if (!c || !c.team) {
+          save.disabled = true;
+          return;
+        }
+        if (c.team === teamAName) counts[teamAName]++;
+        else if (c.team === teamBName) counts[teamBName]++;
+      }
+
+      save.disabled = !(picks.length === 4 && counts[teamAName] === 2 && counts[teamBName] === 2);
     };
 
     const onModalClick = (e) => {
@@ -1069,6 +1214,20 @@ function renderManageMatch() {
 
       const sch2 = getActiveSchedule();
       if (!sch2) return toast('Select a schedule first');
+
+      if (sch2.isSparringMode) {
+        const teamAName = sch2.teamA || 'Team A';
+        const teamBName = sch2.teamB || 'Team B';
+        const mapByName = new Map(candidates.map((c) => [c.name, c]));
+        const counts = { [teamAName]: 0, [teamBName]: 0 };
+        for (const name of picks) {
+          const c = mapByName.get(name);
+          if (!c || !c.team) return toast('All selected players must have a team');
+          if (c.team === teamAName) counts[teamAName]++;
+          else if (c.team === teamBName) counts[teamBName]++;
+        }
+        if (counts[teamAName] !== 2 || counts[teamBName] !== 2) return toast(`Select 2 players from ${teamAName} and 2 players from ${teamBName}`);
+      }
 
       const nextNumber =
         (appState.data.matches.filter((m) => m.scheduleId === sch2.id).reduce((a, b) => Math.max(a, b.matchNumber), 0) || 0) + 1;
@@ -1113,6 +1272,9 @@ function renderManageMatch() {
       matches: appState.data.matches,
     });
 
+    const teamALabel = current.isSparringMode ? (current.teamA || 'Team A') : 'Team A';
+    const teamBLabel = current.isSparringMode ? (current.teamB || 'Team B') : 'Team B';
+
     const modalState = { blacklist: new Set() };
 
     openModal(`
@@ -1140,10 +1302,10 @@ function renderManageMatch() {
                   <h2 class="u-h2-14">Suggestion #${s.suggestionNo}</h2>
                 </div>
 
-                <div class="u-mt-10 u-text-muted fw-800 u-font-12">Team A</div>
+                <div class="u-mt-10 u-text-muted fw-800 u-font-12">${teamALabel}</div>
                 <div class="row u-mt-6 u-gap-8">${teamAButtons}</div>
 
-                <div class="u-mt-10 u-text-muted fw-800 u-font-12">Team B</div>
+                <div class="u-mt-10 u-text-muted fw-800 u-font-12">${teamBLabel}</div>
                 <div class="row u-mt-6 u-gap-8">${teamBButtons}</div>
 
                 <div class="row u-justify-end u-mt-12">
@@ -1194,11 +1356,11 @@ function renderManageMatch() {
                 <h2 class="u-h2-14">Suggestion #${s.suggestionNo}</h2>
               </div>
 
-              <div class="u-mt-10 u-text-muted fw-800 u-font-12">Team A</div>
+              <div class="u-mt-10 u-text-muted fw-800 u-font-12">${teamALabel}</div>
               <div class="row u-mt-6">${s.teamA.join(' + ')}</div>
               <div class="row u-mt-6 u-gap-8">${teamAButtons}</div>
 
-              <div class="u-mt-10 u-text-muted fw-800 u-font-12">Team B</div>
+              <div class="u-mt-10 u-text-muted fw-800 u-font-12">${teamBLabel}</div>
               <div class="row u-mt-6">${s.teamB.join(' + ')}</div>
               <div class="row u-mt-6 u-gap-8">${teamBButtons}</div>
 
@@ -1385,6 +1547,9 @@ function renderScheduleMatches() {
 
   const suggestions = suggestMatchesForSchedule({ schedule: sch, allPlayers: appState.data.players, matches: appState.data.matches });
 
+  const teamALabel = sch.isSparringMode ? (sch.teamA || 'Team A') : 'Team A';
+  const teamBLabel = sch.isSparringMode ? (sch.teamB || 'Team B') : 'Team B';
+
   $('#suggestions').innerHTML = suggestions
     .map((s) => {
       const teamAPlayers = s.teamA.map((name) => `<button class="btn" data-skip="${name}" data-suggestion="${s.suggestionNo}">Skip ${name}</button>`).join('');
@@ -1397,9 +1562,9 @@ function renderScheduleMatches() {
             <div class="pill">Balance: ${s.overallBalanceScore}</div>
           </div>
           <div class="grid u-mt-10 u-gap-8">
-            <div><div class="u-text-muted fw-800 u-font-12">Team A</div><div class="row">${s.teamA.join(' + ')}</div></div>
+            <div><div class="u-text-muted fw-800 u-font-12">${teamALabel}</div><div class="row">${s.teamA.join(' + ')}</div></div>
             <div class="row">${teamAPlayers}</div>
-            <div><div class="u-text-muted fw-800 u-font-12 u-mt-6">Team B</div><div class="row">${s.teamB.join(' + ')}</div></div>
+            <div><div class="u-text-muted fw-800 u-font-12 u-mt-6">${teamBLabel}</div><div class="row">${s.teamB.join(' + ')}</div></div>
             <div class="row">${teamBPlayers}</div>
           </div>
           <div class="row u-justify-end u-mt-10">
@@ -1514,6 +1679,9 @@ function renderScheduleMatches() {
         appState._skipBlacklist,
       );
 
+      const teamALabel = currentSch.isSparringMode ? (currentSch.teamA || 'Team A') : 'Team A';
+      const teamBLabel = currentSch.isSparringMode ? (currentSch.teamB || 'Team B') : 'Team B';
+
       $('#suggestions').innerHTML = updated
         .map((s) => {
           const teamAButtons = s.teamA
@@ -1529,9 +1697,9 @@ function renderScheduleMatches() {
                 <div class="pill">Balance: ${s.overallBalanceScore}</div>
               </div>
               <div class="grid u-mt-10 u-gap-8">
-                <div><div class="u-text-muted fw-800 u-font-12">Team A</div><div class="row">${s.teamA.join(' + ')}</div></div>
+                <div><div class="u-text-muted fw-800 u-font-12">${teamALabel}</div><div class="row">${s.teamA.join(' + ')}</div></div>
                 <div class="row">${teamAButtons}</div>
-                <div><div class="u-text-muted fw-800 u-font-12 u-mt-6">Team B</div><div class="row">${s.teamB.join(' + ')}</div></div>
+                <div><div class="u-text-muted fw-800 u-font-12 u-mt-6">${teamBLabel}</div><div class="row">${s.teamB.join(' + ')}</div></div>
                 <div class="row">${teamBButtons}</div>
               </div>
               <div class="row u-justify-end u-mt-10">
@@ -1560,8 +1728,17 @@ function suggestMatchesForScheduleWithBlacklist(schedule, allPlayers, matches, b
   }
 
   const schedulePlayerSet = new Set(schedulePlayers);
+
+  // Map join info to get team per player (if available)
+  const joinMap = new Map((schedule.joins ?? []).map((j) => [j.playerId, { joinTime: Number(j.joinTime), team: j.team ?? null }]));
+
   const candidates = allPlayers
-    .filter((p) => schedulePlayerSet.has(p.id) && !blacklist.has(p.name));
+    .filter((p) => schedulePlayerSet.has(p.id) && !blacklist.has(p.name))
+    .map((p) => ({
+      ...p,
+      played: playedCountsByName[p.name] ?? 0,
+      team: joinMap.get(p.id)?.team ?? null,
+    }));
 
   candidates.sort((p1, p2) => {
     const c1 = playedCountsByName[p1.name] ?? 0;
@@ -1573,27 +1750,58 @@ function suggestMatchesForScheduleWithBlacklist(schedule, allPlayers, matches, b
   const suggestions = [];
   const usedCombos = new Set();
 
-  const tryAdd = (p1, p2, p3, p4) => {
-    const ids = [p1.id, p2.id, p3.id, p4.id].slice().sort().join('|');
-    if (usedCombos.has(ids)) return;
-    const teamA = [p1, p2];
-    const teamB = [p3, p4];
+  if (schedule.isSparringMode) {
+    const teamAName = schedule.teamA || 'Team A';
+    const teamBName = schedule.teamB || 'Team B';
+    const teamAList = candidates.filter((c) => c.team === teamAName);
+    const teamBList = candidates.filter((c) => c.team === teamBName);
 
-    const balance = balanceScoreForTeams({ teamA, teamB });
-    const fairness = teamA.concat(teamB).reduce((acc, p) => acc + (playedCountsByName[p.name] ?? 0), 0);
-    const overall = balance * 100 + fairness;
+    for (let i = 0; i < teamAList.length; i++) {
+      for (let j = i + 1; j < teamAList.length; j++) {
+        for (let k = 0; k < teamBList.length; k++) {
+          for (let l = k + 1; l < teamBList.length; l++) {
+            if (suggestions.length >= 30) break;
+            const pa1 = teamAList[i];
+            const pa2 = teamAList[j];
+            const pb1 = teamBList[k];
+            const pb2 = teamBList[l];
+            const ids = [pa1.id, pa2.id, pb1.id, pb2.id].slice().sort().join('|');
+            if (usedCombos.has(ids)) continue;
+            usedCombos.add(ids);
 
+            const teamAPlayers = [pa1, pa2];
+            const teamBPlayers = [pb1, pb2];
+            const fairness = teamAPlayers.concat(teamBPlayers).reduce((acc, p) => acc + (playedCountsByName[p.name] ?? 0), 0);
+            const balance = balanceScoreForTeams({ teamA: teamAPlayers, teamB: teamBPlayers });
+            const overall = balance * 100 + fairness;
 
-    suggestions.push({ teamA: [p1.name, p2.name], teamB: [p3.name, p4.name], overallBalanceScore: overall, shuttlecockUsage: { shuttles: 2 }, _meta: { ids } });
-    usedCombos.add(ids);
-  };
+            suggestions.push({ teamA: [pa1.name, pa2.name], teamB: [pb1.name, pb2.name], overallBalanceScore: overall, shuttlecockUsage: { shuttles: 2 }, _meta: { ids } });
+          }
+        }
+      }
+    }
+  } else {
+    const tryAdd = (p1, p2, p3, p4) => {
+      const ids = [p1.id, p2.id, p3.id, p4.id].slice().sort().join('|');
+      if (usedCombos.has(ids)) return;
+      const teamA = [p1, p2];
+      const teamB = [p3, p4];
 
-  for (let i = 0; i < candidates.length; i++) {
-    for (let j = i + 1; j < candidates.length; j++) {
-      for (let k = j + 1; k < candidates.length; k++) {
-        for (let l = k + 1; l < candidates.length; l++) {
-          if (suggestions.length >= 30) break;
-          tryAdd(candidates[i], candidates[j], candidates[k], candidates[l]);
+      const balance = balanceScoreForTeams({ teamA, teamB });
+      const fairness = teamA.concat(teamB).reduce((acc, p) => acc + (playedCountsByName[p.name] ?? 0), 0);
+      const overall = balance * 100 + fairness;
+
+      suggestions.push({ teamA: [p1.name, p2.name], teamB: [p3.name, p4.name], overallBalanceScore: overall, shuttlecockUsage: { shuttles: 2 }, _meta: { ids } });
+      usedCombos.add(ids);
+    };
+
+    for (let i = 0; i < candidates.length; i++) {
+      for (let j = i + 1; j < candidates.length; j++) {
+        for (let k = j + 1; k < candidates.length; k++) {
+          for (let l = k + 1; l < candidates.length; l++) {
+            if (suggestions.length >= 30) break;
+            tryAdd(candidates[i], candidates[j], candidates[k], candidates[l]);
+          }
         }
       }
     }
