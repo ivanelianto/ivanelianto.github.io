@@ -36,14 +36,17 @@ export function formatTime12h(timestamp) {
 export function formatScheduleLabel(schedule) {
   if (!schedule) return '';
 
-  const title = String(schedule.title ?? '').trim();
-  if (title && title !== 'Badminton Session') return title;
+  // Prefer explicit sessionName if provided; fall back to legacy `title` if present
+  const sessionName = String(schedule.sessionName ?? '').trim();
+  const legacyTitle = String(schedule.title ?? '').trim();
+  if (legacyTitle && legacyTitle !== 'Badminton Session' && !sessionName) return legacyTitle;
 
   const datePart = formatDateNice(schedule.dateISO);
   const timePart = formatTime12h(schedule.createdAt);
-  if (datePart && timePart) return `${datePart} - ${timePart}`;
-  if (datePart) return datePart;
-  return title;
+  const base = [datePart, timePart].filter(Boolean).join(' - ');
+
+  if (sessionName) return `${base} - ${sessionName}`.trim();
+  return base || sessionName || legacyTitle || '';
 }
 
 export function formatDateLongID(iso) {

@@ -460,13 +460,14 @@ function renderStartSchedule() {
   const lastSchedule = schedules.slice().sort((a, b) => b.createdAt - a.createdAt)[0];
 
   const scheduleSelect = `
-    <div class="row u-justify-between u-gap-10">
-      <div class="u-flex-1">
-        <label>Active Schedule</label>
+    <div>
+      <label>Active Schedule</label>
+      <div>
         <select id="active-schedule"></select>
       </div>
-      <div class="u-align-end">
-        <button class="btn danger" id="sched-close" title="Remove schedule from active">❌ Close</button>
+      <div class="row u-justify-between u-mt-8">
+        <button class="btn" id="sched-close">Close</button>
+        <button class="btn primary" id="sched-new">New Schedule</button>
       </div>
     </div>
   `;
@@ -484,18 +485,6 @@ function renderStartSchedule() {
         <div class="grid u-gap-10">
           ${scheduleSelect}
 
-          <div>
-            <label>Schedule Date</label>
-            <div class="row u-gap-10">
-              <div class="u-flex-1">
-                <input type="date" id="sched-date" value="${todayISO()}" class="u-w-100" />
-              </div>
-              <div class="u-align-end">
-                <button class="btn good" id="sched-create">✅ Add</button>
-              </div>
-            </div>
-          </div>
-
           <div class="u-text-muted u-font-13">
             Players added will be reused from <span class="fw-800">players.json</span> if name matches.
           </div>
@@ -506,6 +495,7 @@ function renderStartSchedule() {
         <h2>Add Players to Schedule</h2>
         <div class="grid u-gap-10">
           <input id="sp-name" placeholder="Player name" />
+          <div id="sp-team-wrap"></div>
           <div>
             <label>Class (used if new player)</label>
             ${renderClassRadios('sp-class', 'C')}
@@ -534,8 +524,6 @@ function renderStartSchedule() {
     activeSel.value = appState.activeScheduleId;
   }
 
-  $('#sched-date').value = todayISO();
-
   const renderSchedulePlayers = () => {
     const sch = getActiveSchedule();
     const list = $('#sched-player-list');
@@ -546,18 +534,20 @@ function renderStartSchedule() {
     }
 
     const playerById = new Map(appState.data.players.map((p) => [p.id, p]));
-    const joinMap = new Map((sch.joins ?? []).map((j) => [j.playerId, j.joinTime]));
+    const joinMap = new Map((sch.joins ?? []).map((j) => [j.playerId, j]));
 
     const rows = (sch.playerIds ?? []).map((pid) => {
       const p = playerById.get(pid);
-      const joinTime = joinMap.get(pid);
+      const joinObj = joinMap.get(pid) || {};
+      const joinTime = joinObj.joinTime;
       const arriveTime = joinTime ? new Date(joinTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-';
+      const teamBadge = sch.isSparringMode && joinObj.team ? `<span class="badge--team mr-05em">${joinObj.team}</span>` : '';
 
       return `
         <div class="card card--muted no-margin radius-14">
           <div class="row u-justify-between u-align-center">
             <div class="u-flex-1">
-              <div>${p?.class ? formatClassBadge(p.class) : ''} ${capitalizeEachWord(p?.name ?? '')} - arrive ${arriveTime}</div>
+              <div>${teamBadge}${p?.class ? formatClassBadge(p.class) : ''} ${capitalizeEachWord(p?.name ?? '')} - arrive ${arriveTime}</div>
             </div>
             <div>
               <button class="btn danger" data-remove="${pid}">X</button>
@@ -567,8 +557,7 @@ function renderStartSchedule() {
       `;
     });
 
-    list.innerHTML =
-      rows.join('') || `<div class="u-text-muted u-font-13">No players added yet.</div>`;
+    list.innerHTML = rows.join('') || `<div class="u-text-muted u-font-13">No players added yet.</div>`;
   };
 
   activeSel.addEventListener('change', async () => {
@@ -576,55 +565,128 @@ function renderStartSchedule() {
     renderSchedulePlayers();
   });
 
+  // Close just clears active schedule (does not delete schedule)
   $('#sched-close').addEventListener('click', async () => {
-    const current = getActiveSchedule();
-    if (!current?.id) {
-      toast('No active schedule');
-      return;
-    }
-    if (!(await confirmDialog('Close this schedule? This will remove it and its matches/payments.', {
-      title: 'Close Schedule',
-      okText: 'OK',
-      danger: true,
-    }))) return;
-
-    // Remove schedule
-    appState.data.schedules = appState.data.schedules.filter((s) => s.id !== current.id);
-
-    // Remove matches & payments for that schedule
-    appState.data.matches = appState.data.matches.filter((m) => m.scheduleId !== current.id);
-    appState.data.payments = appState.data.payments.filter((p) => p.scheduleId !== current.id);
-
     appState.activeScheduleId = null;
-
     await storage.saveAll(appState.data);
-    await reloadData();
     renderStartSchedule();
-    toast('Schedule closed');
+    toast('Active schedule cleared');
   });
 
-  $('#sched-create').addEventListener('click', async () => {
-    const dateISO = $('#sched-date').value || todayISO();
-    const createdAt = nowTimestamp();
-    const sch = {
-      id: uuid(),
-      dateISO,
-      title: formatScheduleLabel({ dateISO, createdAt }),
-      createdAt,
-      playerIds: [],
-      joins: [],
-    };
-    appState.data.schedules.push(sch);
-    appState.activeScheduleId = sch.id;
-    await storage.saveAll(appState.data);
-    await reloadData();
-    renderStartSchedule();
-    toast('Schedule created');
+  // New Schedule opens modal
+  $('#sched-new').addEventListener('click', () => {
+    openModal(`
+      <h3>Create New Schedule</h3>
+      <div class="grid u-gap-10">
+        <div>
+          <label>Schedule Date</label>
+          <input type="date" id="ns-date" value="${todayISO()}" />
+        </div>
+
+        <div>
+          <label>Session Name (Optional)</label>
+          <input id="ns-session" placeholder="e.g. Friday Night Session" />
+        </div>
+
+        <div>
+          <label>Options</label>
+          <div class="row u-gap-8">
+            <label class="row"><input type="checkbox" id="ns-sparring" /> <span class="u-mt-2">Sparring Mode</span></label>
+          </div>
+        </div>
+
+        <div id="ns-teams" style="display:none;">
+          <div>
+            <label>Team A</label>
+            <input id="ns-team-a" placeholder="Team A name" />
+          </div>
+          <div>
+            <label>Team B</label>
+            <input id="ns-team-b" placeholder="Team B name" />
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button value="cancel" class="btn" formmethod="dialog">Cancel</button>
+        <button type="button" class="btn primary" id="ns-create">Create New Schedule</button>
+      </div>
+    `);
+
+    const modal = $('#modal');
+    const spar = $('#ns-sparring');
+    const teamsWrap = $('#ns-teams');
+    spar.addEventListener('change', () => {
+      teamsWrap.style.display = spar.checked ? 'block' : 'none';
+    });
+
+    $('#ns-create').addEventListener('click', async () => {
+      const dateISO = $('#ns-date').value || todayISO();
+      const sessionName = ($('#ns-session').value || '').trim();
+      const isSparringMode = !!$('#ns-sparring').checked;
+      const teamA = isSparringMode ? ($('#ns-team-a').value || '').trim() : '';
+      const teamB = isSparringMode ? ($('#ns-team-b').value || '').trim() : '';
+
+      if (isSparringMode && (!teamA || !teamB)) return toast('Both team names required for Sparring Mode');
+
+      const createdAt = nowTimestamp();
+      const sch = {
+        id: uuid(),
+        dateISO,
+        sessionName: sessionName || '',
+        isSparringMode: !!isSparringMode,
+        teamA: teamA || '',
+        teamB: teamB || '',
+        createdAt,
+        playerIds: [],
+        joins: [],
+      };
+
+      appState.data.schedules.push(sch);
+      appState.activeScheduleId = sch.id;
+      await storage.saveAll(appState.data);
+      await reloadData();
+      closeModal();
+      renderStartSchedule();
+      toast('Schedule created');
+    }, { once: true });
+
+    modal.addEventListener('close', () => {
+      // noop
+    }, { once: true });
   });
+
+  // legacy inline-create removed; creation now handled via New Schedule modal
 
   $('#sp-add').addEventListener('click', async () => {
     await addPlayerToActiveSchedule();
   });
+
+  // If the active schedule is sparring mode, show team radio options
+  const refreshTeamControls = () => {
+    const sch = getActiveSchedule();
+    const wrap = $('#sp-team-wrap');
+    if (!wrap) return;
+    if (sch && sch.isSparringMode) {
+      const teamA = sch.teamA || 'Team A';
+      const teamB = sch.teamB || 'Team B';
+      wrap.innerHTML = `
+        <label>Team</label>
+        <div class="row">
+          <label class="class-radio"><input type="radio" name="sp-team" value="${teamA}" /> <span>${teamA}</span></label>
+          <label class="class-radio"><input type="radio" name="sp-team" value="${teamB}" /> <span>${teamB}</span></label>
+        </div>
+      `;
+    } else {
+      wrap.innerHTML = '';
+    }
+  };
+
+  // Refresh team controls whenever schedule changes
+  activeSel.addEventListener('change', refreshTeamControls);
+
+  // Initialize team controls for current selection
+  refreshTeamControls();
 
   scheduleAutocompleteTeardown = createAutocompleteInput($('#sp-name'), {
     source: (query) => {
@@ -684,6 +746,13 @@ function renderStartSchedule() {
     const sch = getActiveSchedule();
     if (!sch) return toast('Create/select schedule first');
 
+    // If sparring mode, ensure team selected
+    let selectedTeam = null;
+    if (sch.isSparringMode) {
+      selectedTeam = $(`input[name="sp-team"]:checked`)?.value ?? null;
+      if (!selectedTeam) return toast('Select a team');
+    }
+
     let existing = appState.data.players.find((p) => p.name.toLowerCase() === name.toLowerCase());
     if (!existing) {
       existing = { id: uuid(), name, class: cls, note };
@@ -694,7 +763,9 @@ function renderStartSchedule() {
       sch.playerIds = sch.playerIds ?? [];
       sch.joins = sch.joins ?? [];
       sch.playerIds.push(existing.id);
-      sch.joins.push({ playerId: existing.id, joinTime: nowTimestamp() });
+      const join = { playerId: existing.id, joinTime: nowTimestamp() };
+      if (sch.isSparringMode && selectedTeam) join.team = selectedTeam;
+      sch.joins.push(join);
     }
 
     await storage.saveAll(appState.data);
