@@ -1,104 +1,26 @@
 import { PLAYERS_SEED } from './playersSeed.js';
 import { COURT_FEE, SHUTTLE_FEE_PER, buildCollectPaymentMessage } from './config.js';
+import { createAutocompleteInput } from './autocomplete.js';
+import { $, $$ } from './dom.js';
+import { confirmDialog } from './confirmDialog.js';
+import { setupNavigationDrawer } from './navigationDrawer.js';
+import { seedStorageIfEmpty, storage } from './storage.js';
+import {
+  capitalizeEachWord,
+  formatDateLongID,
+  formatDateNice,
+  formatScheduleLabel,
+  normalizeName,
+  nowTimestamp,
+  parseQueryJSON,
+  todayISO,
+  uuid,
+} from './utils.js';
 
-const STORAGE_FILES = {
-  players: 'players.json',
-  schedules: 'schedules.json',
-  matches: 'matches.json',
-  payments: 'payments.json',
-};
-
-const CLASS_ORDER = ['S', 'A', 'B', 'C'];
+const CLASS_ORDER = ['C', 'B', 'A', 'S'];
 const CLASS_RANK = Object.fromEntries(CLASS_ORDER.map((c, i) => [c, i]));
 
-const $ = (sel, root = document) => root.querySelector(sel);
-const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
-
-function todayISO() {
-  const d = new Date();
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}`;
-}
-
-function uuid() {
-  // RFC4122-ish (sufficient for local JSON app)
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (crypto.getRandomValues(new Uint8Array(1))[0] % 16);
-    const v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-}
-
-function nowTimestamp() {
-  return Date.now();
-}
-
-function formatDateNice(iso) {
-  if (!iso) return '';
-  const [y, m, d] = iso.split('-');
-  return `${d}/${m}/${y}`;
-}
-
-function formatDateLongID(iso) {
-  if (!iso) return '';
-  // iso: yyyy-mm-dd
-  const [y, m, d] = iso.split('-').map((x) => Number(x));
-  if (!y || !m || !d) return iso;
-
-  const dt = new Date(Date.UTC(y, m - 1, d, 12, 0, 0)); // noon to avoid TZ off-by-one
-  return new Intl.DateTimeFormat('id-ID', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  }).format(dt);
-}
-
-function parseQueryJSON(str, fallback) {
-  try {
-    const v = JSON.parse(str);
-    return v ?? fallback;
-  } catch {
-    return fallback;
-  }
-}
-
-// ---- File-backed JSON (local) ----
-// This app uses browser localStorage as a safe fallback. To truly use local JSON files,
-// a companion host / extension is needed; however the UI and data layer is modular.
-const storage = {
-  async loadAll() {
-    // For a pure static demo, use localStorage keys.
-    // Each record is stored under key:
-    //   bbmm:<filename>
-    const out = {};
-    for (const [k, filename] of Object.entries(STORAGE_FILES)) {
-      const raw = localStorage.getItem(`bbmm:${filename}`);
-      const arr = raw ? parseQueryJSON(raw, []) : [];
-      out[k] = Array.isArray(arr) ? arr : [];
-    }
-    return out;
-  },
-  async saveAll({ players, schedules, matches, payments }) {
-    localStorage.setItem(`bbmm:${STORAGE_FILES.players}`, JSON.stringify(players ?? [], null, 2));
-    localStorage.setItem(`bbmm:${STORAGE_FILES.schedules}`, JSON.stringify(schedules ?? [], null, 2));
-    localStorage.setItem(`bbmm:${STORAGE_FILES.matches}`, JSON.stringify(matches ?? [], null, 2));
-    localStorage.setItem(`bbmm:${STORAGE_FILES.payments}`, JSON.stringify(payments ?? [], null, 2));
-  },
-  async resetAll() {
-    for (const filename of Object.values(STORAGE_FILES)) {
-      localStorage.removeItem(`bbmm:${filename}`);
-    }
-  }
-};
-
 // ---- Business logic ----
-function normalizeName(n) {
-  return String(n ?? '').trim();
-}
-
 function getPlayerComfortRank(p) {
   return CLASS_RANK[p.class] ?? 10;
 }
@@ -270,18 +192,13 @@ function computeTotalPayment({ shuttlecockUsage, playerName }) {
 
 function ensureSeededDemoData() {
   // Only for first run: if no players exist, create a couple.
-  const has = localStorage.getItem(`bbmm:${STORAGE_FILES.players}`);
-  if (has) return;
   const seedPlayers = PLAYERS_SEED.map((p) => ({
     id: uuid(),
     name: p.name,
     class: p.class,
     note: p.note ?? '',
   }));
-  localStorage.setItem(`bbmm:${STORAGE_FILES.players}`, JSON.stringify(seedPlayers, null, 2));
-  localStorage.setItem(`bbmm:${STORAGE_FILES.schedules}`, JSON.stringify([], null, 2));
-  localStorage.setItem(`bbmm:${STORAGE_FILES.matches}`, JSON.stringify([], null, 2));
-  localStorage.setItem(`bbmm:${STORAGE_FILES.payments}`, JSON.stringify([], null, 2));
+  seedStorageIfEmpty(seedPlayers);
 }
 
 // ---- UI helpers ----
@@ -314,25 +231,30 @@ function closeModal() {
   modal.close();
 }
 
-function renderOptionsFromClasses(selectEl, value) {
-  selectEl.innerHTML = CLASS_ORDER.map((c) => `
-    <option value="${c}" ${c === value ? 'selected' : ''}>${c}</option>
-  `).join('');
+function renderClassRadios(groupName, value) {
+  return `
+    <div class="class-radio-group" data-class-group="${groupName}">
+      ${CLASS_ORDER.map((c) => `
+        <label class="class-radio">
+          <input type="radio" name="${groupName}" value="${c}" ${c === value ? 'checked' : ''} />
+          <span>${c}</span>
+        </label>
+      `).join('')}
+    </div>
+  `;
 }
 
-function capitalizeEachWord(s) {
-  const str = String(s ?? '').trim();
-  if (!str) return '';
-  return str
-    .split(/(\s+)/)
-    .map((part) => {
-      if (/^\s+$/.test(part)) return part;
-      return part
-        .split('-')
-        .map((chunk) => (chunk ? chunk[0].toUpperCase() + chunk.slice(1).toLowerCase() : chunk))
-        .join('-');
-    })
-    .join('');
+function getSelectedClass(groupName) {
+  return $(`input[name="${groupName}"]:checked`)?.value ?? 'C';
+}
+
+function setSelectedClass(groupName, value = 'C') {
+  const radios = $$(`input[name="${groupName}"]`);
+  if (!radios.length) return;
+  const next = CLASS_ORDER.includes(value) ? value : 'C';
+  radios.forEach((radio) => {
+    radio.checked = radio.value === next;
+  });
 }
 
 function formatClassBadge(cls) {
@@ -351,9 +273,7 @@ let appState = {
   activeScheduleId: null,
 };
 
-let scheduleDelegatedBound = false;
-let manageMatchDelegatedBound = false;
-
+let scheduleAutocompleteTeardown = null;
 
 function getActiveSchedule() {
   if (!appState.activeScheduleId) return null;
@@ -437,7 +357,7 @@ function renderPlayers() {
           <input id="p-name" placeholder="Name" />
           <div>
             <label>Class</label>
-            <select id="p-class"></select>
+            ${renderClassRadios('p-class', 'C')}
           </div>
           <input id="p-note" placeholder="Note" />
           <div class="row">
@@ -461,17 +381,14 @@ function renderPlayers() {
     </div>
   `;
 
-  renderOptionsFromClasses($('#p-class'));
-
   let editingId = null;
 
   const nameEl = $('#p-name');
-  const classEl = $('#p-class');
   const noteEl = $('#p-note');
 
   const setForm = (p) => {
     nameEl.value = p?.name ?? '';
-    classEl.value = p?.class ?? 'A';
+    setSelectedClass('p-class', p?.class ?? 'C');
     noteEl.value = p?.note ?? '';
     editingId = p?.id ?? null;
   };
@@ -482,7 +399,7 @@ function renderPlayers() {
 
   $('#p-save').addEventListener('click', async () => {
     const name = normalizeName(nameEl.value);
-    const cls = classEl.value;
+    const cls = getSelectedClass('p-class');
     const note = noteEl.value;
     if (!name) return toast('Player name required');
     if (!CLASS_ORDER.includes(cls)) return toast('Invalid class');
@@ -510,34 +427,37 @@ function renderPlayers() {
     toast('Saved');
   });
 
-  view.addEventListener('click', async (e) => {
-    const editId = e.target?.getAttribute?.('data-edit');
-    const delId = e.target?.getAttribute?.('data-del');
+  view.onclick = async (e) => {
+    const action = e.target?.closest?.('button[data-edit], button[data-del]');
+    if (!action) return;
+
+    const editId = action.getAttribute('data-edit');
+    const delId = action.getAttribute('data-del');
     if (editId) {
       const p = appState.data.players.find((x) => x.id === editId);
       setForm(p);
     }
     if (delId) {
-      if (!confirm('Delete this player?')) return;
-      appState.data.players = appState.data.players.filter((x) => x.id !== delId);
-      await storage.saveAll(appState.data);
+    if (!(await confirmDialog('Delete this player?', { title: 'Delete Player', okText: 'OK', danger: true }))) return;
       // Also remove from any schedules
+      appState.data.players = appState.data.players.filter((x) => x.id !== delId);
       appState.data.schedules.forEach((s) => {
         s.playerIds = (s.playerIds ?? []).filter((pid) => pid !== delId);
       });
-      // Remove matches with that player names
-      const removedName = appState.data.players.find((x) => x.id === delId)?.name;
-      // matches store names so we need removedName prior. Let's recompute from data before saving.
-      // Keep simple: regenerate by matching player ids is not possible now.
       await storage.saveAll(appState.data);
       await reloadData();
       renderPlayers();
       toast('Deleted');
     }
-  });
+  };
 }
 
 function renderStartSchedule() {
+  if (typeof scheduleAutocompleteTeardown === 'function') {
+    scheduleAutocompleteTeardown();
+    scheduleAutocompleteTeardown = null;
+  }
+
   const view = $('#view-schedule');
   const { players, schedules } = appState.data;
 
@@ -558,7 +478,7 @@ function renderStartSchedule() {
   const scheduleOptions = schedules
     .slice()
     .sort((a, b) => (a.dateISO ?? '').localeCompare(b.dateISO ?? ''))
-    .map((s) => `<option value="${s.id}">${formatDateNice(s.dateISO)} · ${s.title ?? 'Schedule'}</option>`)
+    .map((s) => `<option value="${s.id}">${formatScheduleLabel(s)}</option>`)
     .join('');
 
   view.innerHTML = `
@@ -592,7 +512,7 @@ function renderStartSchedule() {
           <input id="sp-name" placeholder="Player name" />
           <div>
             <label>Class (used if new player)</label>
-            <select id="sp-class"></select>
+            ${renderClassRadios('sp-class', 'C')}
           </div>
           <input id="sp-note" placeholder="Note (optional)" />
           <div class="row">
@@ -610,10 +530,8 @@ function renderStartSchedule() {
     </div>
   `;
 
-  renderOptionsFromClasses($('#sp-class'), 'C');
-
   const activeSel = $('#active-schedule');
-  activeSel.innerHTML = schedules.map((s) => `<option value="${s.id}">${formatDateNice(s.dateISO)} · ${s.title ?? ''}</option>`).join('');
+  activeSel.innerHTML = schedules.map((s) => `<option value="${s.id}">${formatScheduleLabel(s)}</option>`).join('');
 
   if (lastSchedule) {
     appState.activeScheduleId = appState.activeScheduleId ?? lastSchedule.id;
@@ -668,7 +586,11 @@ function renderStartSchedule() {
       toast('No active schedule');
       return;
     }
-    if (!confirm('Close this schedule? This will remove it and its matches/payments.')) return;
+    if (!(await confirmDialog('Close this schedule? This will remove it and its matches/payments.', {
+      title: 'Close Schedule',
+      okText: 'OK',
+      danger: true,
+    }))) return;
 
     // Remove schedule
     appState.data.schedules = appState.data.schedules.filter((s) => s.id !== current.id);
@@ -687,11 +609,12 @@ function renderStartSchedule() {
 
   $('#sched-create').addEventListener('click', async () => {
     const dateISO = $('#sched-date').value || todayISO();
+    const createdAt = nowTimestamp();
     const sch = {
       id: uuid(),
       dateISO,
-      title: 'Badminton Session',
-      createdAt: nowTimestamp(),
+      title: formatScheduleLabel({ dateISO, createdAt }),
+      createdAt,
       playerIds: [],
       joins: [],
     };
@@ -704,8 +627,61 @@ function renderStartSchedule() {
   });
 
   $('#sp-add').addEventListener('click', async () => {
+    await addPlayerToActiveSchedule();
+  });
+
+  scheduleAutocompleteTeardown = createAutocompleteInput($('#sp-name'), {
+    source: (query) => {
+      const q = query.toLowerCase();
+      return appState.data.players
+        .filter((p) => p.name.toLowerCase().includes(q))
+        .slice()
+        .sort((a, b) => a.name.localeCompare(b.name));
+    },
+    minChars: 2,
+    getLabel: (player) => `${capitalizeEachWord(player.name)} · ${player.class}`,
+    onSelect: () => {
+      void addPlayerToActiveSchedule();
+    },
+  });
+
+  $('#sp-name').addEventListener('keydown', async (e) => {
+    if (e.key !== 'Enter' || e.defaultPrevented) return;
+    e.preventDefault();
+    await addPlayerToActiveSchedule();
+  });
+
+  view.onclick = async (e) => {
+    const pid = e.target?.getAttribute?.('data-remove');
+    if (!pid) return;
+    const sch = getActiveSchedule();
+    if (!sch) return;
+
+    if (!(await confirmDialog('Remove player from schedule?', { title: 'Remove Player', okText: 'OK', danger: true }))) return;
+
+    sch.playerIds = (sch.playerIds ?? []).filter((x) => x !== pid);
+    sch.joins = (sch.joins ?? []).filter((j) => j.playerId !== pid);
+
+    // Also cancel any matches containing this player's name
+    const removed = appState.data.players.find((p) => p.id === pid);
+    const removedName = removed?.name;
+
+    appState.data.matches = appState.data.matches.filter((m) => {
+      if (!removedName) return true;
+      return !m.playerNames.includes(removedName);
+    });
+
+    await storage.saveAll(appState.data);
+    await reloadData();
+    renderStartSchedule();
+    toast('Removed');
+  };
+
+  renderSchedulePlayers();
+
+  async function addPlayerToActiveSchedule() {
     const name = normalizeName($('#sp-name').value);
-    const cls = $('#sp-class').value;
+    const cls = getSelectedClass('sp-class');
     const note = $('#sp-note').value;
     if (!name) return toast('Player name required');
 
@@ -716,8 +692,6 @@ function renderStartSchedule() {
     if (!existing) {
       existing = { id: uuid(), name, class: cls, note };
       appState.data.players.push(existing);
-    } else {
-      // If player exists, use it. (Keep stored class/note.)
     }
 
     if (!(sch.playerIds ?? []).includes(existing.id)) {
@@ -731,39 +705,7 @@ function renderStartSchedule() {
     await reloadData();
     renderStartSchedule();
     toast('Player added');
-  });
-
-  // Bind remove handler only once to avoid duplicated confirmation dialogs
-  if (!scheduleDelegatedBound) {
-    scheduleDelegatedBound = true;
-    view.addEventListener('click', async (e) => {
-      const pid = e.target?.getAttribute?.('data-remove');
-      if (!pid) return;
-      const sch = getActiveSchedule();
-      if (!sch) return;
-
-      if (!confirm('Remove player from schedule?')) return;
-
-      sch.playerIds = (sch.playerIds ?? []).filter((x) => x !== pid);
-      sch.joins = (sch.joins ?? []).filter((j) => j.playerId !== pid);
-
-      // Also cancel any matches containing this player's name
-      const removed = appState.data.players.find((p) => p.id === pid);
-      const removedName = removed?.name;
-
-      appState.data.matches = appState.data.matches.filter((m) => {
-        if (!removedName) return true;
-        return !m.playerNames.includes(removedName);
-      });
-
-      await storage.saveAll(appState.data);
-      await reloadData();
-      renderStartSchedule();
-      toast('Removed');
-    });
   }
-
-  renderSchedulePlayers();
 }
 
 function updatePaymentsTotalsForSchedule(scheduleId) {
@@ -802,7 +744,7 @@ function renderManageMatch() {
     .sort((a, b) => (a.dateISO ?? '').localeCompare(b.dateISO ?? ''))
     .map(
       (s) =>
-        `<option value="${s.id}" ${sch && sch.id === s.id ? 'selected' : ''}>${formatDateNice(s.dateISO)} · ${s.title ?? 'Schedule'}</option>`,
+        `<option value="${s.id}" ${sch && sch.id === s.id ? 'selected' : ''}>${formatScheduleLabel(s)}</option>`,
     )
     .join('');
 
@@ -1202,8 +1144,9 @@ function renderManageMatch() {
         .join('');
     };
 
-    modal.addEventListener('click', async (e) => {
-      const skipName = e.target?.getAttribute?.('data-skip');
+    const onSuggestModalClick = async (e) => {
+      const skipBtn = e.target?.closest?.('button[data-skip]');
+      const skipName = skipBtn?.getAttribute('data-skip');
       if (skipName) {
         e.preventDefault();
         e.stopPropagation();
@@ -1224,8 +1167,14 @@ function renderManageMatch() {
         return;
       }
 
-      const pickNo = e.target?.getAttribute?.('data-pick');
+      const pickBtn = e.target?.closest?.('button[data-pick]');
+      const pickNo = pickBtn?.getAttribute('data-pick');
       if (!pickNo) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+      if (pickBtn.disabled) return;
+      pickBtn.disabled = true;
 
       const sch2 = getActiveSchedule();
       if (!sch2) return;
@@ -1261,58 +1210,56 @@ function renderManageMatch() {
       closeModal();
       renderManageMatch();
       toast('Match added');
-    });
+    };
+
+    modal.addEventListener('click', onSuggestModalClick);
+    modal.addEventListener('close', () => modal.removeEventListener('click', onSuggestModalClick), { once: true });
   });
 
-  // Bind cancel handler only once to prevent duplicate confirmation dialogs
-  if (!manageMatchDelegatedBound) {
-    manageMatchDelegatedBound = true;
-    view.addEventListener('click', async (e) => {
-      const cancelId = e.target?.getAttribute?.('data-cancel');
-      const plusId = e.target?.getAttribute?.('data-shuttle-plus');
-      const minusId = e.target?.getAttribute?.('data-shuttle-minus');
+  view.onclick = async (e) => {
+    const action = e.target?.closest?.('button[data-cancel], button[data-shuttle-plus], button[data-shuttle-minus]');
+    if (!action) return;
 
-      if (!(cancelId || plusId || minusId)) return;
+    const cancelId = action.getAttribute('data-cancel');
+    const plusId = action.getAttribute('data-shuttle-plus');
+    const minusId = action.getAttribute('data-shuttle-minus');
 
-      const current = getActiveSchedule();
-      if (!current?.id) {
-        toast('Select a schedule first');
-        return;
-      }
+    const current = getActiveSchedule();
+    if (!current?.id) {
+      toast('Select a schedule first');
+      return;
+    }
 
-      // Cancel match (existing behavior)
-      if (cancelId) {
-        if (!confirm('Cancel this match?')) return;
+    if (cancelId) {
+      if (!(await confirmDialog('Cancel this match?', { title: 'Cancel Match', okText: 'OK', danger: true }))) return;
 
-        appState.data.matches = appState.data.matches.filter((m) => m.id !== cancelId);
+      appState.data.matches = appState.data.matches.filter((m) => m.id !== cancelId);
 
-        appState.data.payments = appState.data.payments.filter((p) => p.scheduleId !== current.id);
-        await autoEnsurePaymentsForSchedule(current.id);
-
-        await storage.saveAll(appState.data);
-        await refreshAll();
-        toast('Cancelled');
-        return;
-      }
-
-      // +/- shuttlecock usage (min 0), recompute payment totals for this schedule
-      const matchId = plusId || minusId;
-      const match = appState.data.matches.find((m) => m.id === matchId);
-      if (!match) return;
-
-      const cur = Number(match.shuttlecockUsage?.shuttles ?? 0);
-      const delta = plusId ? 1 : -1;
-      const next = Math.max(0, cur + delta);
-
-      match.shuttlecockUsage = { shuttles: next };
-
-      updatePaymentsTotalsForSchedule(current.id);
+      appState.data.payments = appState.data.payments.filter((p) => p.scheduleId !== current.id);
+      await autoEnsurePaymentsForSchedule(current.id);
 
       await storage.saveAll(appState.data);
       await refreshAll();
-      toast('Shuttlecock updated');
-    });
-  }
+      toast('Cancelled');
+      return;
+    }
+
+    const matchId = plusId || minusId;
+    const match = appState.data.matches.find((m) => m.id === matchId);
+    if (!match) return;
+
+    const cur = Number(match.shuttlecockUsage?.shuttles ?? 0);
+    const delta = plusId ? 1 : -1;
+    const next = Math.max(0, cur + delta);
+
+    match.shuttlecockUsage = { shuttles: next };
+
+    updatePaymentsTotalsForSchedule(current.id);
+
+    await storage.saveAll(appState.data);
+    await refreshAll();
+    toast('Shuttlecock updated');
+  };
 
   renderHistory();
 }
@@ -1427,110 +1374,111 @@ function renderScheduleMatches() {
 
   appState._latestSuggestions = suggestions;
 
-  // event handlers (only bound once)
-  if (!scheduleDelegatedBound) {
-    scheduleDelegatedBound = true;
-    view.addEventListener('click', async (e) => {
-      const pickNo = e.target?.getAttribute?.('data-pick');
-      if (pickNo) {
-        const sch2 = getActiveSchedule();
-        if (!sch2) return;
-        const latest = appState._latestSuggestions ?? [];
-        const pick = latest.find((x) => x.suggestionNo === Number(pickNo));
-        if (!pick) return;
+  wrap.onclick = async (e) => {
+    const action = e.target?.closest?.('button[data-pick], button[data-cancel], button[data-skip]');
+    if (!action) return;
 
-        const nextNumber =
-          (appState.data.matches.filter((m) => m.scheduleId === sch2.id).reduce((a, b) => Math.max(a, b.matchNumber), 0) || 0) + 1;
-        const playerNames = [...pick.teamA, ...pick.teamB];
+    const pickNo = action.getAttribute('data-pick');
+    if (pickNo) {
+      const sch2 = getActiveSchedule();
+      if (!sch2) return;
+      const latest = appState._latestSuggestions ?? [];
+      const pick = latest.find((x) => x.suggestionNo === Number(pickNo));
+      if (!pick) return;
 
-        appState.data.matches.push({
-          id: uuid(),
-          scheduleId: sch2.id,
-          matchNumber: nextNumber,
-          playerNames,
-          shuttlecockUsage: pick.shuttlecockUsage,
-          createdAt: nowTimestamp(),
-        });
+      action.disabled = true;
 
+      const nextNumber =
+        (appState.data.matches.filter((m) => m.scheduleId === sch2.id).reduce((a, b) => Math.max(a, b.matchNumber), 0) || 0) + 1;
+      const playerNames = [...pick.teamA, ...pick.teamB];
+
+      appState.data.matches.push({
+        id: uuid(),
+        scheduleId: sch2.id,
+        matchNumber: nextNumber,
+        playerNames,
+        shuttlecockUsage: pick.shuttlecockUsage,
+        createdAt: nowTimestamp(),
+      });
+
+      await autoEnsurePaymentsForSchedule(sch2.id);
+      await storage.saveAll(appState.data);
+      await reloadData();
+      renderStartSchedule();
+      renderScheduleMatches();
+      renderPlayersForSuggestion();
+      toast('Match added');
+      return;
+    }
+
+    const cancelId = action.getAttribute('data-cancel');
+    if (cancelId) {
+      if (!(await confirmDialog('Cancel this match?', { title: 'Cancel Match', okText: 'OK', danger: true }))) return;
+      const sch2 = getActiveSchedule();
+      appState.data.matches = appState.data.matches.filter((m) => m.id !== cancelId);
+
+      if (sch2?.id) {
+        appState.data.payments = appState.data.payments.filter((p) => p.scheduleId !== sch2.id);
         await autoEnsurePaymentsForSchedule(sch2.id);
-        await storage.saveAll(appState.data);
-        await reloadData();
-        renderStartSchedule();
-        renderScheduleMatches();
-        renderPlayersForSuggestion();
-        toast('Match added');
-        return;
       }
 
-      const cancelId = e.target?.getAttribute?.('data-cancel');
-      if (cancelId) {
-        if (!confirm('Cancel this match?')) return;
-        const sch2 = getActiveSchedule();
-        appState.data.matches = appState.data.matches.filter((m) => m.id !== cancelId);
+      await storage.saveAll(appState.data);
+      await reloadData();
+      renderStartSchedule();
+      renderScheduleMatches();
+      renderPlayersForSuggestion();
+      toast('Cancelled');
+      return;
+    }
 
-        if (sch2?.id) {
-          appState.data.payments = appState.data.payments.filter((p) => p.scheduleId !== sch2.id);
-          await autoEnsurePaymentsForSchedule(sch2.id);
-        }
+    const skipName = action.getAttribute('data-skip');
+    const skipSug = action.getAttribute('data-suggestion');
+    if (skipName && skipSug) {
+      const currentSch = getActiveSchedule();
+      if (!currentSch) return;
 
-        await storage.saveAll(appState.data);
-        await reloadData();
-        renderStartSchedule();
-        renderScheduleMatches();
-        renderPlayersForSuggestion();
-        toast('Cancelled');
-        return;
-      }
+      appState._skipBlacklist = (appState._skipBlacklist ?? new Set());
+      appState._skipBlacklist.add(skipName);
 
-      const skipName = e.target?.getAttribute?.('data-skip');
-      const skipSug = e.target?.getAttribute?.('data-suggestion');
-      if (skipName && skipSug) {
-        const currentSch = getActiveSchedule();
-        if (!currentSch) return;
+      const updated = suggestMatchesForScheduleWithBlacklist(
+        currentSch,
+        appState.data.players,
+        appState.data.matches,
+        appState._skipBlacklist,
+      );
 
-        appState._skipBlacklist = (appState._skipBlacklist ?? new Set());
-        appState._skipBlacklist.add(skipName);
-
-        const updated = suggestMatchesForScheduleWithBlacklist(
-          currentSch,
-          appState.data.players,
-          appState.data.matches,
-          appState._skipBlacklist,
-        );
-
-        $('#suggestions').innerHTML = updated
-          .map((s) => {
-            const teamAButtons = s.teamA
-              .map((name) => `<button class="btn" data-skip="${name}" data-suggestion="${s.suggestionNo}">Skip ${name}</button>`)
-              .join('');
-            const teamBButtons = s.teamB
-              .map((name) => `<button class="btn" data-skip="${name}" data-suggestion="${s.suggestionNo}">Skip ${name}</button>`)
-              .join('');
-            return `
-              <div class="card" style="margin-bottom:10px; background:rgba(255,255,255,.03);">
-                <div class="row" style="justify-content:space-between;">
-                  <h2 style="margin:0;">Suggestion #${s.suggestionNo}</h2>
-                  <div class="pill">Balance: ${s.overallBalanceScore}</div>
-                </div>
-                <div class="grid" style="margin-top:10px; gap:8px;">
-                  <div><div style="color:var(--muted); font-weight:800; font-size:12px;">Team A</div><div class="row">${s.teamA.join(' + ')}</div></div>
-                  <div class="row">${teamAButtons}</div>
-                  <div><div style="color:var(--muted); font-weight:800; font-size:12px; margin-top:6px;">Team B</div><div class="row">${s.teamB.join(' + ')}</div></div>
-                  <div class="row">${teamBButtons}</div>
-                </div>
-                <div class="row" style="justify-content:flex-end; margin-top:10px;">
-                  <button class="btn good" data-pick="${s.suggestionNo}">Select This Match</button>
-                </div>
+      $('#suggestions').innerHTML = updated
+        .map((s) => {
+          const teamAButtons = s.teamA
+            .map((name) => `<button class="btn" data-skip="${name}" data-suggestion="${s.suggestionNo}">Skip ${name}</button>`)
+            .join('');
+          const teamBButtons = s.teamB
+            .map((name) => `<button class="btn" data-skip="${name}" data-suggestion="${s.suggestionNo}">Skip ${name}</button>`)
+            .join('');
+          return `
+            <div class="card" style="margin-bottom:10px; background:rgba(255,255,255,.03);">
+              <div class="row" style="justify-content:space-between;">
+                <h2 style="margin:0;">Suggestion #${s.suggestionNo}</h2>
+                <div class="pill">Balance: ${s.overallBalanceScore}</div>
               </div>
-            `;
-          })
-          .join('');
+              <div class="grid" style="margin-top:10px; gap:8px;">
+                <div><div style="color:var(--muted); font-weight:800; font-size:12px;">Team A</div><div class="row">${s.teamA.join(' + ')}</div></div>
+                <div class="row">${teamAButtons}</div>
+                <div><div style="color:var(--muted); font-weight:800; font-size:12px; margin-top:6px;">Team B</div><div class="row">${s.teamB.join(' + ')}</div></div>
+                <div class="row">${teamBButtons}</div>
+              </div>
+              <div class="row" style="justify-content:flex-end; margin-top:10px;">
+                <button class="btn good" data-pick="${s.suggestionNo}">Select This Match</button>
+              </div>
+            </div>
+          `;
+        })
+        .join('');
 
-        appState._latestSuggestions = updated;
-        toast('Player skipped');
-      }
-    });
-  }
+      appState._latestSuggestions = updated;
+      toast('Player skipped');
+    }
+  };
 }
 
 function suggestMatchesForScheduleWithBlacklist(schedule, allPlayers, matches, blacklist) {
@@ -1653,43 +1601,36 @@ function renderPayments() {
   view.innerHTML = `
     <div class="card">
       <h2>Unpaid Payment List</h2>
-      <div style="overflow:auto;">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Schedule</th>
-              <th>Player</th>
-              <th>Shuttlecock Usage</th>
-              <th>Total Payment</th>
-              <th style="width:32%">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${unpaid
+      <div class="grid" style="gap:10px;">
+        ${unpaid.length
+          ? unpaid
               .map(
                 (p) => `
-              <tr>
-                <td>${formatDateNice(p.scheduleDateISO)}</td>
-                <td><strong>${p.playerName}</strong></td>
-                <td style="color:var(--muted)">${p.shuttlecockUsage?.shuttles ?? 0}</td>
-                <td><span class="pill">Rp${p.totalPayment.toLocaleString('id-ID')}</span></td>
-                <td>
-                  <div class="row" style="justify-content:flex-end;">
-                    <button class="btn good" data-pay="${p.id}">Pay</button>
-                    <button class="btn" data-collect="${p.id}">Collect Payment</button>
+                  <div class="card payment-card" style="background:rgba(255,255,255,.03); margin:0;">
+                    <div class="row" style="justify-content:space-between; align-items:flex-start; gap:12px;">
+                      <div style="min-width:0;">
+                        <div style="font-weight:900; font-size:15px; line-height:1.3;">
+                          ${p.playerName} - ${formatScheduleLabel(scheduleById.get(p.scheduleId))}
+                        </div>
+                        <div style="margin-top:6px; color:var(--muted); font-size:13px;">
+                          Shuttlecock: ${p.shuttlecockUsage?.shuttles ?? 0} (${`Rp${p.totalPayment.toLocaleString('id-ID')}`})
+                        </div>
+                      </div>
+                    </div>
+                    <div class="row" style="justify-content:flex-start; margin-top:12px;">
+                      <button class="btn good" data-pay="${p.id}">Pay</button>
+                      <button class="btn" data-collect="${p.id}">Collect Payment</button>
+                    </div>
                   </div>
-                </td>
-              </tr>
-            `
+                `,
               )
-              .join('') || `<tr><td colspan="5" style="color:var(--muted)">No unpaid payments 🎉</td></tr>`}
-          </tbody>
-        </table>
+              .join('')
+          : `<div style="color:var(--muted); font-size:13px;">No unpaid payments 🎉</div>`}
       </div>
     </div>
   `;
 
-  view.addEventListener('click', (e) => {
+  view.onclick = (e) => {
     const payId = e.target?.getAttribute?.('data-pay');
     const collectId = e.target?.getAttribute?.('data-collect');
     if (payId) {
@@ -1747,12 +1688,7 @@ function renderPayments() {
       });
       return;
     }
-  });
-
-  const modal = $('#modal');
-  modal.addEventListener('close', () => {
-    // noop
-  });
+  };
 
   async function confirmPay(paymentId, method) {
     const p = appState.data.payments.find((x) => x.id === paymentId);
@@ -1804,7 +1740,7 @@ function renderImportExport() {
   $('#ex-payments').value = JSON.stringify(payments, null, 2);
 
   $('#im-reset').addEventListener('click', async () => {
-    if (!confirm('Reset all local data in this browser?')) return;
+    if (!(await confirmDialog('Reset all local data in this browser?', { title: 'Reset All Data', okText: 'OK', danger: true }))) return;
     await storage.resetAll();
     ensureSeededDemoData();
     await reloadData();
@@ -1883,9 +1819,14 @@ async function main() {
   ensureSeededDemoData();
   await reloadData();
 
+  const closeNavigationDrawer = setupNavigationDrawer();
+
   // Setup nav
   $$('.tab').forEach((btn) => {
-    btn.addEventListener('click', () => switchView(btn.dataset.view));
+    btn.addEventListener('click', () => {
+      switchView(btn.dataset.view);
+      closeNavigationDrawer();
+    });
   });
 
   // Default active schedule

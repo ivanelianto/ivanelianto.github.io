@@ -8,55 +8,65 @@
   </head>
   <body>
     <div class="app">
-      <header class="topbar">
-        <div>
-          <h1 class="brand">Badminton Matchmaker</h1>
-          <p class="subtitle">Simple file-based scheduling & payments</p>
-        </div>
+      <header class="mobile-header">
+        <button
+          type="button"
+          id="menu-toggle"
+          class="menu-toggle"
+          aria-controls="navigation-drawer"
+          aria-expanded="false"
+          aria-label="Open navigation menu"
+        >
+          ☰
+        </button>
 
-        <div class="nav-drawer">
-          <button
-            type="button"
-            class="drawer-toggle"
-            aria-controls="main-drawer"
-            aria-expanded="false"
-            aria-label="Open navigation menu"
-            id="drawer-toggle"
-          >
-            ☰
-          </button>
-
-          <div class="drawer-overlay" id="drawer-overlay" hidden></div>
-
-          <nav
-            id="main-drawer"
-            class="drawer"
-            aria-label="Main navigation"
-            role="navigation"
-          >
-            <div class="drawer-header">
-              <strong>Menu</strong>
-              <button
-                type="button"
-                class="drawer-close"
-                aria-label="Close navigation menu"
-                id="drawer-close"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div class="drawer-body">
-              <button class="tab" data-view="dashboard">Dashboard</button>
-              <button class="tab" data-view="players">Manage Players</button>
-              <button class="tab" data-view="schedule">Manage Schedule</button>
-              <button class="tab" data-view="manage-match">Manage Match</button>
-              <button class="tab" data-view="payments">Manage Payments</button>
-              <button class="tab" data-view="io">Import / Export</button>
-            </div>
-          </nav>
-        </div>
+        <h1>Badminton Matchmaker</h1>
       </header>
+
+      <div class="drawer-backdrop" id="drawer-backdrop" hidden></div>
+
+      <aside
+        id="navigation-drawer"
+        class="navigation-drawer"
+        aria-label="Main navigation"
+      >
+        <div class="drawer-profile">
+          <div class="drawer-avatar" aria-hidden="true">B</div>
+
+          <div class="drawer-profile-copy">
+            <strong>Badminton Matchmaker</strong>
+          </div>
+
+          <span class="drawer-arrow" aria-hidden="true">▼</span>
+        </div>
+
+        <nav class="drawer-menu" aria-label="Main menu">
+          <button class="tab drawer-menu-item" data-view="dashboard">
+            <span class="menu-icon" aria-hidden="true">📊</span>
+            <span>Dashboard</span>
+          </button>
+          <button class="tab drawer-menu-item" data-view="players">
+            <span class="menu-icon" aria-hidden="true">👤</span>
+            <span>Manage Players</span>
+          </button>
+          <button class="tab drawer-menu-item" data-view="schedule">
+            <span class="menu-icon" aria-hidden="true">📅</span>
+            <span>Manage Schedule</span>
+          </button>
+          <button class="tab drawer-menu-item" data-view="manage-match">
+            <span class="menu-icon" aria-hidden="true">🏸</span>
+            <span>Manage Match</span>
+          </button>
+          <button class="tab drawer-menu-item" data-view="payments">
+            <span class="menu-icon" aria-hidden="true">💰</span>
+            <span>Manage Payments</span>
+          </button>
+          <button class="tab drawer-menu-item" data-view="io">
+            <span class="menu-icon" aria-hidden="true">📁</span>
+            <span>Import / Export</span>
+          </button>
+        </nav>
+      </aside>
 
       <main class="content">
         <section id="view-dashboard" class="view" aria-live="polite"></section>
