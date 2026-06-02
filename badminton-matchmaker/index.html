@@ -13,14 +13,49 @@
           <h1 class="brand">Badminton Matchmaker</h1>
           <p class="subtitle">Simple file-based scheduling & payments</p>
         </div>
-        <nav class="tabs" aria-label="Main">
-          <button class="tab" data-view="dashboard">Dashboard</button>
-          <button class="tab" data-view="players">Manage Players</button>
-          <button class="tab" data-view="schedule">Manage Schedule</button>
-          <button class="tab" data-view="manage-match">Manage Match</button>
-          <button class="tab" data-view="payments">Manage Payments</button>
-          <button class="tab" data-view="io">Import / Export</button>
-        </nav>
+
+        <div class="nav-drawer">
+          <button
+            type="button"
+            class="drawer-toggle"
+            aria-controls="main-drawer"
+            aria-expanded="false"
+            aria-label="Open navigation menu"
+            id="drawer-toggle"
+          >
+            ☰
+          </button>
+
+          <div class="drawer-overlay" id="drawer-overlay" hidden></div>
+
+          <nav
+            id="main-drawer"
+            class="drawer"
+            aria-label="Main navigation"
+            role="navigation"
+          >
+            <div class="drawer-header">
+              <strong>Menu</strong>
+              <button
+                type="button"
+                class="drawer-close"
+                aria-label="Close navigation menu"
+                id="drawer-close"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div class="drawer-body">
+              <button class="tab" data-view="dashboard">Dashboard</button>
+              <button class="tab" data-view="players">Manage Players</button>
+              <button class="tab" data-view="schedule">Manage Schedule</button>
+              <button class="tab" data-view="manage-match">Manage Match</button>
+              <button class="tab" data-view="payments">Manage Payments</button>
+              <button class="tab" data-view="io">Import / Export</button>
+            </div>
+          </nav>
+        </div>
       </header>
 
       <main class="content">
@@ -33,7 +68,7 @@
       </main>
 
       <footer class="footer">
-        <span>Local JSON storage · No database server</span>
+        <span>Powered by Pominton</span>
       </footer>
     </div>
 
