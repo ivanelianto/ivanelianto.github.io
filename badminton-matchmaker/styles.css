@@ -384,6 +384,51 @@ textarea {
   background: rgba(255, 204, 51, .16);
 }
 
+/* Toggle switch for nicer sparring control */
+.switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.switch-wrapper {
+  display: block;
+}
+
+.switch input {
+  appearance: none;
+  width: 44px;
+  height: 24px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 999px;
+  outline: none;
+  border: 1px solid var(--border);
+  box-sizing: border-box;
+}
+
+.switch input:checked {
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+}
+
+.switch-slider {
+  position: absolute;
+  left: 8px;
+  top: 7px;
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  transform: none;
+  transition: transform 160ms ease, left 160ms ease;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+}
+
+.switch input:checked + .switch-slider {
+  transform: translateX(20px);
+}
+
 .table {
   width: 100%;
   border-collapse: collapse;

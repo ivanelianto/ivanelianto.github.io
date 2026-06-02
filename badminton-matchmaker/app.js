@@ -632,7 +632,13 @@ function renderStartSchedule() {
         <div>
           <label>Options</label>
           <div class="row u-gap-8">
-            <label class="row"><input type="checkbox" id="ns-sparring" /> <span class="u-mt-2">Sparring Mode</span></label>
+            <label class="switch">
+              <div class="switch-wrapper">
+                <input type="checkbox" id="ns-sparring" />
+                <span class="switch-slider"></span>
+              </div>
+              <span class="u-ml-8">Sparring Mode</span>
+            </label>
           </div>
         </div>
 
@@ -641,7 +647,7 @@ function renderStartSchedule() {
             <label>Team A</label>
             <input id="ns-team-a" placeholder="Team A name" />
           </div>
-          <div>
+          <div class="u-mt-8">
             <label>Team B</label>
             <input id="ns-team-b" placeholder="Team B name" />
           </div>
@@ -655,38 +661,6 @@ function renderStartSchedule() {
     `);
 
     const modal = $('#modal');
-
-    // If sparring mode, render team filter buttons
-    if (schedule.isSparringMode) {
-      const teamAName = schedule.teamA || 'Team A';
-      const teamBName = schedule.teamB || 'Team B';
-      const wrap = $('#mm-team-filter-wrap');
-      if (wrap) {
-        wrap.innerHTML = `
-          <div class="row u-gap-8 u-mb-8" id="mm-team-filter">
-            <button type="button" class="btn primary" data-team="${teamAName}">${teamAName}</button>
-            <button type="button" class="btn" data-team="${teamBName}">${teamBName}</button>
-            <button type="button" class="btn" data-team="all">All</button>
-          </div>
-        `;
-
-        const teamFilter = $('#mm-team-filter');
-        teamFilter.addEventListener('click', (ev) => {
-          const btn = ev.target?.closest?.('button[data-team]');
-          if (!btn) return;
-          const team = btn.getAttribute('data-team');
-          if (team === 'all') currentTeamFilter = null;
-          else currentTeamFilter = team;
-
-          // update active class
-          $$('#mm-team-filter button').forEach((b) => b.classList.remove('primary'));
-          if (team === 'all') btn.classList.add('primary');
-          else btn.classList.add('primary');
-
-          renderPickList();
-        });
-      }
-    }
     const spar = $('#ns-sparring');
     const teamsWrap = $('#ns-teams');
     spar.addEventListener('change', () => {
