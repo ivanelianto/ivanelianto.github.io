@@ -26,21 +26,21 @@ function getPlayerComfortRank(p) {
 }
 
 function balanceScoreForTeams({ teamA, teamB }) {
-  // Lower is better. Score based on skill rank spread and team differences.
-  const ranksA = teamA.map(getPlayerComfortRank);
-  const ranksB = teamB.map(getPlayerComfortRank);
+  // Lower is better. Prefer pairwise-matching of class ranks between teams.
+  // For 2v2 teams, compute sorted rank arrays and sum absolute differences per position.
+  // This makes S+C vs A+C (|3-2| + |0-0| = 1) preferred over C+C vs A+B (|0-2| + |0-1| = 3).
+  const ranksA = teamA.map(getPlayerComfortRank).slice().sort((x, y) => y - x); // desc
+  const ranksB = teamB.map(getPlayerComfortRank).slice().sort((x, y) => y - x);
 
-  // spread inside each team
-  const spreadA = Math.max(...ranksA) - Math.min(...ranksA);
-  const spreadB = Math.max(...ranksB) - Math.min(...ranksB);
+  // If sizes differ, pad with high rank to penalize uneven teams
+  const n = Math.max(ranksA.length, ranksB.length);
+  const pad = 10;
+  while (ranksA.length < n) ranksA.push(pad);
+  while (ranksB.length < n) ranksB.push(pad);
 
-  // difference between teams
-  const avgA = ranksA.reduce((a, b) => a + b, 0) / ranksA.length;
-  const avgB = ranksB.reduce((a, b) => a + b, 0) / ranksB.length;
-  const diffTeams = Math.abs(avgA - avgB);
+  const pairwiseDiff = ranksA.reduce((acc, v, i) => acc + Math.abs(v - ranksB[i]), 0);
 
-  // total
-  return spreadA * 2 + spreadB * 2 + diffTeams;
+  return pairwiseDiff;
 }
 
 function computeRemainingCandidates({ schedulePlayers, allPlayers, playedCountsByName }) {
@@ -171,13 +171,17 @@ function suggestMatchesForSchedule({ schedule, allPlayers, matches, playerNameBl
             const teamBPlayers = [pb1, pb2];
             const playedSum = teamAPlayers.concat(teamBPlayers).reduce((acc, p) => acc + (p.played ?? 0), 0);
             const classDiff = balanceScoreForTeams({ teamA: teamAPlayers, teamB: teamBPlayers });
-            const overall = classDiff * 1000 + playedSum;
+            // tertiary tie-breaker: prefer earlier arrivals (sum of arrival timestamps)
+            const arrivalSum = teamAPlayers.concat(teamBPlayers).reduce((acc, p) => acc + (p.arriveTime ?? Number.POSITIVE_INFINITY), 0);
 
             suggestions.push({
               teamA: teamAPlayers.map((p) => p.name),
               teamB: teamBPlayers.map((p) => p.name),
-              overallBalanceScore: overall,
-              _meta: { pids: ids, classDiff },
+              overallBalanceScore: classDiff * 1000 + playedSum, // legacy display metric
+              _meta: { pids: ids, classDiff, playedSum, arrivalSum },
+              classDiff,
+              playedSum,
+              arrivalSum,
               shuttlecockUsage: { shuttles: 0 },
             });
           }
@@ -197,7 +201,18 @@ function suggestMatchesForSchedule({ schedule, allPlayers, matches, playerNameBl
     }
   }
 
-  suggestions.sort((a, b) => a.overallBalanceScore - b.overallBalanceScore);
+  // Sort using priorities: 1) class balance (classDiff), 2) total matches played (playedSum), 3) arrival time (arrivalSum)
+  suggestions.sort((a, b) => {
+    const ad = a.classDiff ?? a._meta?.classDiff ?? a.overallBalanceScore;
+    const bd = b.classDiff ?? b._meta?.classDiff ?? b.overallBalanceScore;
+    if (ad !== bd) return ad - bd;
+    const ap = a.playedSum ?? a._meta?.playedSum ?? 0;
+    const bp = b.playedSum ?? b._meta?.playedSum ?? 0;
+    if (ap !== bp) return ap - bp;
+    const aa = a.arrivalSum ?? a._meta?.arrivalSum ?? 0;
+    const ba = b.arrivalSum ?? b._meta?.arrivalSum ?? 0;
+    return aa - ba;
+  });
   const top = suggestions.slice(0, 3).map((s, idx) => ({
     suggestionNo: idx + 1,
     teamA: s.teamA,
@@ -217,16 +232,15 @@ function inferGreetingByTime(d = new Date()) {
   return 'Malam';
 }
 
-function computeTotalPayment({ shuttlecockUsage, playerName }) {
+function computeTotalPayment({ shuttlecockUsage, playerName, courtFee = COURT_FEE, shuttleFeePer = SHUTTLE_FEE_PER }) {
   const shuttles = Number(shuttlecockUsage?.shuttles ?? shuttlecockUsage ?? 0);
-  const courtFee = COURT_FEE;
 
   const free = /^(mei|asrofi)$/i.test(playerName.trim());
   const specialShuttleOnly = /^(kelvinsen|miftah|ivan)$/i.test(playerName.trim());
 
   if (free) return 0;
 
-  const shuttleFee = shuttles * SHUTTLE_FEE_PER;
+  const shuttleFee = shuttles * shuttleFeePer;
   const total = shuttleFee + (specialShuttleOnly ? 0 : courtFee);
   return total;
 }
@@ -299,8 +313,33 @@ function setSelectedClass(groupName, value = 'C') {
 }
 
 function formatClassBadge(cls) {
-  return `<span class="badge">${cls}</span>`;
+  const s = String(cls ?? '');
+  // Keep only non-vowel letters, and uppercase everything
+  // Vowels: a i e o u (case-insensitive)
+  const formatted = s
+    .replace(/[aiueo]/gi, '')
+    .toUpperCase();
+
+  return `<span class="badge">${formatted}</span>`;
 }
+
+function formatTeamLabel(team) {
+  const s = String(team ?? '');
+
+  // Rule: keep first letter, remove all vowel letters (a,i,e,o,u), max 3 letters, uppercase.
+  const lettersOnly = s.replace(/[^a-z]/gi, '');
+  if (!lettersOnly) return '';
+
+  const first = lettersOnly[0];
+  const rest = lettersOnly.slice(1).replace(/[aiueo]/gi, '');
+
+  // Ensure first letter exists even if it is a vowel; then trim to max 3 total letters.
+  return (first + rest).toUpperCase().slice(0, 3);
+}
+
+
+
+
 
 function renderPlayerNameWithClass(p) {
   if (!p) return '';
@@ -392,24 +431,12 @@ function renderPlayers() {
   view.innerHTML = `
     <div class="grid grid-cols-1">
       <div class="card">
-        <h2>Add / Update Player</h2>
-        <div class="grid u-gap-10">
-          <input id="p-name" placeholder="Name" />
-          <div>
-            <label>Class</label>
-            ${renderClassRadios('p-class', 'C')}
-          </div>
-          <input id="p-note" placeholder="Note" />
-          <div class="row">
-            <button class="btn primary" id="p-save">Save</button>
-            <button class="btn" id="p-reset">Reset</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
         <h2>Players</h2>
-        <div class="u-overflow-auto">
+        <div class="u-mt-12">
+          <button class="btn good u-w-100" id="p-open-modal">➕ Add / Update Player</button>
+        </div>
+        
+        <div class="u-overflow-auto u-mt-12">
           <div id="players-list">
             ${cards || '<div class="u-text-muted">No players yet.</div>'}
           </div>
@@ -418,51 +445,81 @@ function renderPlayers() {
     </div>
   `;
 
-  let editingId = null;
+  // Open modal to add/update a player
+  $('#p-open-modal').addEventListener('click', () => {
+    openPlayerModal();
+  });
 
-  const nameEl = $('#p-name');
-  const noteEl = $('#p-note');
+  function openPlayerModal(existingPlayer = null) {
+    openModal(`
+      <h3>${existingPlayer ? 'Update' : 'Add'} Player</h3>
+      <div class="grid u-gap-10">
+        <input id="mp-name" placeholder="Name" value="${existingPlayer ? existingPlayer.name : ''}" />
+        <div>
+          <label>Class</label>
+          ${renderClassRadios('mp-class', existingPlayer?.class ?? 'C')}
+        </div>
+        <input id="mp-note" placeholder="Note" value="${existingPlayer?.note ?? ''}" />
+      </div>
+      <div class="modal-actions u-mt-12">
+        <button value="cancel" class="btn" formmethod="dialog">Cancel</button>
+        <button type="button" class="btn" id="mp-delete" ${existingPlayer ? '' : 'style="display:none;"'}>Delete</button>
+        <button type="button" class="btn primary" id="mp-save">Save</button>
+      </div>
+    `);
 
-  const setForm = (p) => {
-    nameEl.value = p?.name ?? '';
-    setSelectedClass('p-class', p?.class ?? 'C');
-    noteEl.value = p?.note ?? '';
-    editingId = p?.id ?? null;
-  };
+    const modal = $('#modal');
+    const nameEl = $('#mp-name');
+    const noteEl = $('#mp-note');
+    const saveBtn = $('#mp-save');
+    const delBtn = $('#mp-delete');
 
-  setForm(null);
+    saveBtn.addEventListener('click', async () => {
+      const name = normalizeName(nameEl.value);
+      const cls = getSelectedClass('mp-class');
+      const note = noteEl.value;
+      if (!name) return toast('Player name required');
+      if (!CLASS_ORDER.includes(cls)) return toast('Invalid class');
 
-  $('#p-reset').addEventListener('click', () => setForm(null));
-
-  $('#p-save').addEventListener('click', async () => {
-    const name = normalizeName(nameEl.value);
-    const cls = getSelectedClass('p-class');
-    const note = noteEl.value;
-    if (!name) return toast('Player name required');
-    if (!CLASS_ORDER.includes(cls)) return toast('Invalid class');
-
-    const nowData = appState.data;
-    if (editingId) {
-      const idx = nowData.players.findIndex((x) => x.id === editingId);
-      if (idx >= 0) {
-        nowData.players[idx] = { ...nowData.players[idx], name, class: cls, note };
-      }
-    } else {
-      const exists = nowData.players.find((p) => p.name.toLowerCase() === name.toLowerCase());
-      if (exists) {
-        // Update existing name collision instead of creating duplicate
-        exists.class = cls;
-        exists.note = note;
+      const nowData = appState.data;
+      if (existingPlayer) {
+        const idx = nowData.players.findIndex((x) => x.id === existingPlayer.id);
+        if (idx >= 0) nowData.players[idx] = { ...nowData.players[idx], name, class: cls, note };
       } else {
-        nowData.players.push({ id: uuid(), name, class: cls, note });
+        const exists = nowData.players.find((p) => p.name.toLowerCase() === name.toLowerCase());
+        if (exists) {
+          exists.class = cls;
+          exists.note = note;
+        } else {
+          nowData.players.push({ id: uuid(), name, class: cls, note });
+        }
       }
+
+      await storage.saveAll(nowData);
+      await reloadData();
+      closeModal();
+      renderPlayers();
+      toast('Saved');
+    }, { once: true });
+
+    if (delBtn) {
+      delBtn.addEventListener('click', async () => {
+        if (!(await confirmDialog('Delete this player?', { title: 'Delete Player', okText: 'OK', danger: true }))) return;
+        appState.data.players = appState.data.players.filter((x) => x.id !== existingPlayer.id);
+        appState.data.schedules.forEach((s) => {
+          s.playerIds = (s.playerIds ?? []).filter((pid) => pid !== existingPlayer.id);
+        });
+        await storage.saveAll(appState.data);
+        await reloadData();
+        closeModal();
+        renderPlayers();
+        toast('Deleted');
+      }, { once: true });
     }
 
-    await storage.saveAll(nowData);
-    await reloadData();
-    renderPlayers();
-    toast('Saved');
-  });
+    // close modal on backdrop click handled by openModal
+    modal.addEventListener('close', () => {}, { once: true });
+  }
 
   view.onclick = async (e) => {
     const action = e.target?.closest?.('button[data-edit], button[data-del]');
@@ -472,7 +529,7 @@ function renderPlayers() {
     const delId = action.getAttribute('data-del');
     if (editId) {
       const p = appState.data.players.find((x) => x.id === editId);
-      setForm(p);
+      openPlayerModal(p);
     }
     if (delId) {
     if (!(await confirmDialog('Delete this player?', { title: 'Delete Player', okText: 'OK', danger: true }))) return;
@@ -506,9 +563,14 @@ function renderStartSchedule() {
       <div>
         <select id="active-schedule"></select>
       </div>
-      <div class="row u-justify-between u-mt-8">
-        <button class="btn" id="sched-close">Close</button>
-        <button class="btn primary" id="sched-new">New Schedule</button>
+      
+      <div class="u-mt-6 u-font-13 u-text-muted">
+        Fees: <span id="sched-fees">-</span>
+      </div>
+
+      <div class="row u-mt-8">
+        <button class="btn danger" id="sched-close">❌ Close</button>
+        <button class="btn good" id="sched-new">➕ New Schedule</button>
       </div>
     </div>
   `;
@@ -535,8 +597,11 @@ function renderStartSchedule() {
       <div class="card">
         <h2>Add Players to Schedule</h2>
         <div class="grid u-gap-10">
-          <input id="sp-name" placeholder="Player name" />
-          <div id="sp-team-wrap"></div>
+          <div id="sp-team-wrap"></div>  
+          <div>
+            <label>Player name</label>
+            <input id="sp-name" placeholder="Player name" />
+          </div>
           <div>
             <label>Class (used if new player)</label>
             ${renderClassRadios('sp-class', 'C')}
@@ -565,6 +630,18 @@ function renderStartSchedule() {
     activeSel.value = appState.activeScheduleId;
   }
 
+  const updateFeesLabel = () => {
+    const el = $('#sched-fees');
+    const sch = getActiveSchedule();
+    if (!el || !sch) {
+      if (el) el.textContent = '-';
+      return;
+    }
+    const cf = typeof sch.courtFee === 'number' ? Number(sch.courtFee) : Number(COURT_FEE ?? 0);
+    const sf = typeof sch.shuttleFeePer === 'number' ? Number(sch.shuttleFeePer) : Number(SHUTTLE_FEE_PER ?? 0);
+    el.textContent = `⛺: Rp${cf.toLocaleString('id-ID')} | ⚾: Rp${sf.toLocaleString('id-ID')}`;
+  };
+
   const renderSchedulePlayers = () => {
     const sch = getActiveSchedule();
     const list = $('#sched-player-list');
@@ -582,10 +659,10 @@ function renderStartSchedule() {
       const joinObj = joinMap.get(pid) || {};
       const joinTime = joinObj.joinTime;
       const arriveTime = joinTime ? new Date(joinTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-';
-      const teamBadge = sch.isSparringMode && joinObj.team ? `<span class="badge--team mr-05em">${joinObj.team}</span>` : '';
+      const teamBadge = sch.isSparringMode && joinObj.team ? `<span class="badge--team ${joinObj.team === (sch.teamA || '') ? 'team-a' : 'team-b'} mr-05em">${joinObj.team}</span>` : '';
 
       return `
-        <div class="card card--muted no-margin radius-14">
+        <div class="card card--muted no-margin">
           <div class="row u-justify-between u-align-center">
             <div class="u-flex-1">
               <div>${teamBadge}${p?.class ? formatClassBadge(p.class) : ''} ${capitalizeEachWord(p?.name ?? '')} - arrive ${arriveTime}</div>
@@ -597,14 +674,93 @@ function renderStartSchedule() {
         </div>
       `;
     });
+    if (!sch.isSparringMode) {
+      list.innerHTML = rows.join('') || `<div class="u-text-muted u-font-13">No players added yet.</div>`;
+      return;
+    }
 
-    list.innerHTML = rows.join('') || `<div class="u-text-muted u-font-13">No players added yet.</div>`;
+    // Sparring mode: group players by team cards
+    const teamAName = sch.teamA || 'Team A';
+    const teamBName = sch.teamB || 'Team B';
+
+
+    const teamAIds = (sch.joins ?? []).filter((j) => j.team === teamAName).map((j) => j.playerId);
+    const teamBIds = (sch.joins ?? []).filter((j) => j.team === teamBName).map((j) => j.playerId);
+
+    const renderList = (ids) =>
+      ids
+        .map((pid) => {
+          const p = playerById.get(pid);
+          const j = joinMap.get(pid) || {};
+          const arrive = j.joinTime ? new Date(j.joinTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-';
+          return `
+            <div class="card card--muted u-mb-10">
+              <div class="row u-justify-between u-align-center">
+                <div>
+                  ${p?.class ? formatClassBadge(p.class) : ''} <strong>${capitalizeEachWord(p?.name ?? '')} </strong>
+                  <span class="u-font-12 u-text-muted">arrive ${arrive}</span>
+                </div>
+                <div><button class="btn danger" data-remove="${pid}">X</button></div>
+              </div>
+            </div>
+          `;
+        })
+        .join('') || `<div class="u-text-muted u-font-13">No players in this team.</div>`;
+
+    list.innerHTML = `
+      <div class="row u-gap-8 u-mb-8" id="sched-team-filter">
+        <button type="button" class="btn primary" data-team="all">All</button>
+        <button type="button" class="btn" data-team="${teamAName}">${teamAName}</button>
+        <button type="button" class="btn" data-team="${teamBName}">${teamBName}</button>
+      </div>
+
+      <div id="sched-team-cards">
+        <div class="card" data-team-card="${teamAName}">
+          <div class="u-text-muted fw-800 u-font-12 team-header team-a">${teamAName}</div>
+          <div class="u-mt-8">${renderList(teamAIds)}</div>
+        </div>
+
+        <div class="card u-mt-12" data-team-card="${teamBName}">
+          <div class="u-text-muted fw-800 u-font-12 team-header team-b">${teamBName}</div>
+          <div class="u-mt-8">${renderList(teamBIds)}</div>
+        </div>
+      </div>
+    `;
+
+    // wire up filter buttons
+    const filterWrap = $('#sched-team-filter');
+    if (filterWrap) {
+      filterWrap.addEventListener('click', (ev) => {
+        const btn = ev.target?.closest?.('button[data-team]');
+        if (!btn) return;
+        const team = btn.getAttribute('data-team');
+
+        // update active styling
+        $$('#sched-team-filter button').forEach((b) => b.classList.remove('primary'));
+        btn.classList.add('primary');
+
+        const container = $('#sched-team-cards');
+        if (!container) return;
+        if (team === 'all') {
+          container.querySelectorAll('[data-team-card]').forEach((el) => (el.style.display = 'block'));
+        } else {
+          container.querySelectorAll('[data-team-card]').forEach((el) => {
+            el.style.display = el.getAttribute('data-team-card') === team ? 'block' : 'none';
+          });
+        }
+      });
+    }
   };
 
   activeSel.addEventListener('change', async () => {
     appState.activeScheduleId = activeSel.value || null;
+    await storage.saveAll(appState.data);
+    updateFeesLabel();
     renderSchedulePlayers();
   });
+
+  // initial fees label
+  updateFeesLabel();
 
   // Close just clears active schedule (does not delete schedule)
   $('#sched-close').addEventListener('click', async () => {
@@ -642,6 +798,15 @@ function renderStartSchedule() {
           </div>
         </div>
 
+        <div>
+          <label>Court Fee</label>
+          <input type="number" id="ns-court-fee" value="15000" min="0" />
+        </div>
+        <div>
+          <label>Shuttlecock Fee</label>
+          <input type="number" id="ns-shuttle-fee" value="4000" min="0" />
+        </div>
+
         <div id="ns-teams" style="display:none;">
           <div>
             <label>Team A</label>
@@ -673,6 +838,11 @@ function renderStartSchedule() {
       const isSparringMode = !!$('#ns-sparring').checked;
       const teamA = isSparringMode ? ($('#ns-team-a').value || '').trim() : '';
       const teamB = isSparringMode ? ($('#ns-team-b').value || '').trim() : '';
+      const courtFeeVal = Number($('#ns-court-fee').value ?? 15000);
+      const shuttleFeeVal = Number($('#ns-shuttle-fee').value ?? 4000);
+
+      if (isNaN(courtFeeVal) || courtFeeVal < 0) return toast('Court Fee must be a non-negative number');
+      if (isNaN(shuttleFeeVal) || shuttleFeeVal < 0) return toast('Shuttlecock Fee must be a non-negative number');
 
       if (isSparringMode && (!teamA || !teamB)) return toast('Both team names required for Sparring Mode');
 
@@ -685,6 +855,8 @@ function renderStartSchedule() {
         teamA: teamA || '',
         teamB: teamB || '',
         createdAt,
+        courtFee: courtFeeVal,
+        shuttleFeePer: shuttleFeeVal,
         playerIds: [],
         joins: [],
       };
@@ -720,10 +892,11 @@ function renderStartSchedule() {
       wrap.innerHTML = `
         <label>Team</label>
         <div class="row">
-          <label class="class-radio"><input type="radio" name="sp-team" value="${teamA}" /> <span>${teamA}</span></label>
-          <label class="class-radio"><input type="radio" name="sp-team" value="${teamB}" /> <span>${teamB}</span></label>
+          <label class="class-radio team-radio"><input type="radio" name="sp-team" value="${teamA}" /> <span>${formatTeamLabel(teamA)}</span></label>
+          <label class="class-radio team-radio"><input type="radio" name="sp-team" value="${teamB}" /> <span>${formatTeamLabel(teamB)}</span></label>
         </div>
       `;
+
     } else {
       wrap.innerHTML = '';
     }
@@ -806,6 +979,12 @@ function renderStartSchedule() {
       appState.data.players.push(existing);
     }
 
+    // If player exists, do not overwrite their class (autocomplete should preserve it).
+    // Only update note from the add form.
+    else {
+      existing.note = note;
+    }
+
     if (!(sch.playerIds ?? []).includes(existing.id)) {
       sch.playerIds = sch.playerIds ?? [];
       sch.joins = sch.joins ?? [];
@@ -842,7 +1021,10 @@ function updatePaymentsTotalsForSchedule(scheduleId) {
     if (p.scheduleId !== scheduleId) continue;
     const shuttlecockUsage = { shuttles: shuttleByPlayer[p.playerName] ?? 0 };
     p.shuttlecockUsage = shuttlecockUsage;
-    p.totalPayment = computeTotalPayment({ shuttlecockUsage, playerName: p.playerName });
+    const sch = schedule;
+    const courtFee = sch?.courtFee ?? COURT_FEE;
+    const shuttleFeePer = sch?.shuttleFeePer ?? sch?.shuttleFeePer ?? SHUTTLE_FEE_PER;
+    p.totalPayment = computeTotalPayment({ shuttlecockUsage, playerName: p.playerName, courtFee, shuttleFeePer });
     p.scheduleDateISO = schedule.dateISO;
   }
 }
@@ -872,7 +1054,9 @@ function renderManageMatch() {
           <label>Active Schedule</label>
           <select id="mm-schedule">${scheduleOptions}</select>
         </div>
+        
         <hr class="sep" />
+
         <div class="row u-justify-start">
           <button class="btn primary" id="mm-add">+ Add Match</button>
           <button class="btn good" id="mm-suggest">⭐ See Suggestions</button>
@@ -1023,7 +1207,7 @@ function renderManageMatch() {
           const btnText = picked ? 'Unpick' : 'Pick';
 
           return `
-            <div class="card card--muted no-margin radius-14">
+            <div class="card card--muted no-margin">
               <div class="row u-justify-between u-align-center">
                 <div class="u-min-width-0">
                   <div class="fw-900 mb-4">
@@ -1085,8 +1269,8 @@ function renderManageMatch() {
       if (wrap) {
         wrap.innerHTML = `
           <div class="row u-gap-8 u-mb-8" id="mm-team-filter">
-            <button type="button" class="btn primary" data-team="${teamAName}">${teamAName}</button>
-            <button type="button" class="btn" data-team="${teamBName}">${teamBName}</button>
+            <button type="button" class="btn primary team-a" data-team="${teamAName}">${teamAName}</button>
+            <button type="button" class="btn team-b" data-team="${teamBName}">${teamBName}</button>
             <button type="button" class="btn" data-team="all">All</button>
           </div>
         `;
@@ -1276,10 +1460,10 @@ function renderManageMatch() {
                   <h2 class="u-h2-14">Suggestion #${s.suggestionNo}</h2>
                 </div>
 
-                <div class="u-mt-10 u-text-muted fw-800 u-font-12">${teamALabel}</div>
+                <div class="u-mt-10 u-text-muted fw-800 u-font-12">${current.isSparringMode ? `<span class="team-header team-a">${teamALabel}</span>` : teamALabel}</div>
                 <div class="row u-mt-6 u-gap-8">${teamAButtons}</div>
 
-                <div class="u-mt-10 u-text-muted fw-800 u-font-12">${teamBLabel}</div>
+                <div class="u-mt-10 u-text-muted fw-800 u-font-12">${current.isSparringMode ? `<span class="team-header team-b">${teamBLabel}</span>` : teamBLabel}</div>
                 <div class="row u-mt-6 u-gap-8">${teamBButtons}</div>
 
                 <div class="row u-justify-end u-mt-12">
@@ -1330,13 +1514,13 @@ function renderManageMatch() {
                 <h2 class="u-h2-14">Suggestion #${s.suggestionNo}</h2>
               </div>
 
-              <div class="u-mt-10 u-text-muted fw-800 u-font-12">${teamALabel}</div>
-              <div class="row u-mt-6">${s.teamA.join(' + ')}</div>
-              <div class="row u-mt-6 u-gap-8">${teamAButtons}</div>
+                  <div class="u-mt-10 u-text-muted fw-800 u-font-12">${current.isSparringMode ? `<span class="team-header team-a">${teamALabel}</span>` : teamALabel}</div>
+                  <div class="row u-mt-6">${s.teamA.join(' + ')}</div>
+                  <div class="row u-mt-6 u-gap-8">${teamAButtons}</div>
 
-              <div class="u-mt-10 u-text-muted fw-800 u-font-12">${teamBLabel}</div>
-              <div class="row u-mt-6">${s.teamB.join(' + ')}</div>
-              <div class="row u-mt-6 u-gap-8">${teamBButtons}</div>
+                  <div class="u-mt-10 u-text-muted fw-800 u-font-12">${current.isSparringMode ? `<span class="team-header team-b">${teamBLabel}</span>` : teamBLabel}</div>
+                  <div class="row u-mt-6">${s.teamB.join(' + ')}</div>
+                  <div class="row u-mt-6 u-gap-8">${teamBButtons}</div>
 
               <div class="row u-justify-end u-mt-12">
                 <button class="btn good" data-pick="${s.suggestionNo}" type="button">Select This Match</button>
@@ -1536,9 +1720,9 @@ function renderScheduleMatches() {
             <div class="pill">Balance: ${s.overallBalanceScore}</div>
           </div>
           <div class="grid u-mt-10 u-gap-8">
-            <div><div class="u-text-muted fw-800 u-font-12">${teamALabel}</div><div class="row">${s.teamA.join(' + ')}</div></div>
+            <div><div class="u-text-muted fw-800 u-font-12">${sch.isSparringMode ? `<span class="team-header team-a">${teamALabel}</span>` : teamALabel}</div><div class="row">${s.teamA.join(' + ')}</div></div>
             <div class="row">${teamAPlayers}</div>
-            <div><div class="u-text-muted fw-800 u-font-12 u-mt-6">${teamBLabel}</div><div class="row">${s.teamB.join(' + ')}</div></div>
+            <div><div class="u-text-muted fw-800 u-font-12 u-mt-6">${sch.isSparringMode ? `<span class="team-header team-b">${teamBLabel}</span>` : teamBLabel}</div><div class="row">${s.teamB.join(' + ')}</div></div>
             <div class="row">${teamBPlayers}</div>
           </div>
           <div class="row u-justify-end u-mt-10">
@@ -1670,12 +1854,12 @@ function renderScheduleMatches() {
                 <h2 class="u-h2-14">Suggestion #${s.suggestionNo}</h2>
                 <div class="pill">Balance: ${s.overallBalanceScore}</div>
               </div>
-              <div class="grid u-mt-10 u-gap-8">
-                <div><div class="u-text-muted fw-800 u-font-12">${teamALabel}</div><div class="row">${s.teamA.join(' + ')}</div></div>
-                <div class="row">${teamAButtons}</div>
-                <div><div class="u-text-muted fw-800 u-font-12 u-mt-6">${teamBLabel}</div><div class="row">${s.teamB.join(' + ')}</div></div>
-                <div class="row">${teamBButtons}</div>
-              </div>
+                  <div class="grid u-mt-10 u-gap-8">
+                    <div><div class="u-text-muted fw-800 u-font-12">${currentSch.isSparringMode ? `<span class="team-header team-a">${teamALabel}</span>` : teamALabel}</div><div class="row">${s.teamA.join(' + ')}</div></div>
+                    <div class="row">${teamAButtons}</div>
+                    <div><div class="u-text-muted fw-800 u-font-12 u-mt-6">${currentSch.isSparringMode ? `<span class="team-header team-b">${teamBLabel}</span>` : teamBLabel}</div><div class="row">${s.teamB.join(' + ')}</div></div>
+                    <div class="row">${teamBButtons}</div>
+                  </div>
               <div class="row u-justify-end u-mt-10">
                 <button class="btn good" data-pick="${s.suggestionNo}">Select This Match</button>
               </div>
@@ -1712,6 +1896,7 @@ function suggestMatchesForScheduleWithBlacklist(schedule, allPlayers, matches, b
       ...p,
       played: playedCountsByName[p.name] ?? 0,
       team: joinMap.get(p.id)?.team ?? null,
+      arriveTime: joinMap.get(p.id) ? Number(joinMap.get(p.id).joinTime) : Number.POSITIVE_INFINITY,
     }));
 
   candidates.sort((p1, p2) => {
@@ -1747,9 +1932,18 @@ function suggestMatchesForScheduleWithBlacklist(schedule, allPlayers, matches, b
             const teamBPlayers = [pb1, pb2];
             const fairness = teamAPlayers.concat(teamBPlayers).reduce((acc, p) => acc + (playedCountsByName[p.name] ?? 0), 0);
             const balance = balanceScoreForTeams({ teamA: teamAPlayers, teamB: teamBPlayers });
-            const overall = balance * 100 + fairness;
+            const arrivalSum = teamAPlayers.concat(teamBPlayers).reduce((acc, p) => acc + (p.arriveTime ?? Number.POSITIVE_INFINITY), 0);
 
-            suggestions.push({ teamA: [pa1.name, pa2.name], teamB: [pb1.name, pb2.name], overallBalanceScore: overall, shuttlecockUsage: { shuttles: 2 }, _meta: { ids } });
+            suggestions.push({
+              teamA: [pa1.name, pa2.name],
+              teamB: [pb1.name, pb2.name],
+              overallBalanceScore: balance * 100 + fairness,
+              shuttlecockUsage: { shuttles: 2 },
+              classDiff: balance,
+              playedSum: fairness,
+              arrivalSum,
+              _meta: { ids },
+            });
           }
         }
       }
@@ -1781,7 +1975,17 @@ function suggestMatchesForScheduleWithBlacklist(schedule, allPlayers, matches, b
     }
   }
 
-  suggestions.sort((a, b) => a.overallBalanceScore - b.overallBalanceScore);
+  suggestions.sort((a, b) => {
+    const ad = a.classDiff ?? a._meta?.classDiff ?? a.overallBalanceScore;
+    const bd = b.classDiff ?? b._meta?.classDiff ?? b.overallBalanceScore;
+    if (ad !== bd) return ad - bd;
+    const ap = a.playedSum ?? a._meta?.playedSum ?? 0;
+    const bp = b.playedSum ?? b._meta?.playedSum ?? 0;
+    if (ap !== bp) return ap - bp;
+    const aa = a.arrivalSum ?? a._meta?.arrivalSum ?? 0;
+    const ba = b.arrivalSum ?? b._meta?.arrivalSum ?? 0;
+    return aa - ba;
+  });
   return suggestions.slice(0, 3).map((s, idx) => ({
     suggestionNo: idx + 1,
     teamA: s.teamA,
@@ -1821,7 +2025,9 @@ async function autoEnsurePaymentsForSchedule(scheduleId) {
     if (existing) continue;
 
     const shuttlecockUsage = { shuttles: shuttleByPlayer[name] ?? 0 };
-    const total = computeTotalPayment({ shuttlecockUsage, playerName: name });
+    const courtFee = schedule?.courtFee ?? COURT_FEE;
+    const shuttleFeePer = schedule?.shuttleFeePer ?? SHUTTLE_FEE_PER;
+    const total = computeTotalPayment({ shuttlecockUsage, playerName: name, courtFee, shuttleFeePer });
 
     appState.data.payments.push({
       id: uuid(),
@@ -1842,20 +2048,20 @@ function renderPayments() {
 
   const scheduleById = new Map(schedules.map((s) => [s.id, s]));
 
-  const unpaid = payments
+  const unpaidAll = payments
     .filter((p) => !p.paymentMethod)
     .slice()
     .sort((a, b) => (a.scheduleDateISO ?? '').localeCompare(b.scheduleDateISO ?? ''));
 
-  view.innerHTML = `
-    <div class="card">
-      <h2>Unpaid Payment List</h2>
-      <div class="grid u-gap-10">
-        ${unpaid.length
-          ? unpaid
-              .map(
-                (p) => `
-                  <div class="card payment-card card--muted no-margin">
+  const renderUnpaidList = (query = '') => {
+    const q = (query || '').toLowerCase().trim();
+    const unpaid = q ? unpaidAll.filter((p) => p.playerName.toLowerCase().includes(q)) : unpaidAll;
+
+    return unpaid.length
+      ? unpaid
+          .map(
+            (p) => `
+                  <div class="card payment-card card--muted u-mb-10">
                     <div class="row u-justify-between u-align-start u-gap-12">
                       <div class="u-min-width-0">
                         <div class="fw-900 u-font-15 lh-13">
@@ -1872,12 +2078,34 @@ function renderPayments() {
                     </div>
                   </div>
                 `,
-              )
-              .join('')
-          : `<div class="u-text-muted u-font-13">No unpaid payments 🎉</div>`}
+          )
+          .join('')
+      : `<div class="u-text-muted u-font-13">No unpaid payments 🎉</div>`;
+  };
+
+  view.innerHTML = `
+    <div class="card">
+      <h2>Unpaid Payment List</h2>
+      <div class="grid u-gap-10">
+        <div>
+          <input id="payments-search" placeholder="Search by player name" />
+        </div>
+        <div id="payments-list">
+          ${renderUnpaidList()}
+        </div>
       </div>
     </div>
   `;
+
+  // wire search
+  const searchEl = $('#payments-search');
+  if (searchEl) {
+    searchEl.addEventListener('input', (ev) => {
+      const q = ev.target.value || '';
+      const listWrap = $('#payments-list');
+      if (listWrap) listWrap.innerHTML = renderUnpaidList(q);
+    });
+  }
 
   view.onclick = (e) => {
     const payId = e.target?.getAttribute?.('data-pay');
