@@ -105,14 +105,21 @@ export function confirmDialog(
       }
     };
 
+    // Use Bulma modal markup
     modal.innerHTML = `
-      <div class="modal-inner confirm-dialog" role="document" aria-labelledby="confirm-title">
-        <div class="confirm-dialog-title" id="confirm-title">${title}</div>
-        <div class="confirm-dialog-body">${message}</div>
-        <div class="modal-actions confirm-dialog-actions">
-          <button type="button" class="btn" id="confirm-cancel">${cancelText}</button>
-          <button type="button" class="btn ${danger ? 'danger' : 'primary'}" id="confirm-ok">${okText}</button>
-        </div>
+      <div class="modal-background"></div>
+      <div class="modal-card" role="document" aria-labelledby="confirm-title">
+        <header class="modal-card-head">
+          <p class="modal-card-title" id="confirm-title">${title}</p>
+          <button class="delete" aria-label="close" id="confirm-close"></button>
+        </header>
+        <section class="modal-card-body">
+          <div class="has-text-light">${message}</div>
+        </section>
+        <footer class="modal-card-foot">
+          <button type="button" class="button" id="confirm-cancel">${cancelText}</button>
+          <button type="button" class="button ${danger ? 'is-danger' : 'is-primary'}" id="confirm-ok">${okText}</button>
+        </footer>
       </div>
     `;
 
