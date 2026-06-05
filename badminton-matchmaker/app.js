@@ -314,13 +314,10 @@ function setSelectedClass(groupName, value = 'C') {
 
 function formatClassBadge(cls) {
   const s = String(cls ?? '');
-  // Keep only non-vowel letters, and uppercase everything
-  // Vowels: a i e o u (case-insensitive)
-  const formatted = s
-    .replace(/[aiueo]/gi, '')
-    .toUpperCase();
+  
+  const display = s.charAt(0).toUpperCase();
 
-  return `<span class="badge">${formatted}</span>`;
+  return `<span class="badge">${display}</span>`;
 }
 
 function formatTeamLabel(team) {
@@ -614,8 +611,6 @@ function renderStartSchedule() {
       </div>
     </div>
 
-    <hr class="sep" />
-    
     <div class="card">
       <h2>Players in Active Schedule</h2>
       <div id="sched-player-list" class="grid u-gap-10"></div>
@@ -2295,6 +2290,15 @@ function switchView(key) {
 async function main() {
   ensureSeededDemoData();
   await reloadData();
+
+  // Register service worker (best-effort, non-blocking)
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('service-worker.js').then((reg) => {
+      console.log('Service worker registered', reg.scope);
+    }).catch((err) => {
+      console.warn('SW registration failed', err);
+    });
+  }
 
   const closeNavigationDrawer = setupNavigationDrawer();
 

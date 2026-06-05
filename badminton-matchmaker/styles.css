@@ -30,6 +30,14 @@
   box-sizing: border-box;
 }
 
+/* Prevent iOS auto-zoom on inputs by ensuring text size and disabling text-size-adjust */
+html { -webkit-text-size-adjust: 100%; }
+
+/* Ensure form controls use at least 16px font to avoid mobile auto-zoom */
+input, textarea, select, button {
+  font-size: 16px;
+}
+
 html,
 body {
   height: 100%;
