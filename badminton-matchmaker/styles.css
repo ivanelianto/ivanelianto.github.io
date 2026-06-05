@@ -317,6 +317,20 @@ textarea {
   color: var(--text);
   outline: none;
 }
+/* Focus styles for accessibility */
+:where(button, input, textarea, select, a, .btn, .drawer-menu-item, .bottom-nav-btn):focus-visible {
+  outline: 3px solid rgba(79,140,255,0.24);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 4px rgba(79,140,255,0.08);
+}
+
+/* Provide visible disabled state */
+.btn[disabled], button[disabled], input[disabled], select[disabled], textarea[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+  border-color: rgba(255,255,255,0.04);
+}
 
 textarea {
   min-height: 7.5rem; /* 120px */
@@ -709,6 +723,11 @@ main.content { padding-bottom: 72px; }
   display: block;
 }
 
+/* Prevent toast from being obscured by mobile bottom navigation */
+@media (max-width: 430px) {
+  .toast { bottom: 86px; }
+}
+
 .footer {
   padding: .5em; /* keep em (font-relative) */
   display: flex;
@@ -767,3 +786,16 @@ main.content { padding-bottom: 72px; }
 .fw-800 { font-weight: 800; }
 .u-mt-8 { margin-top: 8px; }
 .u-align-start { align-items: flex-start; }
+
+/* Screen-reader only utility */
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
