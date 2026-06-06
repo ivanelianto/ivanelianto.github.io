@@ -95,6 +95,7 @@ body {
   display: flex !important;
   justify-content: flex-start !important;
   align-items: center !important;
+  width: 100%;
 }
 
 .mobile-header .navbar-burger.menu-toggle,
