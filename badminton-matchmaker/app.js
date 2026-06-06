@@ -267,23 +267,21 @@ function toast(msg) {
 
 function openModal(html) {
   const modal = $('#modal');
-  modal.innerHTML = `<form method="dialog"><div class="modal-inner">${html}</div></form>`;
-  modal.showModal();
+  // insert the provided modal markup (modal-background + modal-card)
+  modal.innerHTML = html;
+  modal.classList.add('is-active');
 
-  // Close when clicking outside the modal box (backdrop)
-  modal.addEventListener(
-    'click',
-    (e) => {
-      const modalInner = e.target?.closest?.('.modal-inner');
-      if (!modalInner) closeModal();
-    },
-    { once: true },
-  );
+  // Close when clicking outside the modal-card/modal-inner.
+  modal.addEventListener('click', (e) => {
+    const clickedInside = e.target?.closest?.('.modal-card') || e.target?.closest?.('.modal-inner');
+    if (!clickedInside) closeModal();
+  }, { once: true });
 }
 
 function closeModal() {
   const modal = $('#modal');
-  modal.close();
+  modal.classList.remove('is-active');
+  modal.innerHTML = '';
 }
 
 function renderClassRadios(groupName, value) {
@@ -493,40 +491,53 @@ function renderPlayers() {
             <div class="card-content">
               <h2>Players</h2>
               <div class="mt-5">
-                <button class="button is-success is-fullwidth" id="p-open-modal">➕ Add / Update Player</button>
+                <button type="button" class="button is-success is-fullwidth" id="p-open-modal">➕ Add / Update Player</button>
               </div>
             </div>
           </div>
         </div>
 
       
-        <div id="players-list" class="column is-6">
+        <div id="players-list" class="column is-12">
           ${cards || '<div class="has-text-grey-light">No players yet.</div>'}
         </div>
       </div>
     </div>
   `;
 
-  // Open modal to add/update a player
-  $('#p-open-modal').addEventListener('click', () => {
-    openPlayerModal();
-  });
-
   function openPlayerModal(existingPlayer = null) {
     openModal(`
-      <h3>${existingPlayer ? 'Update' : 'Add'} Player</h3>
-      <div class="grid">
-        <input id="mp-name" placeholder="Name" value="${existingPlayer ? existingPlayer.name : ''}" />
-        <div>
-          <label>Class</label>
-          ${renderClassRadios('mp-class', existingPlayer?.class ?? 'C')}
-        </div>
-        <input id="mp-note" placeholder="Note" value="${existingPlayer?.note ?? ''}" />
-      </div>
-      <div class="modal-actions mt-5">
-        <button value="cancel" class="button" formmethod="dialog">Cancel</button>
-        <button type="button" class="button" id="mp-delete" ${existingPlayer ? '' : 'style="display:none;"'}>Delete</button>
-        <button type="button" class="button is-primary" id="mp-save">Save</button>
+      <div class="modal-background"></div>
+      <div class="modal-card" role="document" aria-labelledby="mp-title">
+        <header class="modal-card-head">
+          <p class="modal-card-title" id="mp-title">${existingPlayer ? 'Update' : 'Add'} Player</p>
+          <button type="button" class="delete" aria-label="close" formmethod="dialog" value="cancel"></button>
+        </header>
+
+        <section class="modal-card-body">
+          <div class="grid">
+            <div>
+              <label>Name</label>
+              <input id="mp-name" class="input" placeholder="Name" value="${existingPlayer ? existingPlayer.name : ''}" />
+            </div>
+
+            <div>
+              <label>Class</label>
+              ${renderClassRadios('mp-class', existingPlayer?.class ?? 'C')}
+            </div>
+
+            <div>
+              <label>Note</label>
+              <input id="mp-note" class="input" placeholder="Note" value="${existingPlayer?.note ?? ''}" />
+            </div>
+          </div>
+        </section>
+
+        <footer class="modal-card-foot">
+          <button value="cancel" class="button" formmethod="dialog">Cancel</button>
+          <button type="button" class="button" id="mp-delete" ${existingPlayer ? '' : 'style="display:none;"'}>Delete</button>
+          <button type="button" class="button is-primary" id="mp-save">Save</button>
+        </footer>
       </div>
     `);
 
@@ -584,6 +595,13 @@ function renderPlayers() {
   }
 
   view.onclick = async (e) => {
+    const openBtn = e.target?.closest?.('#p-open-modal');
+    if (openBtn) {
+      e.preventDefault();
+      openPlayerModal();
+      return;
+    }
+
     const action = e.target?.closest?.('button[data-edit], button[data-del]');
     if (!action) return;
 

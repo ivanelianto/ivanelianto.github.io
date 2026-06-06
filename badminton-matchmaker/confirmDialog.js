@@ -27,7 +27,7 @@ export function confirmDialog(
     }
 
     closeActiveDialog();
-    if (modal.open) modal.close();
+    if (modal.classList.contains('is-active')) modal.classList.remove('is-active');
 
     let settled = false;
 
@@ -35,14 +35,14 @@ export function confirmDialog(
       if (settled) return;
       settled = true;
       cleanup();
-      if (modal.open) modal.close();
+      if (modal.classList.contains('is-active')) modal.classList.remove('is-active');
       if (activeDismiss === finish) activeDismiss = null;
       resolve(value);
     };
 
     const cleanup = () => {
       modal.removeEventListener('click', onBackdropClick);
-      modal.removeEventListener('cancel', onCancel);
+
       document.removeEventListener('keydown', onKeyDown);
       const okBtn = $('#confirm-ok');
       const cancelBtn = $('#confirm-cancel');
@@ -57,7 +57,7 @@ export function confirmDialog(
     };
 
     const onBackdropClick = (e) => {
-      if (e.target === modal) finish(false);
+      if (e.target && e.target.classList && e.target.classList.contains('modal-background')) finish(false);
     };
 
     const onCancel = (e) => {
@@ -124,7 +124,7 @@ export function confirmDialog(
     `;
 
     modal.addEventListener('click', onBackdropClick);
-    modal.addEventListener('cancel', onCancel);
+    // Note: dialog 'cancel' event is not used for div-based Bulma modal
 
     const okBtn = $('#confirm-ok');
     const cancelBtn = $('#confirm-cancel');
@@ -144,6 +144,6 @@ export function confirmDialog(
     (focusable[0] || okBtn || cancelBtn || modal).focus();
 
     activeDismiss = finish;
-    modal.showModal();
+    modal.classList.add('is-active');
   });
 }
