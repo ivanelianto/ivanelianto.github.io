@@ -26,6 +26,26 @@
   --radius: 8px;
 }
 
+.theme-dark, [data-theme=dark] {
+  --bulma-shadow: none;
+}
+
+.modal-card, .box {
+  background: rgba(17, 28, 51, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  color: var(--text);
+}
+
+.modal-card-head {
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  /* border-start-end-radius: 0;
+  border-start-start-radius: 0; */
+}
+
+.card {
+  --bulma-card-header-shadow: none;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -314,6 +334,11 @@ body {
   color: #fff;
 }
 
+/* Light-theme: selected radio label should use dark text */
+[data-theme="light"] .class-radio input:checked + span {
+  color: #0b1220;
+}
+
 /* Custom .btn removed; use Bulma .button variants instead */
 
 /* Toggle switch for nicer sparring control */
@@ -508,4 +533,8 @@ html, body {
 
 [data-theme="light"] .drawer-menu-item[aria-current="page"] {
   background: rgba(79, 140, 255, 0.16) !important;
+}
+
+.modal-card-foot {
+  justify-content: flex-end;
 }

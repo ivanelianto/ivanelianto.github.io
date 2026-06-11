@@ -118,7 +118,7 @@ export function confirmDialog(
         </section>
         <footer class="modal-card-foot">
           <button type="button" class="button" id="confirm-cancel">${cancelText}</button>
-          <button type="button" class="button ${danger ? 'is-danger' : 'is-primary'}" id="confirm-ok">${okText}</button>
+          <button type="button" class="button ${danger ? 'is-danger' : 'is-primary'} ml-3" id="confirm-ok">${okText}</button>
         </footer>
       </div>
     `;

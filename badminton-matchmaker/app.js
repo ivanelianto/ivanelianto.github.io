@@ -271,11 +271,21 @@ function openModal(html) {
   modal.innerHTML = html;
   modal.classList.add('is-active');
 
-  // Close when clicking outside the modal-card/modal-inner.
-  modal.addEventListener('click', (e) => {
-    const clickedInside = e.target?.closest?.('.modal-card') || e.target?.closest?.('.modal-inner');
-    if (!clickedInside) closeModal();
-  }, { once: true });
+  // Close when clicking outside the modal-card.
+  // Use capture + do not rely on { once: true } so it keeps working across modal content updates.
+  modal.addEventListener(
+    'click',
+    (e) => {
+      const card = e.target?.closest?.('.modal-card');
+      const inner = e.target?.closest?.('.modal-inner');
+      if (!card && !inner) closeModal();
+    },
+    true,
+  );
+
+  // Ensure the top-right X button (Bulma delete) closes too.
+  const closeBtn = modal.querySelector('button.delete[aria-label="close"], button.delete, .modal-card-head .delete');
+  closeBtn?.addEventListener('click', () => closeModal(), { once: true });
 }
 
 function closeModal() {
@@ -466,16 +476,16 @@ function renderPlayers() {
           <div class="row is-justify-content-space-between is-align-items-center">
             <div class="is-flex-basis-0">
               <div>
-                <span class="tag">${p.class}</span>
+                <span class="tag mr-1">${p.class}</span>
                 <strong>${p.name}</strong>
               </div>
 
-              <div class="has-text-grey-light is-size-7 mt-2">${p.note ?? ''}</div>
+              <div class="has-text-grey-light is-size-7 mt-1 mb-2">${p.note ?? ''}</div>
             </div>
 
-            <div class="row">
+            <div class="is-flex is-justify-content-flex-end">
               <button class="button is-warning" data-edit="${p.id}">✍️</button>
-              <button class="button is-danger" data-del="${p.id}">❌</button>
+              <button class="button is-danger ml-3" data-del="${p.id}">❌</button>
             </div>
           </div>
         </div>  
@@ -515,28 +525,29 @@ function renderPlayers() {
         </header>
 
         <section class="modal-card-body">
-          <div class="grid">
-            <div>
-              <label>Name</label>
-              <input id="mp-name" class="input" placeholder="Name" value="${existingPlayer ? existingPlayer.name : ''}" />
-            </div>
+          <div class="columns is-multiline">
+            <div class="column is-12">
+              <div>
+                <label>Name</label>
+                <input id="mp-name" class="input" placeholder="Name" value="${existingPlayer ? existingPlayer.name : ''}" />
+              </div>
 
-            <div>
-              <label>Class</label>
-              ${renderClassRadios('mp-class', existingPlayer?.class ?? 'C')}
-            </div>
+              <div>
+                <label>Class</label>
+                ${renderClassRadios('mp-class', existingPlayer?.class ?? 'C')}
+              </div>
 
-            <div>
-              <label>Note</label>
-              <input id="mp-note" class="input" placeholder="Note" value="${existingPlayer?.note ?? ''}" />
+              <div>
+                <label>Note</label>
+                <input id="mp-note" class="input" placeholder="Note" value="${existingPlayer?.note ?? ''}" />
+              </div>
             </div>
           </div>
         </section>
 
         <footer class="modal-card-foot">
-          <button value="cancel" class="button" formmethod="dialog">Cancel</button>
-          <button type="button" class="button" id="mp-delete" ${existingPlayer ? '' : 'style="display:none;"'}>Delete</button>
-          <button type="button" class="button is-primary" id="mp-save">Save</button>
+          <button type="button" class="button is-danger ml-3" id="mp-delete" ${existingPlayer ? '' : 'style="display:none;"'}>Delete</button>
+          <button type="button" class="button is-primary ml-3" id="mp-save">Save</button>
         </footer>
       </div>
     `);
