@@ -26,10 +26,6 @@
   --radius: 8px;
 }
 
-.theme-dark, [data-theme=dark] {
-  --bulma-shadow: none;
-}
-
 .modal-card, .box {
   background: rgba(17, 28, 51, 0.95);
   border: 1px solid rgba(255, 255, 255, 0.04);
@@ -41,11 +37,6 @@
   /* border-start-end-radius: 0;
   border-start-start-radius: 0; */
 }
-
-.card {
-  --bulma-card-header-shadow: none;
-}
-
 * {
   box-sizing: border-box;
 }
@@ -425,12 +416,69 @@ main.content { padding-bottom: 72px; margin-top: 6em; }
 
 /* Remove custom bottom-nav and confirm-dialog styles in strict mode */
 
-/* Remove custom autocomplete/toast styles in strict mode */
+.autocomplete-shell {
+  position: relative;
+  width: 100%;
+}
+
+.autocomplete-menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 0.375rem); /* 6px */
+  z-index: 60;
+  display: grid;
+  gap: 0.25rem; /* 4px */
+  max-height: 220px; /* keep layout height as-is */
+  overflow: auto;
+  padding: 0.5rem; /* 8px */
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(11, 18, 32, .98);
+  box-shadow: var(--shadow);
+}
+
+.autocomplete-menu[hidden] {
+  display: none !important;
+}
+
+.autocomplete-item {
+  appearance: none;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, .04);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 0.625rem 0.75rem; /* 10px 12px */
+  text-align: left;
+  font-size: 0.8125rem; /* 13px */
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.autocomplete-item.active,
+.autocomplete-item:hover {
+  border-color: rgba(79, 140, 255, .45);
+  background: rgba(79, 140, 255, .16);
+}
 
 /* Strict Bulma-only mode:
    Remove custom utility shims. Templates should use Bulma classes. */
 
 /* ===== Bulma Harmony Overrides (loaded after Bulma) ===== */
+
+/* Ensure Bulma modal is above fixed bottom navigation bar */
+#modal.modal {
+  z-index: 1000; /* must be > .bottom-nav z-index (60) */
+}
+
+#modal.modal .modal-background {
+  z-index: 1;
+}
+
+#modal.modal .modal-card {
+  z-index: 2;
+}
+
 
 :root {
   --app-bg: var(--bg);
@@ -537,4 +585,60 @@ html, body {
 
 .modal-card-foot {
   justify-content: flex-end;
+}
+
+input[type="date"] {
+    width: 100%;
+    position: relative;
+    padding-right: 44px;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23e8eefc" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>');
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 1rem 1rem;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+    position: absolute;
+    right: 8px;
+    cursor: pointer;
+    opacity: 0;
+    width: 1rem;
+    height: 1rem;
+}
+
+input.switch {
+  position: relative;
+  top: 0.5rem;
+  appearance: none;
+  width: 46px;
+  height: 24px;
+  background: #ccc;
+  border-radius: 20px;
+  outline: none;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+input.switch:checked {
+  background: #48c78e;
+}
+
+input.switch::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  background: white;
+  border-radius: 50%;
+  transition: 0.2s;
+}
+
+input.switch:checked::after {
+  transform: translateX(22px);
+}
+
+.player-list > *:not(:last-child) {
+  border-bottom: 1px solid var(--bulma-border);
 }
