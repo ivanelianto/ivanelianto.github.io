@@ -1,0 +1,6 @@
+.next
+node_modules
+out
+
+dev-server*
+static-server*
