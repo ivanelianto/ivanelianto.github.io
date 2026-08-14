@@ -27,7 +27,7 @@ export function confirmDialog(
     }
 
     closeActiveDialog();
-    if (modal.open) modal.close();
+    if (modal.classList.contains('is-active')) modal.classList.remove('is-active');
 
     let settled = false;
 
@@ -35,14 +35,14 @@ export function confirmDialog(
       if (settled) return;
       settled = true;
       cleanup();
-      if (modal.open) modal.close();
+      if (modal.classList.contains('is-active')) modal.classList.remove('is-active');
       if (activeDismiss === finish) activeDismiss = null;
       resolve(value);
     };
 
     const cleanup = () => {
       modal.removeEventListener('click', onBackdropClick);
-      modal.removeEventListener('cancel', onCancel);
+
       document.removeEventListener('keydown', onKeyDown);
       const okBtn = $('#confirm-ok');
       const cancelBtn = $('#confirm-cancel');
@@ -57,7 +57,7 @@ export function confirmDialog(
     };
 
     const onBackdropClick = (e) => {
-      if (e.target === modal) finish(false);
+      if (e.target && e.target.classList && e.target.classList.contains('modal-background')) finish(false);
     };
 
     const onCancel = (e) => {
@@ -105,19 +105,26 @@ export function confirmDialog(
       }
     };
 
+    // Use Bulma modal markup
     modal.innerHTML = `
-      <div class="modal-inner confirm-dialog" role="document" aria-labelledby="confirm-title">
-        <div class="confirm-dialog-title" id="confirm-title">${title}</div>
-        <div class="confirm-dialog-body">${message}</div>
-        <div class="modal-actions confirm-dialog-actions">
-          <button type="button" class="btn" id="confirm-cancel">${cancelText}</button>
-          <button type="button" class="btn ${danger ? 'danger' : 'primary'}" id="confirm-ok">${okText}</button>
-        </div>
+      <div class="modal-background"></div>
+      <div class="modal-card" role="document" aria-labelledby="confirm-title">
+        <header class="modal-card-head">
+          <p class="modal-card-title" id="confirm-title">${title}</p>
+          <button class="delete" aria-label="close" id="confirm-close"></button>
+        </header>
+        <section class="modal-card-body">
+          <div class="has-text-light">${message}</div>
+        </section>
+        <footer class="modal-card-foot">
+          <button type="button" class="button" id="confirm-cancel">${cancelText}</button>
+          <button type="button" class="button ${danger ? 'is-danger' : 'is-primary'} ml-3" id="confirm-ok">${okText}</button>
+        </footer>
       </div>
     `;
 
     modal.addEventListener('click', onBackdropClick);
-    modal.addEventListener('cancel', onCancel);
+    // Note: dialog 'cancel' event is not used for div-based Bulma modal
 
     const okBtn = $('#confirm-ok');
     const cancelBtn = $('#confirm-cancel');
@@ -137,6 +144,6 @@ export function confirmDialog(
     (focusable[0] || okBtn || cancelBtn || modal).focus();
 
     activeDismiss = finish;
-    modal.showModal();
+    modal.classList.add('is-active');
   });
 }

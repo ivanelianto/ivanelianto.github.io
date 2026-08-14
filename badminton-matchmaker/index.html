@@ -7,32 +7,36 @@
     <link rel="manifest" href="manifest.json" />
     <link rel="icon" href="icons/icon-192.svg" />
     <title>Badminton Matchmaker</title>
+    <!-- Bulma CSS (CDN) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js@11.2.3/public/assets/styles/choices.min.css">
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <div class="app">
-      <header class="mobile-header">
-        <button
-          type="button"
-          id="menu-toggle"
-          class="menu-toggle"
-          aria-controls="navigation-drawer"
-          aria-expanded="false"
-          aria-label="Open navigation menu"
-        >
-          ☰
-        </button>
+      <header class="mobile-header navbar" id="app-header">
+        <div class="navbar-brand">
+          <a role="button" id="menu-toggle" class="navbar-burger menu-toggle" aria-controls="navigation-drawer" aria-expanded="false" aria-label="Open navigation menu">
+            ☰
+          </a>
+          <h1 class="title is-5 app-title m-0">Badminton Matchmaker</h1>
 
-        <h1>Badminton Matchmaker</h1>
+          <button
+            type="button"
+            id="theme-toggle"
+            class="button is-small theme-toggle is-justify-self-end"
+            aria-label="Toggle theme"
+            aria-pressed="true"
+            title="Toggle theme"
+          >
+            🌙
+          </button>
+        </div>
       </header>
 
       <div class="drawer-backdrop" id="drawer-backdrop" hidden></div>
 
-      <aside
-        id="navigation-drawer"
-        class="navigation-drawer"
-        aria-label="Main navigation"
-      >
+      <aside id="navigation-drawer" class="navigation-drawer menu" aria-label="Main navigation">
         <div class="drawer-profile">
           <div class="drawer-avatar" aria-hidden="true">B</div>
 
@@ -44,30 +48,30 @@
         </div>
 
         <nav class="drawer-menu" aria-label="Main menu">
-          <button class="tab drawer-menu-item" data-view="dashboard">
+          <a class="menu-item tab drawer-menu-item" data-view="dashboard">
             <span class="menu-icon" aria-hidden="true">📊</span>
             <span>Dashboard</span>
-          </button>
-          <button class="tab drawer-menu-item" data-view="players">
+          </a>
+          <a class="menu-item tab drawer-menu-item" data-view="players">
             <span class="menu-icon" aria-hidden="true">👤</span>
             <span>Manage Players</span>
-          </button>
-          <button class="tab drawer-menu-item" data-view="schedule">
+          </a>
+          <a class="menu-item tab drawer-menu-item" data-view="schedule">
             <span class="menu-icon" aria-hidden="true">📅</span>
             <span>Manage Schedule</span>
-          </button>
-          <button class="tab drawer-menu-item" data-view="manage-match">
+          </a>
+          <a class="menu-item tab drawer-menu-item" data-view="manage-match">
             <span class="menu-icon" aria-hidden="true">🏸</span>
             <span>Manage Match</span>
-          </button>
-          <button class="tab drawer-menu-item" data-view="payments">
+          </a>
+          <a class="menu-item tab drawer-menu-item" data-view="payments">
             <span class="menu-icon" aria-hidden="true">💰</span>
             <span>Manage Payments</span>
-          </button>
-          <button class="tab drawer-menu-item" data-view="io">
+          </a>
+          <a class="menu-item tab drawer-menu-item" data-view="io">
             <span class="menu-icon" aria-hidden="true">📁</span>
             <span>Import / Export</span>
-          </button>
+          </a>
         </nav>
       </aside>
 
@@ -79,23 +83,20 @@
         <section id="view-payments" class="view" aria-live="polite"></section>
         <section id="view-io" class="view" aria-live="polite"></section>
       </main>
-
-      <footer class="footer">
-        <span>Powered by Pominton</span>
-      </footer>
       
       <!-- Bottom mobile navigation -->
       <nav class="bottom-nav" role="navigation" aria-label="Bottom navigation">
-        <button class="tab bottom-nav-btn" data-view="dashboard" title="Dashboard">📊<span class="bn-label">Dashboard</span></button>
-        <button class="tab bottom-nav-btn" data-view="players" title="Players">👤<span class="bn-label">Players</span></button>
-        <button class="tab bottom-nav-btn" data-view="schedule" title="Schedule">📅<span class="bn-label">Schedule</span></button>
-        <button class="tab bottom-nav-btn" data-view="manage-match" title="Match">🏸<span class="bn-label">Match</span></button>
-        <button class="tab bottom-nav-btn" data-view="payments" title="Payments">💰<span class="bn-label">Payments</span></button>
+        <a class="tab bottom-nav-btn" data-view="dashboard" title="Dashboard">📊<span class="bn-label">Dashboard</span></a>
+        <a class="tab bottom-nav-btn" data-view="players" title="Players">👤<span class="bn-label">Players</span></a>
+        <a class="tab bottom-nav-btn" data-view="schedule" title="Schedule">📅<span class="bn-label">Schedule</span></a>
+        <a class="tab bottom-nav-btn" data-view="manage-match" title="Match">🏸<span class="bn-label">Match</span></a>
+        <a class="tab bottom-nav-btn" data-view="payments" title="Payments">💰<span class="bn-label">Payments</span></a>
       </nav>
     </div>
 
-    <dialog id="modal" class="modal" aria-modal="true"></dialog>
+    <div id="modal" class="modal" aria-modal="true"></div>
 
+    <script src="https://cdn.jsdelivr.net/npm/choices.js@11.2.3/public/assets/scripts/choices.min.js"></script>
     <script type="module" src="app.js"></script>
   </body>
 </html>

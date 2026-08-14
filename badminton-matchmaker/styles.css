@@ -26,6 +26,17 @@
   --radius: 8px;
 }
 
+.modal-card, .box {
+  background: rgba(17, 28, 51, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  color: var(--text);
+}
+
+.modal-card-head {
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  /* border-start-end-radius: 0;
+  border-start-start-radius: 0; */
+}
 * {
   box-sizing: border-box;
 }
@@ -48,9 +59,7 @@ body {
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji", "Segoe UI Emoji";
   font-size: var(--font-body); /* 1rem = 16px */
   line-height: 1.5;
-  background: radial-gradient(620px 340px at 20% -8%, rgba(79, 140, 255, .26), transparent 62%),
-    radial-gradient(520px 280px at 90% 0%, rgba(86, 211, 100, .14), transparent 58%),
-    var(--bg);
+  background: #070b12; /* simple high-contrast dark */
   color: var(--text);
 }
 
@@ -61,26 +70,49 @@ body {
   margin: 0 auto;
   padding: 0 12px 32px;
   overflow-x: hidden;
-  background: radial-gradient(620px 340px at 20% -8%, rgba(79, 140, 255, .26), transparent 62%),
-    radial-gradient(520px 280px at 90% 0%, rgba(86, 211, 100, .14), transparent 58%),
-    var(--bg);
-  box-shadow: 0 0 34px rgba(18, 28, 45, .24);
+  background: #070b12; /* simple high-contrast dark */
+  box-shadow: 0 0 34px rgba(0, 0, 0, .45);
 }
 
 .mobile-header {
   position: fixed;
   top: 0;
   z-index: 30;
-  display: grid;
   grid-template-columns: 44px 1fr 44px;
   align-items: center;
-  min-height: 64px;
   padding: 10px 12px;
   background: rgba(11, 18, 32, .92);
   border-bottom: 1px solid var(--border);
   backdrop-filter: blur(14px);
   width: 430px;
   margin-left: -12px;
+}
+
+/* Theme toggle (top-right) */
+.theme-toggle {
+  margin-left: auto;
+  height: 36px;
+  min-width: 36px;
+  padding: 0 10px;
+  border-radius: 10px;
+  color: var(--text);
+}
+
+/* Bulma navbar spacing can push our burger away from the left on mobile.
+   Override it to keep the hamburger flush with our grid. */
+.mobile-header .navbar-brand {
+  margin: 0 !important;
+  padding: 0 !important;
+  display: flex !important;
+  justify-content: flex-start !important;
+  align-items: center !important;
+  width: 100%;
+}
+
+.mobile-header .navbar-burger.menu-toggle,
+.mobile-header .navbar-burger {
+  margin-left: 0 !important;
+  padding-left: 0 !important;
 }
 
 .mobile-header h1 {
@@ -130,14 +162,15 @@ body {
   position: fixed;
   top: 0;
   bottom: 0;
-  z-index: 50;
+  z-index: 80; /* above bottom nav (z-index: 60) */
   width: 280px;
   max-width: 85vw;
   padding: 18px 12px;
   overflow: auto;
-  color: #1f2937;
-  background: #fff;
-  box-shadow: 0 20px 48px rgba(9, 20, 38, .32);
+  color: var(--text);
+  background: rgba(11, 18, 32, .98);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, .55);
   transform: translateX(-104%);
   transition: transform 280ms cubic-bezier(.2, 0, 0, 1);
   margin-left: -12px;
@@ -168,7 +201,7 @@ body {
   min-height: 118px;
   margin: 0 -0.75rem 0.875rem; /* -12px and 14px */
   padding: 1.125rem 1rem 1rem; /* 18px 16px 16px */
-  border-bottom: 1px solid #e7ebf0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .drawer-avatar {
@@ -225,7 +258,7 @@ body {
   border-radius: 0 24px 24px 0;
   padding: 0 1.125rem; /* 18px */
   background: transparent;
-  color: #2f3642;
+  color: var(--text);
   cursor: pointer;
   font-size: 0.875rem; /* 14px */
   font-weight: 700;
@@ -233,12 +266,12 @@ body {
 }
 
 .drawer-menu-item:hover {
-  background: #f3f6fa;
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .drawer-menu-item[aria-current="page"] {
-  background: #e8f0fe;
-  color: var(--accent);
+  background: rgba(79, 140, 255, 0.20);
+  color: #ffffff;
 }
 
 .menu-icon {
@@ -253,107 +286,26 @@ body {
   filter: none;
 }
 
-.content {
-  margin-top: calc(4rem + 0.75rem); /* 64px + 12px */
-}
-
+/* Keep view switching styles (app-specific). Everything else should use Bulma. */
 .view {
   display: none;
-  padding: 1rem; /* 16px */
-  background: rgba(17, 28, 51, .75);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
 }
-
 .view.active {
   display: block;
 }
 
-.grid {
-  display: grid;
-  gap: 0.75rem; /* 12px */
-}
-
-.grid-2,
-.grid-3 {
-  grid-template-columns: 1fr;
-}
-
-.card {
-  background: rgba(15, 25, 48, .9);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 0.875rem; /* 14px */
-}
-
-.card h2 {
-  margin: 0 0 0.625rem; /* 10px */
-  font-size: 0.9375rem; /* 15px */
-}
-
-.row {
-  display: flex;
-  gap: 0.625rem; /* 10px */
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-label {
-  display: block;
-  font-size: 0.75rem; /* 12px */
-  color: var(--muted);
-  margin-bottom: 0.375rem; /* 6px */
-}
-
-input,
-select,
-textarea {
-  width: 100%;
-  padding: 0.6875rem 0.75rem; /* 11px 12px */
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  background: rgba(255, 255, 255, .04);
-  color: var(--text);
-  outline: none;
-}
-/* Focus styles for accessibility */
-:where(button, input, textarea, select, a, .btn, .drawer-menu-item, .bottom-nav-btn):focus-visible {
-  outline: 3px solid rgba(79,140,255,0.24);
-  outline-offset: 3px;
-  box-shadow: 0 0 0 4px rgba(79,140,255,0.08);
-}
-
-/* Provide visible disabled state */
-.btn[disabled], button[disabled], input[disabled], select[disabled], textarea[disabled] {
-  opacity: 0.5;
-  cursor: not-allowed;
-  box-shadow: none;
-  border-color: rgba(255,255,255,0.04);
-}
-
-textarea {
-  min-height: 7.5rem; /* 120px */
-  resize: vertical;
-}
-
+/* Custom class radio control (not available in Bulma) */
 .class-radio-group {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
 }
-
-.class-radio {
-  display: block;
-  position: relative;
-}
-
+.class-radio { display: block; position: relative; }
 .class-radio input {
   position: absolute;
   opacity: 0;
   pointer-events: none;
 }
-
 .class-radio span {
   display: grid;
   place-items: center;
@@ -367,48 +319,18 @@ textarea {
   cursor: pointer;
   user-select: none;
 }
-
 .class-radio input:checked + span {
   border-color: rgba(79, 140, 255, .55);
   background: rgba(79, 140, 255, .18);
   color: #fff;
 }
 
-.btn {
-  appearance: none;
-  cursor: pointer;
-  border: 1px solid var(--border);
-  background: rgba(255, 255, 255, .04);
-  color: var(--text);
-  padding: 0.625rem 0.75rem; /* 10px 12px */
-  border-radius: 12px;
-  font-weight: 700;
-  font-size: 0.8125rem; /* 13px */
+/* Light-theme: selected radio label should use dark text */
+[data-theme="light"] .class-radio input:checked + span {
+  color: #0b1220;
 }
 
-.btn:hover {
-  border-color: rgba(255, 255, 255, .25);
-}
-
-.btn.primary {
-  border-color: rgba(79, 140, 255, .55);
-  background: rgba(79, 140, 255, .18);
-}
-
-.btn.good {
-  border-color: rgba(86, 211, 100, .55);
-  background: rgba(86, 211, 100, .18);
-}
-
-.btn.danger {
-  border-color: rgba(255, 77, 77, .55);
-  background: rgba(255, 77, 77, .16);
-}
-
-.btn.warn {
-  border-color: rgba(255, 204, 51, .65);
-  background: rgba(255, 204, 51, .16);
-}
+/* Custom .btn removed; use Bulma .button variants instead */
 
 /* Toggle switch for nicer sparring control */
 .switch {
@@ -419,10 +341,7 @@ textarea {
   cursor: pointer;
 }
 
-.switch-wrapper {
-  display: block;
-}
-
+.switch-wrapper { display: block; }
 .switch input {
   appearance: none;
   width: 44px;
@@ -433,11 +352,7 @@ textarea {
   border: 1px solid var(--border);
   box-sizing: border-box;
 }
-
-.switch input:checked {
-  background: linear-gradient(90deg, var(--accent), var(--accent2));
-}
-
+.switch input:checked { background: linear-gradient(90deg, var(--accent), var(--accent2)); }
 .switch-slider {
   position: absolute;
   left: 8px;
@@ -450,155 +365,14 @@ textarea {
   transition: transform 160ms ease, left 160ms ease;
   box-shadow: 0 2px 6px rgba(0,0,0,0.25);
 }
+.switch input:checked + .switch-slider { transform: translateX(20px); }
 
-.switch input:checked + .switch-slider {
-  transform: translateX(20px);
-}
+/* Remove custom pill/badge/table/button styles in strict Bulma mode */
 
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  overflow: hidden;
-  border-radius: 14px;
-}
+/* Keep Bulma modals; custom .modal overrides removed */
 
-.table th,
-.table td {
-  padding: 0.625rem 0.625rem; /* 10px 10px */
-  border-bottom: 1px solid rgba(255, 255, 255, .08);
-  font-size: 0.8125rem; /* 13px */
-  text-align: left;
-}
-
-.table th {
-  color: var(--muted);
-  font-weight: 800;
-}
-
-.pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem; /* 8px */
-  padding: 0.375rem 0.625rem; /* 6px 10px */
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: rgba(255, 255, 255, .04);
-  font-weight: 800;
-  font-size: 0.75rem; /* 12px */
-}
-
-.badge {
-  display: inline-flex;
-  padding: 0.25rem 0.5rem; /* 4px 8px */
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: rgba(255, 255, 255, .04);
-  font-weight: 800;
-  font-size: 0.75rem; /* 12px */
-}
-
-.badge--team {
-  display: inline-flex;
-  padding: 0.25rem 0.5rem;
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.06);
-  background: linear-gradient(90deg, rgba(86,211,100,0.12), rgba(79,140,255,0.12));
-  color: var(--text);
-  font-weight: 800;
-  font-size: 0.75rem;
-}
-
-.badge--team.team-a {
-  background: linear-gradient(90deg, var(--team-a-tint), rgba(255,255,255,0.02));
-  border-color: rgba(79,140,255,0.35);
-  color: var(--team-a);
-}
-
-.badge--team.team-b {
-  background: linear-gradient(90deg, var(--team-b-tint), rgba(255,255,255,0.02));
-  border-color: rgba(255,77,77,0.35);
-  color: var(--team-b);
-}
-
-.team-radio {
-  width: 4em;
-  letter-spacing: 2px;
-}
-
-.team-radio.team-a span {
-  border-color: rgba(79,140,255,0.35);
-  background: rgba(79,140,255,0.06);
-  color: var(--team-a);
-}
-
-.team-radio.team-b span {
-  border-color: rgba(255,77,77,0.35);
-  background: rgba(255,77,77,0.06);
-  color: var(--team-b);
-}
-
-.team-header.team-a {
-  color: var(--team-a);
-}
-
-.team-header.team-b {
-  color: var(--team-b);
-}
-
-.btn.team-a {
-  border-color: rgba(79,140,255,0.32);
-  color: var(--team-a);
-}
-
-.btn.team-b {
-  border-color: rgba(255,77,77,0.32);
-  color: var(--team-b);
-}
-
-.btn.team-b.primary {
-  border-color: rgba(255,77,77,0.55);
-  background: rgba(255,77,77,0.12);
-  color: #fff;
-}
-
-hr.sep {
-  border: none;
-  border-top: 1px solid rgba(255, 255, 255, .10);
-  margin: 0.875rem 0; /* 14px */
-}
-
-.modal {
-  width: min(720px, 100%);
-  border: none;
-  background: rgba(17, 28, 51, .95);
-  color: var(--text);
-  border-radius: 16px;
-  padding: 0;
-  box-shadow: var(--shadow);
-}
-
-.modal::backdrop {
-  background: rgba(0, 0, 0, .55);
-  backdrop-filter: blur(6px);
-}
-
-.modal-inner {
-  padding: 1rem; /* 16px */
-}
-
-.modal h3 {
-  margin: 0 0 0.5rem; /* 8px */
-}
-
-.modal-actions {
-  display: flex;
-  gap: 0.625rem; /* 10px */
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  margin-top: 0.75rem; /* 12px */
-}
-
-/* Bottom mobile navigation */
+/* Bottom mobile navigation (required app layout).
+   Minimal styles to ensure visibility/positioning after strict Bulma migration. */
 .bottom-nav {
   position: fixed;
   bottom: 0;
@@ -610,7 +384,7 @@ hr.sep {
   justify-content: space-around;
   align-items: center;
   padding: 8px 6px;
-  background: linear-gradient(180deg, rgba(11,18,32,0.9), rgba(11,18,32,0.98));
+  background: rgba(11,18,32,0.98);
   border-top: 1px solid rgba(255,255,255,0.06);
 }
 
@@ -632,32 +406,15 @@ hr.sep {
   display: block;
 }
 
-.bottom-nav-btn[aria-current="page"], .bottom-nav-btn.tab[aria-current="page"] {
+.bottom-nav-btn[aria-current="page"],
+.bottom-nav-btn.tab[aria-current="page"] {
   color: var(--accent);
 }
 
 /* Avoid overlapping content with bottom nav */
-main.content { padding-bottom: 72px; }
+main.content { padding-bottom: 72px; margin-top: 6em; }
 
-.confirm-dialog {
-  min-width: min(92vw, 360px);
-}
-
-.confirm-dialog-title {
-  font-size: 16px;
-  font-weight: 900;
-  margin-bottom: 8px;
-}
-
-.confirm-dialog-body {
-  color: var(--text);
-  line-height: 1.45;
-  font-size: 14px;
-}
-
-.confirm-dialog-actions {
-  margin-top: 16px;
-}
+/* Remove custom bottom-nav and confirm-dialog styles in strict mode */
 
 .autocomplete-shell {
   position: relative;
@@ -704,98 +461,184 @@ main.content { padding-bottom: 72px; }
   background: rgba(79, 140, 255, .16);
 }
 
-.toast {
-  position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: 14px;
-  background: rgba(17, 28, 51, .95);
-  border: 1px solid var(--border);
-  color: var(--text);
-  padding: 10px 12px;
-  border-radius: 14px;
-  box-shadow: var(--shadow);
-  display: none;
-  max-width: 90vw;
+/* Strict Bulma-only mode:
+   Remove custom utility shims. Templates should use Bulma classes. */
+
+/* ===== Bulma Harmony Overrides (loaded after Bulma) ===== */
+
+/* Ensure Bulma modal is above fixed bottom navigation bar */
+#modal.modal {
+  z-index: 1000; /* must be > .bottom-nav z-index (60) */
 }
 
-.toast.show {
-  display: block;
+#modal.modal .modal-background {
+  z-index: 1;
 }
 
-/* Prevent toast from being obscured by mobile bottom navigation */
-@media (max-width: 430px) {
-  .toast { bottom: 86px; }
+#modal.modal .modal-card {
+  z-index: 2;
 }
 
-.footer {
-  padding: .5em; /* keep em (font-relative) */
-  display: flex;
-  justify-content: center;
-  align-items: center;
+
+:root {
+  --app-bg: var(--bg);
+  --app-surface: var(--panel);
+  --app-accent: var(--accent);
 }
 
-/* Utility classes added to replace inline styles from JS templates */
-.u-justify-between { justify-content: space-between; }
-.u-justify-start { justify-content: flex-start; }
-.u-justify-end { justify-content: flex-end; }
-.u-align-center { align-items: center; }
-.u-align-end { align-self: flex-end; }
-.u-flex-1 { flex: 1; }
-.u-min-width-0 { min-width: 0; }
-.u-gap-10 { gap: 10px; }
-.u-gap-8 { gap: 8px; }
-.u-gap-12 { gap: 12px; }
-.u-mt-4 { margin-top: 4px; }
-.u-mt-6 { margin-top: 6px; }
-.u-mt-10 { margin-top: 10px; }
-.u-mb-0 { margin-bottom: 0; }
-.u-mb-10 { margin-bottom: 10px; }
-.u-margin-0 { margin: 0; }
-.u-overflow-auto { overflow: auto; }
-.u-w-100 { width: 100%; }
-.u-text-muted { color: var(--muted); }
-.u-font-13 { font-size: 13px; }
-.u-font-12 { font-size: 12px; }
-.u-font-14 { font-size: 14px; }
-.u-font-15 { font-size: 15px; }
-.fw-900 { font-weight: 900; }
-.mb-4 { margin-bottom: 4px; }
-.mb-8 { margin-bottom: 8px; }
-.padding-right-6 { padding-right: 6px; }
-.maxh-52vh { max-height: 52vh; }
-.radius-14 { border-radius: 14px; }
+/* Ensure base still matches app theme */
+/* body { background: radial-gradient(620px 340px at 20% -8%, rgba(79, 140, 255, .26), transparent 62%), radial-gradient(520px 280px at 90% 0%, rgba(86, 211, 100, .14), transparent 58%), var(--bg); color: var(--text); } */
 
-/* Card variants used in templates */
-.card--muted { background: rgba(255,255,255,.03); }
-.card--overlay { background: rgba(15,25,48,.65); }
-.no-margin { margin: 0; }
+/* Buttons: align visual language with existing .btn styles */
+/* .button { border-radius: 12px; font-weight: 700; border: 1px solid var(--border); }
+.button:not(.is-light):not(.is-white) { color: var(--text); }
+.button.is-primary { background: rgba(79,140,255,0.18); border-color: rgba(79,140,255,0.55); color: #fff; }
+.button.is-success { background: rgba(86,211,100,0.16); border-color: rgba(86,211,100,0.55); color: #fff; }
+.button.is-danger { background: rgba(255,77,77,0.16); border-color: rgba(255,77,77,0.55); color: #fff; }
+.button.is-warning { background: rgba(255,204,51,0.16); border-color: rgba(255,204,51,0.65); color: #111827; } */
 
-/* Grid helper */
-.grid-cols-1 { grid-template-columns: 1fr; }
+/* Modal backdrop and card adjustments */
+.modal-background { background-color: rgba(2,6,23,0.72); }
+.modal-card, .box { background: rgba(17,28,51,0.95); border: 1px solid rgba(255,255,255,0.04); color: var(--text); }
 
-/* Width helpers */
-.w-30 { width: 30%; }
-.w-12 { width: 12%; }
-.w-22 { width: 22%; }
-.mr-05em { margin-right: 0.5em; }
-.u-mt-12 { margin-top: 12px; }
-.u-h2-14 { margin: 0; font-size: 14px; }
-.u-mt-2 { margin-top: 2px; }
-.u-border-top-subtle { border-top: 1px solid rgba(255,255,255,.10); }
-.fw-800 { font-weight: 800; }
-.u-mt-8 { margin-top: 8px; }
-.u-align-start { align-items: flex-start; }
+/* Navbar tweaks to preserve app header look */
+.navbar, .navbar-menu, .navbar-item { background: transparent; color: var(--text); }
 
-/* Screen-reader only utility */
-.sr-only {
-  position: absolute !important;
-  width: 1px !important;
-  height: 1px !important;
-  padding: 0 !important;
-  margin: -1px !important;
-  overflow: hidden !important;
-  clip: rect(0, 0, 0, 0) !important;
-  white-space: nowrap !important;
-  border: 0 !important;
+/* Bottom navigation: prefer existing bottom-nav styles but tolerate Bulma helpers */
+.bottom-nav { left: 50%; transform: translateX(-50%); width: min(100vw, 430px); }
+.bottom-nav .button { background: transparent; border: none; color: var(--muted); padding: 6px 8px; }
+.bottom-nav .button[aria-current="page"] { color: var(--accent); }
+
+/* Focus-visible harmony */
+:where(.button, a, input, select, textarea):focus-visible { outline: 3px solid rgba(79,140,255,0.24); outline-offset: 3px; box-shadow: 0 0 0 4px rgba(79,140,255,0.08); }
+
+/* Disabled state parity */
+.button[disabled], button[disabled], .is-disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+
+/* (removed .u-w-100 utility shim; templates should use Bulma classes) */
+
+/* Small helper to avoid Bulma's global .container width issues inside app */
+.app { max-width: 430px; }
+
+/* End Bulma Harmony Overrides */
+
+/* Ensure dark background stays consistent even with Bulma defaults */
+:root {
+  color-scheme: dark;
+}
+
+html, body {
+  background: var(--bg, #070b12) !important;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f7f8fb;
+  --text: #0b1220;
+  --muted: #4b5563;
+  --border: rgba(0, 0, 0, .12);
+  --panel: #ffffff;
+  --panel2: #f3f4f6;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0b1220;
+  --text: #e8eefc;
+  --muted: #a9b4d0;
+  --border: rgba(255, 255, 255, .20);
+  --panel: #111c33;
+  --panel2: #0f1930;
+}
+
+[data-theme="light"] body,
+[data-theme="light"] .app {
+  background: var(--bg) !important;
+  color: var(--text) !important;
+}
+
+[data-theme="light"] .mobile-header,
+[data-theme="light"] .drawer-backdrop,
+[data-theme="light"] .bottom-nav {
+  background: rgba(255,255,255,0.92) !important;
+  border-color: rgba(0,0,0,.08) !important;
+}
+
+[data-theme="light"] .navigation-drawer {
+  background: rgba(255,255,255,0.98) !important;
+  color: var(--text) !important;
+  box-shadow: 0 20px 48px rgba(0,0,0,.18) !important;
+  border-right-color: rgba(0,0,0,.06) !important;
+}
+
+[data-theme="light"] .drawer-menu-item {
+  color: var(--text) !important;
+}
+
+[data-theme="light"] .drawer-menu-item:hover {
+  background: rgba(0,0,0,0.04) !important;
+}
+
+[data-theme="light"] .drawer-menu-item[aria-current="page"] {
+  background: rgba(79, 140, 255, 0.16) !important;
+}
+
+.modal-card-foot {
+  justify-content: flex-end;
+}
+
+input[type="date"] {
+    width: 100%;
+    position: relative;
+    padding-right: 44px;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23e8eefc" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>');
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 1rem 1rem;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+    position: absolute;
+    right: 8px;
+    cursor: pointer;
+    opacity: 0;
+    width: 1rem;
+    height: 1rem;
+}
+
+input.switch {
+  position: relative;
+  top: 0.5rem;
+  appearance: none;
+  width: 46px;
+  height: 24px;
+  background: #ccc;
+  border-radius: 20px;
+  outline: none;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+input.switch:checked {
+  background: #48c78e;
+}
+
+input.switch::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  background: white;
+  border-radius: 50%;
+  transition: 0.2s;
+}
+
+input.switch:checked::after {
+  transform: translateX(22px);
+}
+
+.player-list > *:not(:last-child) {
+  border-bottom: 1px solid var(--bulma-border);
 }

@@ -267,28 +267,49 @@ function toast(msg) {
 
 function openModal(html) {
   const modal = $('#modal');
-  modal.innerHTML = `<form method="dialog"><div class="modal-inner">${html}</div></form>`;
-  modal.showModal();
+  // insert the provided modal markup (modal-background + modal-card)
+  modal.innerHTML = html;
+  modal.classList.add('is-active');
 
-  // Close when clicking outside the modal box (backdrop)
+  // Close when clicking outside the modal-card.
+  // Use capture + do not rely on { once: true } so it keeps working across modal content updates.
   modal.addEventListener(
     'click',
     (e) => {
-      const modalInner = e.target?.closest?.('.modal-inner');
-      if (!modalInner) closeModal();
+      const card = e.target?.closest?.('.modal-card');
+      const inner = e.target?.closest?.('.modal-inner');
+      if (!card && !inner) closeModal();
     },
-    { once: true },
+    true,
   );
+
+  // Ensure the top-right X button (Bulma delete) closes too.
+  const closeBtn = modal.querySelector('button.delete[aria-label="close"], button.delete, .modal-card-head .delete');
+  closeBtn?.addEventListener('click', () => closeModal(), { once: true });
+
+  // Ensure any buttons intended to close the dialog (e.g. footer Close buttons using formmethod="dialog") close the modal.
+  modal.querySelectorAll('button[formmethod="dialog"]').forEach((btn) => {
+    btn.addEventListener('click', () => closeModal(), { once: true });
+  });
 }
 
 function closeModal() {
   const modal = $('#modal');
-  modal.close();
+  modal.classList.remove('is-active');
+  modal.innerHTML = '';
+  if (typeof scheduleAutocompleteTeardown === 'function') {
+    try {
+      scheduleAutocompleteTeardown();
+    } catch (e) {
+      // ignore
+    }
+    scheduleAutocompleteTeardown = null;
+  }
 }
 
 function renderClassRadios(groupName, value) {
   return `
-    <div class="class-radio-group" data-class-group="${groupName}">
+    <div class="class-radio-group mt-2" data-class-group="${groupName}">
       ${CLASS_ORDER.map((c) => `
         <label class="class-radio">
           <input type="radio" name="${groupName}" value="${c}" ${c === value ? 'checked' : ''} />
@@ -314,10 +335,10 @@ function setSelectedClass(groupName, value = 'C') {
 
 function formatClassBadge(cls) {
   const s = String(cls ?? '');
-  
+
   const display = s.charAt(0).toUpperCase();
 
-  return `<span class="badge">${display}</span>`;
+  return `<span class="tag">${display}</span>`;
 }
 
 function formatTeamLabel(team) {
@@ -334,15 +355,10 @@ function formatTeamLabel(team) {
   return (first + rest).toUpperCase().slice(0, 3);
 }
 
-
-
-
-
 function renderPlayerNameWithClass(p) {
   if (!p) return '';
   return `${formatClassBadge(p.class)} ${capitalizeEachWord(p.name)}`;
 }
-
 
 // ---- App state ----
 let appState = {
@@ -381,20 +397,73 @@ function renderDashboard() {
   const outstandingPayments = payments.filter((p) => !p.paymentMethod);
 
   view.innerHTML = `
-    <div class="grid grid-3">
-      <div class="card"><h2>Total Players</h2><div class="pill">${players.length}</div></div>
-      <div class="card"><h2>Active Players Today</h2><div class="pill">${activePlayersToday}</div></div>
-      <div class="card"><h2>Total Matches Today</h2><div class="pill">${totalMatchesToday}</div></div>
-      <div class="card"><h2>Total Shuttlecock Usage</h2><div class="pill">${totalShuttles}</div></div>
-      <div class="card"><h2>Total Outstanding Payments</h2><div class="pill">${outstandingPayments.length}</div></div>
-      <div class="card"><h2>Active Schedule</h2><div class="pill">${activeISO ? formatDateNice(activeISO) : '-'}</div></div>
-    </div>
-    <hr class="sep" />
-    <div class="row">
-      <button class="btn primary" data-go="schedule">Start / Select Schedule</button>
-      <button class="btn" data-go="players">Manage   Players</button>
-      <button class="btn" data-go="payments">Manage Payments</button>
-    </div>
+      <div class="columns is-multiline">
+        <div class="column is-12">
+          <div class="card">
+            <div class="card-content">
+              <div class="content">
+                <h2>Total Players</h2>
+                <span class="tag is-dark is-large is-primary">${players.length}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="column is-12">
+          <div class="card">
+            <div class="card-content">
+              <div class="content">
+                <h2>Active Players Today</h2>
+                <span class="tag is-dark is-large is-primary">${activePlayersToday}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="column is-12">
+          <div class="card">
+            <div class="card-content">
+              <div class="content">
+                <h2>Total Matches Today</h2>
+                <span class="tag is-dark is-large is-primary">${totalMatchesToday}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="column is-12">
+          <div class="card">
+            <div class="card-content">
+              <div class="content">
+                <h2>Total Shuttlecock Usage</h2>
+                <span class="tag is-dark is-large is-primary">${totalShuttles}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="column is-12">
+          <div class="card">
+            <div class="card-content">
+              <div class="content">
+                <h2>Total Outstanding Payments</h2>
+                <span class="tag is-dark is-large is-primary">${outstandingPayments.length}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="column is-12">
+          <div class="card">
+            <div class="card-content">
+              <div class="content">
+                <h2>Active Schedule</h2>
+                <span class="tag is-dark is-large is-primary">${activeISO ? formatDateNice(activeISO) : '-'}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
   `;
 
   $$('button[data-go]', view).forEach((b) => {
@@ -410,16 +479,16 @@ function renderPlayers() {
     .slice()
     .sort((a, b) => a.name.localeCompare(b.name))
     .map((p) => `
-      <div class="card card--muted u-mb-10">
-        <div class="row u-justify-between u-align-center">
-          <div class="u-min-width-0">
-            <div><span class="badge mr-05em">${p.class}</span> <strong>${p.name}</strong></div>
-            <div class="u-text-muted u-font-13 u-mt-4">${p.note ?? ''}</div>
-          </div>
-          <div class="row u-gap-8">
-            <button class="btn warn" data-edit="${p.id}">✍️</button>
-            <button class="btn danger" data-del="${p.id}">❌</button>
-          </div>
+      <div class="is-flex is-justify-content-space-between is-align-items-center py-4">
+        <div class="is-flex-basis-0">
+          <span class="tag mr-1">${p.class}</span>
+          <strong>${p.name}</strong>
+          <span class="has-text-grey-light is-size-7">${p.note ? ' - ' + p.note : ''}</span>
+        </div>
+
+        <div class="is-flex is-justify-content-flex-end">
+          <button class="button is-small is-outlined is-warning" data-edit="${p.id}">✍️</button>
+          <button class="button is-small is-outlined is-danger ml-3" data-del="${p.id}">❌</button>
         </div>
       </div>
     `)
@@ -427,41 +496,59 @@ function renderPlayers() {
 
   view.innerHTML = `
     <div class="grid grid-cols-1">
-      <div class="card">
-        <h2>Players</h2>
-        <div class="u-mt-12">
-          <button class="btn good u-w-100" id="p-open-modal">➕ Add / Update Player</button>
-        </div>
-        
-        <div class="u-overflow-auto u-mt-12">
-          <div id="players-list">
-            ${cards || '<div class="u-text-muted">No players yet.</div>'}
+      <div class="columns is-multiline">
+        <div class="column is-12">
+          <div class="card">
+            <div class="card-content">
+              <h3>Players</h3>
+              <div class="mt-5">
+                <button type="button" class="button is-success is-fullwidth" id="p-open-modal">➕ Add / Update Player</button>
+              </div>
+            </div>
+
+            <div id="players-list" class="player-list column is-12">
+              ${cards || '<div class="has-text-grey-light">No players yet.</div>'}
+            </div>
           </div>
         </div>
       </div>
     </div>
   `;
 
-  // Open modal to add/update a player
-  $('#p-open-modal').addEventListener('click', () => {
-    openPlayerModal();
-  });
-
   function openPlayerModal(existingPlayer = null) {
     openModal(`
-      <h3>${existingPlayer ? 'Update' : 'Add'} Player</h3>
-      <div class="grid u-gap-10">
-        <input id="mp-name" placeholder="Name" value="${existingPlayer ? existingPlayer.name : ''}" />
-        <div>
-          <label>Class</label>
-          ${renderClassRadios('mp-class', existingPlayer?.class ?? 'C')}
-        </div>
-        <input id="mp-note" placeholder="Note" value="${existingPlayer?.note ?? ''}" />
-      </div>
-      <div class="modal-actions u-mt-12">
-        <button value="cancel" class="btn" formmethod="dialog">Cancel</button>
-        <button type="button" class="btn" id="mp-delete" ${existingPlayer ? '' : 'style="display:none;"'}>Delete</button>
-        <button type="button" class="btn primary" id="mp-save">Save</button>
+      <div class="modal-background"></div>
+      <div class="modal-card" role="document" aria-labelledby="mp-title">
+        <header class="modal-card-head">
+          <p class="modal-card-title" id="mp-title">${existingPlayer ? 'Update' : 'Add'} Player</p>
+          <button type="button" class="delete" aria-label="close" formmethod="dialog" value="cancel"></button>
+        </header>
+
+        <section class="modal-card-body">
+          <div class="columns is-multiline">
+            <div class="column is-12">
+              <div class="mb-4">
+                <label class="mb-4">Name</label>
+                <input id="mp-name" class="input mt-2" placeholder="Name" value="${existingPlayer ? existingPlayer.name : ''}" />
+              </div>
+
+              <div class="mb-4">
+                <label>Class</label>
+                ${renderClassRadios('mp-class', existingPlayer?.class ?? 'C')}
+              </div>
+
+              <div class="mb-4">
+                <label>Note</label>
+                <input id="mp-note" class="input mt-2" placeholder="Note" value="${existingPlayer?.note ?? ''}" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <footer class="modal-card-foot">
+          <button type="button" class="button is-danger ml-3" id="mp-delete" ${existingPlayer ? '' : 'style="display:none;"'}>Delete</button>
+          <button type="button" class="button is-primary ml-3" id="mp-save">Save</button>
+        </footer>
       </div>
     `);
 
@@ -515,10 +602,17 @@ function renderPlayers() {
     }
 
     // close modal on backdrop click handled by openModal
-    modal.addEventListener('close', () => {}, { once: true });
+    modal.addEventListener('close', () => { }, { once: true });
   }
 
   view.onclick = async (e) => {
+    const openBtn = e.target?.closest?.('#p-open-modal');
+    if (openBtn) {
+      e.preventDefault();
+      openPlayerModal();
+      return;
+    }
+
     const action = e.target?.closest?.('button[data-edit], button[data-del]');
     if (!action) return;
 
@@ -529,7 +623,7 @@ function renderPlayers() {
       openPlayerModal(p);
     }
     if (delId) {
-    if (!(await confirmDialog('Delete this player?', { title: 'Delete Player', okText: 'OK', danger: true }))) return;
+      if (!(await confirmDialog('Delete this player?', { title: 'Delete Player', okText: 'OK', danger: true }))) return;
       // Also remove from any schedules
       appState.data.players = appState.data.players.filter((x) => x.id !== delId);
       appState.data.schedules.forEach((s) => {
@@ -555,20 +649,22 @@ function renderStartSchedule() {
   const lastSchedule = schedules.slice().sort((a, b) => b.createdAt - a.createdAt)[0];
 
   const scheduleSelect = `
-    <div>
+    <div class="mb-3">
       <label>Active Schedule</label>
-      <div>
-        <select id="active-schedule"></select>
-      </div>
-      
-      <div class="u-mt-6 u-font-13 u-text-muted">
-        Fees: <span id="sched-fees">-</span>
-      </div>
 
-      <div class="row u-mt-8">
-        <button class="btn danger" id="sched-close">❌ Close</button>
-        <button class="btn good" id="sched-new">➕ New Schedule</button>
+      <div class="select is-fullwidth">
+        <select class="input" id="active-schedule"></select>
       </div>
+    </div>
+    
+    <div class="mb-3 is-size-7 has-text-grey-light">
+      Fees: <span id="sched-fees">-</span>
+    </div>
+
+
+    <div class="is-align-self-flex-end">
+      <button class="button is-danger" id="sched-close">❌ Close</button>
+      <button class="button is-success ml-3" id="sched-new">➕ New Schedule</button>
     </div>
   `;
 
@@ -578,42 +674,41 @@ function renderStartSchedule() {
     .map((s) => `<option value="${s.id}">${formatScheduleLabel(s)}</option>`)
     .join('');
 
+  const hasSchedules = (schedules ?? []).length > 0;
+
   view.innerHTML = `
-    <div class="grid grid-2">
-      <div class="card">
-        <h2>Start / Select Schedule</h2>
-        <div class="grid u-gap-10">
-          ${scheduleSelect}
+    <div class="grid grid-cols-1">
+      <div class="columns is-multiline">
+        <div class="column is-12">
+          <div class="card">
+            <div class="card-content">
+              <h3>Start / Select Schedule</h3>
+              
+              <div class="is-flex is-flex-direction-column mt-5">
+                ${scheduleSelect}
 
-          <div class="u-text-muted u-font-13">
-            Players added will be reused from <span class="fw-800">players.json</span> if name matches.
+                <div class="has-text-grey-light is-size-7 mt-4">
+                  Players added will be reused from <span class="has-text-weight-bold">players.json</span> if name matches.
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="card">
-        <h2>Add Players to Schedule</h2>
-        <div class="grid u-gap-10">
-          <div id="sp-team-wrap"></div>  
-          <div>
-            <label>Player name</label>
-            <input id="sp-name" placeholder="Player name" />
-          </div>
-          <div>
-            <label>Class (used if new player)</label>
-            ${renderClassRadios('sp-class', 'C')}
-          </div>
-          <input id="sp-note" placeholder="Note (optional)" />
-          <div class="row">
-            <button class="btn good" id="sp-add">🟢 Add Player</button>
+        ${hasSchedules ? `
+        <div class="column is-12" id="sched-players-list-card">
+          <div class="card">
+            <div class="card-content">
+              <h3>Players in Active Schedule</h3>
+              <div class="is-align-self-flex-end mb-3">
+                <button type="button" class="button is-success" id="sched-open-add-player">➕ Add Player</button>
+              </div>
+              <div id="sched-player-list" class="player-list mt-4"></div>
+            </div>
           </div>
         </div>
+        ` : ''}
       </div>
-    </div>
-
-    <div class="card">
-      <h2>Players in Active Schedule</h2>
-      <div id="sched-player-list" class="grid u-gap-10"></div>
     </div>
   `;
 
@@ -641,13 +736,35 @@ function renderStartSchedule() {
     const sch = getActiveSchedule();
     const list = $('#sched-player-list');
 
+    const playersCard = document.querySelector('#view-schedule h2 + .mt-4')?.closest?.('.card');
+
     if (!sch) {
-      list.innerHTML = `<div class="u-text-muted u-font-13">No active schedule. Create one.</div>`;
+      // Hide the whole "Add Players..." + "Players in Active Schedule" section when no schedule is selected
+      const addHeading = Array.from(document.querySelectorAll('#view-schedule h3')).find((h) => (h.textContent || '').trim().startsWith('Add Players'));
+      const addCard = addHeading?.closest?.('.column');
+      if (addCard) addCard.style.display = 'none';
+      if (playersCard) playersCard.style.display = 'none';
       return;
     }
 
+    // Ensure cards are visible again when schedule is available
+    const addHeading = Array.from(document.querySelectorAll('#view-schedule h3')).find((h) => (h.textContent || '').trim().startsWith('Add Players'));
+    const addCard = addHeading?.closest?.('.column');
+    if (addCard) addCard.style.display = '';
+    if (playersCard) playersCard.style.display = '';
+
     const playerById = new Map(appState.data.players.map((p) => [p.id, p]));
     const joinMap = new Map((sch.joins ?? []).map((j) => [j.playerId, j]));
+
+    const playerListItem = (player, arriveTime, playerId, teamBadge) => `
+      <div class="is-flex is-justify-content-space-between is-align-items-center py-5">
+        <div class="has-text-adaptive">
+          ${teamBadge}${player?.class ? formatClassBadge(player.class) : ''} ${capitalizeEachWord(player?.name ?? '')}
+          <span class="has-text-grey is-size-7"> ${arriveTime}</span>
+        </div>
+        <button class="button is-danger is-small" data-remove="${playerId}">X</button>
+      </div>`
+    ;
 
     const rows = (sch.playerIds ?? []).map((pid) => {
       const p = playerById.get(pid);
@@ -656,28 +773,17 @@ function renderStartSchedule() {
       const arriveTime = joinTime ? new Date(joinTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-';
       const teamBadge = sch.isSparringMode && joinObj.team ? `<span class="badge--team ${joinObj.team === (sch.teamA || '') ? 'team-a' : 'team-b'} mr-05em">${joinObj.team}</span>` : '';
 
-      return `
-        <div class="card card--muted no-margin">
-          <div class="row u-justify-between u-align-center">
-            <div class="u-flex-1">
-              <div>${teamBadge}${p?.class ? formatClassBadge(p.class) : ''} ${capitalizeEachWord(p?.name ?? '')} - arrive ${arriveTime}</div>
-            </div>
-            <div>
-              <button class="btn danger" data-remove="${pid}">X</button>
-            </div>
-          </div>
-        </div>
-      `;
+      return playerListItem(p, arriveTime, pid, teamBadge);
     });
+
     if (!sch.isSparringMode) {
-      list.innerHTML = rows.join('') || `<div class="u-text-muted u-font-13">No players added yet.</div>`;
+      list.innerHTML = rows.join('') || `<div class="has-text-grey-light is-size-7">No players added yet.</div>`;
       return;
     }
 
     // Sparring mode: group players by team cards
     const teamAName = sch.teamA || 'Team A';
     const teamBName = sch.teamB || 'Team B';
-
 
     const teamAIds = (sch.joins ?? []).filter((j) => j.team === teamAName).map((j) => j.playerId);
     const teamBIds = (sch.joins ?? []).filter((j) => j.team === teamBName).map((j) => j.playerId);
@@ -687,62 +793,66 @@ function renderStartSchedule() {
         .map((pid) => {
           const p = playerById.get(pid);
           const j = joinMap.get(pid) || {};
-          const arrive = j.joinTime ? new Date(j.joinTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-';
-          return `
-            <div class="card card--muted u-mb-10">
-              <div class="row u-justify-between u-align-center">
-                <div>
-                  ${p?.class ? formatClassBadge(p.class) : ''} <strong>${capitalizeEachWord(p?.name ?? '')} </strong>
-                  <span class="u-font-12 u-text-muted">arrive ${arrive}</span>
-                </div>
-                <div><button class="btn danger" data-remove="${pid}">X</button></div>
-              </div>
-            </div>
-          `;
+          const arriveTime = j.joinTime ? new Date(j.joinTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-';
+
+          return playerListItem(p, arriveTime, pid, '');
         })
-        .join('') || `<div class="u-text-muted u-font-13">No players in this team.</div>`;
+        .join('') || `<div class="has-text-grey-light is-size-7">No players in this team.</div>`;
 
     list.innerHTML = `
-      <div class="row u-gap-8 u-mb-8" id="sched-team-filter">
-        <button type="button" class="btn primary" data-team="all">All</button>
-        <button type="button" class="btn" data-team="${teamAName}">${teamAName}</button>
-        <button type="button" class="btn" data-team="${teamBName}">${teamBName}</button>
+      <div class="tabs is-boxed mb-4" id="sched-team-filter">
+        <ul class="ml-0">
+          <li class="is-active">
+            <a data-team="${teamAName}">${teamAName} 
+              <span class="tag ml-2">${teamAIds.length}</span>
+            </a>
+          </li>
+
+          <li>
+            <a data-team="${teamBName}">${teamBName} 
+              <span class="tag ml-2">${teamBIds.length}</span>
+            </a>
+          </li>
+        </ul>
       </div>
 
       <div id="sched-team-cards">
-        <div class="card" data-team-card="${teamAName}">
-          <div class="u-text-muted fw-800 u-font-12 team-header team-a">${teamAName}</div>
-          <div class="u-mt-8">${renderList(teamAIds)}</div>
+        <div class="player-list" data-team-card="${teamAName}">
+          ${renderList(teamAIds)}
         </div>
 
-        <div class="card u-mt-12" data-team-card="${teamBName}">
-          <div class="u-text-muted fw-800 u-font-12 team-header team-b">${teamBName}</div>
-          <div class="u-mt-8">${renderList(teamBIds)}</div>
+        <div class="player-list" data-team-card="${teamBName}">
+          ${renderList(teamBIds)}
         </div>
       </div>
     `;
+
+    // default: show Team A only
+    const container = $('#sched-team-cards');
+    if (container) {
+      container.querySelectorAll('[data-team-card]').forEach((el) => {
+        el.style.display = el.getAttribute('data-team-card') === teamAName ? 'block' : 'none';
+      });
+    }
 
     // wire up filter buttons
     const filterWrap = $('#sched-team-filter');
     if (filterWrap) {
       filterWrap.addEventListener('click', (ev) => {
-        const btn = ev.target?.closest?.('button[data-team]');
+        const btn = ev.target?.closest?.('[data-team]');
         if (!btn) return;
         const team = btn.getAttribute('data-team');
 
-        // update active styling
-        $$('#sched-team-filter button').forEach((b) => b.classList.remove('primary'));
-        btn.classList.add('primary');
+        // update active styling on tabs
+        $$('#sched-team-filter li').forEach((li) => li.classList.remove('is-active'));
+        const li = btn.closest('li');
+        if (li) li.classList.add('is-active');
 
         const container = $('#sched-team-cards');
         if (!container) return;
-        if (team === 'all') {
-          container.querySelectorAll('[data-team-card]').forEach((el) => (el.style.display = 'block'));
-        } else {
-          container.querySelectorAll('[data-team-card]').forEach((el) => {
-            el.style.display = el.getAttribute('data-team-card') === team ? 'block' : 'none';
-          });
-        }
+        container.querySelectorAll('[data-team-card]').forEach((el) => {
+          el.style.display = el.getAttribute('data-team-card') === team ? 'block' : 'none';
+        });
       });
     }
   };
@@ -757,66 +867,117 @@ function renderStartSchedule() {
   // initial fees label
   updateFeesLabel();
 
-  // Close just clears active schedule (does not delete schedule)
   $('#sched-close').addEventListener('click', async () => {
+    const current = getActiveSchedule();
+    if (!current?.id) {
+      toast('No active schedule');
+      return;
+    }
+
+    if (
+      !(
+        await confirmDialog('Close this schedule? This will remove it and its matches/payments.', {
+          title: 'Close Schedule',
+          okText: 'OK',
+          danger: true,
+        })
+      )
+    )
+      return;
+
+    // Remove schedule
+    appState.data.schedules = appState.data.schedules.filter((s) => s.id !== current.id);
+
+    // Remove matches & payments for that schedule
+    appState.data.matches = appState.data.matches.filter((m) => m.scheduleId !== current.id);
+    appState.data.payments = appState.data.payments.filter((p) => p.scheduleId !== current.id);
+
     appState.activeScheduleId = null;
+
     await storage.saveAll(appState.data);
+    await reloadData();
     renderStartSchedule();
-    toast('Active schedule cleared');
+    toast('Schedule closed');
   });
 
   // New Schedule opens modal
   $('#sched-new').addEventListener('click', () => {
     openModal(`
-      <h3>Create New Schedule</h3>
-      <div class="grid u-gap-10">
-        <div>
-          <label>Schedule Date</label>
-          <input type="date" id="ns-date" value="${todayISO()}" />
-        </div>
+      <div class="modal-background"></div>
+      <div class="modal-card" role="document" aria-labelledby="ns-title">
+        <header class="modal-card-head">
+          <p class="modal-card-title" id="ns-title">Create New Schedule</p>
+          <button type="button" class="delete" aria-label="close"></button>
+        </header>
 
-        <div>
-          <label>Session Name (Optional)</label>
-          <input id="ns-session" placeholder="e.g. Friday Night Session" />
-        </div>
+        <section class="modal-card-body is-flex is-flex-direction-column">
+          <div class="field">
+            <label class="label">Schedule Date</label>
 
-        <div>
-          <label>Options</label>
-          <div class="row u-gap-8">
-            <label class="switch">
-              <div class="switch-wrapper">
-                <input type="checkbox" id="ns-sparring" />
-                <span class="switch-slider"></span>
+            <div class="control">
+              <input
+                class="input mt-0"
+                type="date"
+                id="ns-date"
+                value="${todayISO()}"
+              />
+            </div>
+
+          </div>
+
+          <div class="field mt-4">
+            <label class="label">Session Name (Optional)</label>
+
+            <div class="control">
+              <input class="input" id="ns-session" placeholder="e.g. Friday Night Session" />
+            </div>
+          </div>
+
+          <div class="field mt-4">
+            <label class="label">Options</label>
+            <div class="control">
+              <div class="row">
+                <div class="field">
+                  <input id="ns-sparring" type="checkbox" name="toggle" class="switch is-success">
+                  <label for="toggle">Sparring Mode</label>
+                </div>
               </div>
-              <span class="u-ml-8">Sparring Mode</span>
-            </label>
+            </div>
           </div>
-        </div>
 
-        <div>
-          <label>Court Fee</label>
-          <input type="number" id="ns-court-fee" value="15000" min="0" />
-        </div>
-        <div>
-          <label>Shuttlecock Fee</label>
-          <input type="number" id="ns-shuttle-fee" value="4000" min="0" />
-        </div>
-
-        <div id="ns-teams" style="display:none;">
-          <div>
-            <label>Team A</label>
-            <input id="ns-team-a" placeholder="Team A name" />
+          <div class="field mt-4">
+            <label class="label">Court Fee</label>
+            <div class="control">
+              <input class="input" type="number" id="ns-court-fee" value="15000" min="0" />
+            </div>
           </div>
-          <div class="u-mt-8">
-            <label>Team B</label>
-            <input id="ns-team-b" placeholder="Team B name" />
-          </div>
-        </div>
-      </div>
 
-      <div class="modal-actions">
-        <button value="cancel" class="btn" formmethod="dialog">Cancel</button>
-        <button type="button" class="btn primary" id="ns-create">Create New Schedule</button>
+          <div class="field mt-4">
+            <label class="label">Shuttlecock Fee</label>
+            <div class="control">
+              <input class="input" type="number" id="ns-shuttle-fee" value="4000" min="0" />
+            </div>
+          </div>
+
+          <div id="ns-teams" style="display:none;">
+            <div class="field mt-4">
+              <label class="label">Team A</label>
+              <div class="control">
+                <input class="input" id="ns-team-a" placeholder="Team A name" />
+              </div>
+            </div>
+            <div class="field mt-4">
+              <label class="label">Team B</label>
+              <div class="control">
+                <input class="input" id="ns-team-b" placeholder="Team B name" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <footer class="modal-card-foot">
+          <button type="button" class="button is-primary" id="ns-create">Create New Schedule</button>
+        </footer>
       </div>
     `);
 
@@ -828,7 +989,8 @@ function renderStartSchedule() {
     });
 
     $('#ns-create').addEventListener('click', async () => {
-      const dateISO = $('#ns-date').value || todayISO();
+      const dateISO = ($('#ns-date').value || '').trim() || todayISO();
+
       const sessionName = ($('#ns-session').value || '').trim();
       const isSparringMode = !!$('#ns-sparring').checked;
       const teamA = isSparringMode ? ($('#ns-team-a').value || '').trim() : '';
@@ -872,57 +1034,164 @@ function renderStartSchedule() {
 
   // legacy inline-create removed; creation now handled via New Schedule modal
 
-  $('#sp-add').addEventListener('click', async () => {
-    await addPlayerToActiveSchedule();
-  });
-
-  // If the active schedule is sparring mode, show team radio options
-  const refreshTeamControls = () => {
+  // Open Add Player modal from "Players in Active Schedule" card
+  const openAddPlayerModal = () => {
     const sch = getActiveSchedule();
-    const wrap = $('#sp-team-wrap');
-    if (!wrap) return;
-    if (sch && sch.isSparringMode) {
+    if (!sch) return toast('Create/select schedule first');
+
+    openModal(`
+      <div class="modal-background"></div>
+      <div class="modal-card" role="document" aria-labelledby="ap-title">
+        <header class="modal-card-head">
+          <p class="modal-card-title" id="ap-title">Add Player to Schedule</p>
+          <button type="button" class="delete" aria-label="close"></button>
+        </header>
+
+        <section class="modal-card-body is-flex is-flex-direction-column">
+          <div id="ap-team-wrap" class="field">
+          </div>
+
+          <div class="field">
+            <label class="label">Player name</label>
+            <div class="control">
+              <input class="input" id="ap-name" placeholder="Player name" />
+            </div>
+          </div>
+
+          <div class="field mt-3">
+            <label class="label">Class (used if new player)</label>
+            <div class="control">${renderClassRadios('ap-class', 'C')}</div>
+          </div>
+
+          <div class="field mt-3">
+            <label class="label">Note (optional)</label>
+            <div class="control"><input class="input" id="ap-note" placeholder="Note (optional)" /></div>
+          </div>
+        </section>
+
+        <footer class="modal-card-foot">
+          <button type="button" class="button is-primary" id="ap-save">Add Player</button>
+        </footer>
+      </div>
+    `);
+
+    // wire up team controls if sparring
+    const teamsWrap = $('#ap-team-wrap');
+    if (sch.isSparringMode) {
       const teamA = sch.teamA || 'Team A';
       const teamB = sch.teamB || 'Team B';
-      wrap.innerHTML = `
-        <label>Team</label>
-        <div class="row">
-          <label class="class-radio team-radio"><input type="radio" name="sp-team" value="${teamA}" /> <span>${formatTeamLabel(teamA)}</span></label>
-          <label class="class-radio team-radio"><input type="radio" name="sp-team" value="${teamB}" /> <span>${formatTeamLabel(teamB)}</span></label>
+      teamsWrap.innerHTML = `
+        <label class="label">Team</label>
+        <div class="control columns is-mobile">
+          <label class="class-radio team-radio column">
+            <input type="radio" name="ap-team" value="${teamA}" />
+            <span>${formatTeamLabel(teamA)}</span>
+          </label>
+
+          <label class="class-radio team-radio column">
+            <input type="radio" name="ap-team" value="${teamB}" />
+            <span>${formatTeamLabel(teamB)}</span>
+          </label>
         </div>
       `;
 
-    } else {
-      wrap.innerHTML = '';
+      // hide all siblings of the team wrapper's parent except the team wrapper itself
+      const teamWrapEl = $('#ap-team-wrap');
+      if (teamWrapEl) {
+        const parent = teamWrapEl.parentElement;
+        if (parent) {
+          // hide every child except the teamWrapEl
+          Array.from(parent.children).forEach((ch) => {
+            if (ch === teamWrapEl) return;
+            ch.style.display = 'none';
+            // mark hidden so we can restore later
+            ch.setAttribute('data-hidden-by-team', '1');
+          });
+
+          // when team selected, reveal previously hidden siblings
+          teamsWrap.addEventListener('change', (ev) => {
+            const sel = $(`input[name="ap-team"]:checked`);
+            if (sel) {
+              Array.from(parent.children).forEach((ch) => {
+                if (ch.getAttribute('data-hidden-by-team') === '1') {
+                  ch.style.display = '';
+                  ch.removeAttribute('data-hidden-by-team');
+                }
+              });
+            }
+          });
+        }
+      }
     }
+
+    // attach autocomplete to modal input
+    try {
+      scheduleAutocompleteTeardown = createAutocompleteInput($('#ap-name'), {
+        source: (query) => {
+          const q = (query || '').toLowerCase();
+          return appState.data.players
+            .filter((p) => p.name.toLowerCase().includes(q))
+            .slice()
+            .sort((a, b) => a.name.localeCompare(b.name));
+        },
+        minChars: 2,
+        getLabel: (player) => `${capitalizeEachWord(player.name)} · ${player.class}`,
+        onSelect: () => {
+          // auto-submit when selecting from autocomplete
+          $('#ap-save')?.click();
+        },
+      });
+
+      $('#ap-name').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.defaultPrevented) {
+          e.preventDefault();
+          $('#ap-save')?.click();
+        }
+      });
+    } catch (err) {
+      // noop
+    }
+
+    $('#ap-save').addEventListener('click', async () => {
+      const name = capitalizeEachWord($('#ap-name').value);
+      const cls = getSelectedClass('ap-class');
+      const note = $('#ap-note').value;
+      if (!name) return toast('Player name required');
+
+      const sch2 = getActiveSchedule();
+      if (!sch2) return toast('Create/select schedule first');
+
+      let selectedTeam = null;
+      if (sch2.isSparringMode) {
+        selectedTeam = $(`input[name="ap-team"]:checked`)?.value ?? null;
+        if (!selectedTeam) return toast('Select a team');
+      }
+
+      let existing = appState.data.players.find((p) => p.name.toLowerCase() === name.toLowerCase());
+      if (!existing) {
+        existing = { id: uuid(), name, class: cls, note };
+        appState.data.players.push(existing);
+      } else {
+        existing.note = note;
+      }
+
+      if (!(sch2.playerIds ?? []).includes(existing.id)) {
+        sch2.playerIds = sch2.playerIds ?? [];
+        sch2.joins = sch2.joins ?? [];
+        sch2.playerIds.push(existing.id);
+        const join = { playerId: existing.id, joinTime: nowTimestamp() };
+        if (sch2.isSparringMode && selectedTeam) join.team = selectedTeam;
+        sch2.joins.push(join);
+      }
+
+      await storage.saveAll(appState.data);
+      await reloadData();
+      closeModal();
+      renderStartSchedule();
+      toast('Player added');
+    }, { once: true });
   };
 
-  // Refresh team controls whenever schedule changes
-  activeSel.addEventListener('change', refreshTeamControls);
-
-  // Initialize team controls for current selection
-  refreshTeamControls();
-
-  scheduleAutocompleteTeardown = createAutocompleteInput($('#sp-name'), {
-    source: (query) => {
-      const q = query.toLowerCase();
-      return appState.data.players
-        .filter((p) => p.name.toLowerCase().includes(q))
-        .slice()
-        .sort((a, b) => a.name.localeCompare(b.name));
-    },
-    minChars: 2,
-    getLabel: (player) => `${capitalizeEachWord(player.name)} · ${player.class}`,
-    onSelect: () => {
-      void addPlayerToActiveSchedule();
-    },
-  });
-
-  $('#sp-name').addEventListener('keydown', async (e) => {
-    if (e.key !== 'Enter' || e.defaultPrevented) return;
-    e.preventDefault();
-    await addPlayerToActiveSchedule();
-  });
 
   view.onclick = async (e) => {
     const pid = e.target?.getAttribute?.('data-remove');
@@ -951,6 +1220,14 @@ function renderStartSchedule() {
   };
 
   renderSchedulePlayers();
+
+  const schedOpenAddBtn = $('#sched-open-add-player');
+  if (schedOpenAddBtn) {
+    schedOpenAddBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      openAddPlayerModal();
+    });
+  }
 
   async function addPlayerToActiveSchedule() {
     const name = capitalizeEachWord($('#sp-name').value);
@@ -1042,25 +1319,38 @@ function renderManageMatch() {
   const historyTitle = 'Match History';
 
   view.innerHTML = `
-    <div class="grid grid-cols-1 u-gap-12">
-      <div class="card card--overlay">
-        <h2>Schedule Selection</h2>
-        <div class="grid u-gap-10">
-          <label>Active Schedule</label>
-          <select id="mm-schedule">${scheduleOptions}</select>
-        </div>
-        
-        <hr class="sep" />
+    <div class="grid grid-cols-1">
+      <div class="columns is-multiline">
+        <div class="column is-12">
+          <div class="card">
+            <div class="card-content">
+              <h3>Schedule Selection</h3>
+              <div class="mt-5">
+                <label>Active Schedule</label>
 
-        <div class="row u-justify-start">
-          <button class="btn primary" id="mm-add">+ Add Match</button>
-          <button class="btn good" id="mm-suggest">⭐ See Suggestions</button>
-        </div>
-      </div>
+                <div class="select is-fullwidth">
+                  <select id="mm-schedule">${scheduleOptions}</select>
+                </div>
+              </div>
 
-      <div class="card card--overlay">
-        <h2>${historyTitle}</h2>
-        <div id="mm-history"></div>
+              <hr class="sep" />
+
+              <div class="row is-justify-content-flex-start">
+                <button class="button is-primary" id="mm-add">+ Add Match</button>
+                <button class="button is-success ml-3" id="mm-suggest">⭐ See Suggestions</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="column is-12">
+          <div class="card card--overlay">
+            <div class="card-content">
+              <h2>${historyTitle}</h2>
+              <div id="mm-history"></div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   `;
@@ -1069,7 +1359,7 @@ function renderManageMatch() {
     const current = getActiveSchedule();
     const history = $('#mm-history');
     if (!current) {
-      history.innerHTML = `<div class="u-text-muted u-font-13">No active schedule selected.</div>`;
+      history.innerHTML = `<div class="has-text-grey-light is-size-7">No active schedule selected.</div>`;
       return;
     }
 
@@ -1080,31 +1370,31 @@ function renderManageMatch() {
 
     history.innerHTML =
       scheduleMatches.length === 0
-        ? `<div class="u-text-muted u-font-13">No matches yet.</div>`
+        ? `<div class="has-text-grey-light is-size-7">No matches yet.</div>`
         : scheduleMatches
-            .map((m) => {
-              const playersText = `${m.playerNames.slice(0, 2).join(' & ')} ⚔ ${m.playerNames.slice(2, 4).join(' & ')}`;
-              return `
-                <div class="card card--muted u-mb-10">
-                  <div class="row u-justify-between">
+          .map((m) => {
+            const playersText = `${m.playerNames.slice(0, 2).join(' & ')} ⚔ ${m.playerNames.slice(2, 4).join(' & ')}`;
+            return `
+                <div class="card card--muted mb-4">
+                  <div class="row is-justify-content-space-between">
                     <div>
-                      <strong class="u-text-muted">Match #${m.matchNumber}</strong>
+                      <strong class="has-text-grey-light">Match #${m.matchNumber}</strong>
                       <div class="u-mt-4">${playersText}</div>
-                      <div class="u-mt-4 u-text-muted">
+                      <div class="mt-2 has-text-grey-light">
                         ⚾: <span data-shuttleval="${m.id}">${m.shuttlecockUsage?.shuttles ?? 0}</span>
                       </div>
                     </div>
-                    <div class="row u-justify-end">
-                      <button class="btn" data-shuttle-minus="${m.id}" title="Decrement shuttles">-1 ⚾</button>
-                      <button class="btn good" data-shuttle-plus="${m.id}" title="Increment shuttles">+1 ⚾</button>
-                      <button class="btn danger" data-cancel="${m.id}" title="Cancel match">❌ Cancel</button>
+                    <div class="row is-justify-content-flex-end">
+                      <button class="button is-danger is-outlined" data-shuttle-minus="${m.id}" title="Decrement shuttles">-1 ⚾</button>
+                      <button class="button is-success is-outlined" data-shuttle-plus="${m.id}" title="Increment shuttles">+1 ⚾</button>
+                      <button class="button is-danger" data-cancel="${m.id}" title="Cancel match">❌ Cancel</button>
                     </div>
                   </div>
                 </div>
               `;
-            })
-            .join('');
-    };
+          })
+          .join('');
+  };
 
   const refreshAll = async () => {
     await reloadData();
@@ -1198,20 +1488,20 @@ function renderManageMatch() {
           const canPick = !picked && picks.length < 4 && !(schedule.isSparringMode && maxReachedForTeam);
           const buttonDisabled = !picked && !canPick;
 
-          const btnClass = picked ? 'btn danger' : 'btn good';
+          const btnClass = picked ? 'button is-danger' : 'button is-success';
           const btnText = picked ? 'Unpick' : 'Pick';
 
           return `
             <div class="card card--muted no-margin">
-              <div class="row u-justify-between u-align-center">
-                <div class="u-min-width-0">
+              <div class="row is-justify-content-space-between is-align-items-center">
+                <div class="is-flex-basis-0">
                   <div class="fw-900 mb-4">
                     <span class="badge mr-05em">${c.class}</span> ${capitalizeEachWord(c.name)}
                   </div>
-                  <div class="u-text-muted u-font-13 u-mt-4">
+                  <div class="has-text-grey-light is-size-7 mt-2">
                     ${c.played} played.
                   </div>
-                  <div class="u-text-muted u-font-13 u-mt-2">
+                  <div class="has-text-grey-light is-size-7 mt-1">
                     Arrive: ${formatArrive(c.joinTime)}
                   </div>
                 </div>
@@ -1238,19 +1528,37 @@ function renderManageMatch() {
     };
 
     openModal(`
-      <h3>Add Match (Manual)</h3>
-      <div class="u-text-muted u-font-13 u-mb-10">
-        Pick 4 players from the current active schedule (sorted by total matches played, then arrival).
-      </div>
+      <div class="modal-background"></div>
+      <div class="modal-card" role="document" aria-labelledby="mm-manual-title">
+        <header class="modal-card-head">
+          <p class="modal-card-title" id="mm-manual-title">Add Match (Manual)</p>
+          <button type="button" class="delete" aria-label="close" formmethod="dialog" value="cancel"></button>
+        </header>
+        <section class="modal-card-body">
+          <div class="columns is-multiline">
+            <div class="column is-12">
+              <div class="has-text-grey-light is-size-7 mb-4">
+                Pick 4 players from the current active schedule (sorted by total matches played, then arrival).
+              </div>
+            </div>
 
-      <div id="mm-team-filter-wrap"></div>
-      <div id="mm-pick-list" class="grid grid-cols-1 u-gap-10 maxh-52vh u-overflow-auto padding-right-6"></div>
+            <div class="column is-12">
+              <div id="mm-team-filter-wrap"></div>
+            </div>
 
-      <div class="u-mt-12 u-border-top-subtle"></div>
-
-      <div class="modal-actions u-mt-12">
-        <button value="cancel" class="btn" id="mm-manual-cancel">Cancel</button>
-        <button type="button" class="btn primary" id="mm-manual-save" disabled>+ Add Match</button>
+            <div class="column is-12">
+              <div class="card card--muted">
+                <div class="card-content">
+                  <div id="mm-pick-list" class="grid grid-cols-1 u-overflow-auto"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <footer class="modal-card-foot">
+          <button value="cancel" class="button" id="mm-manual-cancel" formmethod="dialog">Cancel</button>
+          <button type="button" class="button is-primary" id="mm-manual-save" disabled>+ Add Match</button>
+        </footer>
       </div>
     `);
 
@@ -1263,10 +1571,10 @@ function renderManageMatch() {
       const wrap = $('#mm-team-filter-wrap');
       if (wrap) {
         wrap.innerHTML = `
-          <div class="row u-gap-8 u-mb-8" id="mm-team-filter">
-            <button type="button" class="btn primary team-a" data-team="${teamAName}">${teamAName}</button>
-            <button type="button" class="btn team-b" data-team="${teamBName}">${teamBName}</button>
-            <button type="button" class="btn" data-team="all">All</button>
+          <div class="row mb-4" id="mm-team-filter">
+            <button type="button" class="button is-primary team-a" data-team="${teamAName}">${teamAName}</button>
+            <button type="button" class="button team-b" data-team="${teamBName}">${teamBName}</button>
+            <button type="button" class="button" data-team="all">All</button>
           </div>
         `;
 
@@ -1431,48 +1739,65 @@ function renderManageMatch() {
     const modalState = { blacklist: new Set() };
 
     openModal(`
-      <h3 class="mb-8">Match Suggestions</h3>
-      <div class="grid grid-cols-1 u-gap-12" id="mm-suggest-body">
-        ${(() => {
-          const byName = new Map((appState.data.players ?? []).map((p) => [p.name, p]));
-          const teamBtns = (names) =>
-            (names ?? [])
-              .map((name) => {
-                const p = byName.get(name);
-                const clsBadge = p?.class ? formatClassBadge(p.class) : '';
-                const displayName = p?.name ? capitalizeEachWord(p.name) : capitalizeEachWord(name);
-                return `<button class="btn" data-skip="${name}" type="button">${clsBadge} ${displayName} ❌</button>`;
-              })
-              .join('');
-          return suggestions
-            .map((s) => {
-              const teamAButtons = teamBtns(s.teamA);
-              const teamBButtons = teamBtns(s.teamB);
+      <div class="modal-background"></div>
+      <div class="modal-card" role="document" aria-labelledby="mm-suggest-title">
+        <header class="modal-card-head">
+          <p class="modal-card-title" id="mm-suggest-title">Match Suggestions</p>
+          <button type="button" class="delete" aria-label="close" formmethod="dialog" value="cancel"></button>
+        </header>
 
-              return `
+        <section class="modal-card-body">
+          <div class="columns is-multiline">
+            <div class="column is-12">
+              <div class="has-text-grey-light is-size-7 mb-4">Suggestions are generated from players in the active schedule.</div>
+            </div>
+
+            <div class="column is-12">
+              <div id="mm-suggest-body" class="grid grid-cols-1 u-gap-12">
+                ${(() => {
+        const byName = new Map((appState.data.players ?? []).map((p) => [p.name, p]));
+        const teamBtns = (names) =>
+          (names ?? [])
+            .map((name) => {
+              const p = byName.get(name);
+              const clsBadge = p?.class ? formatClassBadge(p.class) : '';
+              const displayName = p?.name ? capitalizeEachWord(p.name) : capitalizeEachWord(name);
+              return `<button class="button" data-skip="${name}" type="button">${clsBadge} ${displayName} ❌</button>`;
+            })
+            .join('');
+        return suggestions
+          .map((s) => {
+            const teamAButtons = teamBtns(s.teamA);
+            const teamBButtons = teamBtns(s.teamB);
+
+            return `
               <div class="card card--muted u-mb-0">
                 <div class="row u-justify-between">
-                  <h2 class="u-h2-14">Suggestion #${s.suggestionNo}</h2>
+                  <h2 class="is-size-6">Suggestion #${s.suggestionNo}</h2>
                 </div>
 
-                <div class="u-mt-10 u-text-muted fw-800 u-font-12">${current.isSparringMode ? `<span class="team-header team-a">${teamALabel}</span>` : teamALabel}</div>
-                <div class="row u-mt-6 u-gap-8">${teamAButtons}</div>
+                <div class="mt-4 has-text-grey-light has-text-weight-bold is-size-7">${current.isSparringMode ? `<span class="team-header team-a">${teamALabel}</span>` : teamALabel}</div>
+                <div class="row mt-3">${teamAButtons}</div>
 
-                <div class="u-mt-10 u-text-muted fw-800 u-font-12">${current.isSparringMode ? `<span class="team-header team-b">${teamBLabel}</span>` : teamBLabel}</div>
-                <div class="row u-mt-6 u-gap-8">${teamBButtons}</div>
+                <div class="mt-4 has-text-grey-light has-text-weight-bold is-size-7">${current.isSparringMode ? `<span class="team-header team-b">${teamBLabel}</span>` : teamBLabel}</div>
+                <div class="row mt-3">${teamBButtons}</div>
 
-                <div class="row u-justify-end u-mt-12">
-                  <button class="btn good" data-pick="${s.suggestionNo}" type="button">Select This Match</button>
+                <div class="row is-justify-content-flex-end mt-5">
+                  <button class="button is-success" data-pick="${s.suggestionNo}" type="button">Select This Match</button>
                 </div>
               </div>
             `;
-            })
-            .join('');
-        })()}
-      </div>
-
-      <div class="modal-actions u-mt-12">
-        <button value="close" class="btn" formmethod="dialog">Close</button>
+          })
+          .join('');
+      })()}
+              </div>
+            </div>
+          </div>
+        </section>
+        
+        <footer class="modal-card-foot">
+          <button value="close" class="button" formmethod="dialog">Close</button>
+        </footer>
       </div>
     `);
 
@@ -1490,7 +1815,7 @@ function renderManageMatch() {
               const p = byName.get(name);
               const clsBadge = p?.class ? formatClassBadge(p.class) : '';
               const displayName = p?.name ? capitalizeEachWord(p.name) : capitalizeEachWord(name);
-              return `<button class="btn" data-skip="${name}" type="button">${clsBadge} ${displayName} ❌</button>`;
+              return `<button class="button" data-skip="${name}" type="button">${clsBadge} ${displayName} ❌</button>`;
             })
             .join('');
 
@@ -1499,26 +1824,26 @@ function renderManageMatch() {
               const p = byName.get(name);
               const clsBadge = p?.class ? formatClassBadge(p.class) : '';
               const displayName = p?.name ? capitalizeEachWord(p.name) : capitalizeEachWord(name);
-              return `<button class="btn" data-skip="${name}" type="button">${clsBadge} ${displayName} ❌</button>`;
+              return `<button class="button" data-skip="${name}" type="button">${clsBadge} ${displayName} ❌</button>`;
             })
             .join('');
 
           return `
             <div class="card card--muted u-mb-0">
-              <div class="row u-justify-between">
-                <h2 class="u-h2-14">Suggestion #${s.suggestionNo}</h2>
+              <div class="row is-justify-content-space-between">
+                <h2 class="is-size-6">Suggestion #${s.suggestionNo}</h2>
               </div>
 
-                  <div class="u-mt-10 u-text-muted fw-800 u-font-12">${current.isSparringMode ? `<span class="team-header team-a">${teamALabel}</span>` : teamALabel}</div>
+                  <div class="mt-4 has-text-grey-light has-text-weight-bold is-size-7">${current.isSparringMode ? `<span class="team-header team-a">${teamALabel}</span>` : teamALabel}</div>
                   <div class="row u-mt-6">${s.teamA.join(' + ')}</div>
-                  <div class="row u-mt-6 u-gap-8">${teamAButtons}</div>
+                  <div class="row mt-3">${teamAButtons}</div>
 
-                  <div class="u-mt-10 u-text-muted fw-800 u-font-12">${current.isSparringMode ? `<span class="team-header team-b">${teamBLabel}</span>` : teamBLabel}</div>
+                  <div class="mt-4 has-text-grey-light has-text-weight-bold is-size-7">${current.isSparringMode ? `<span class="team-header team-b">${teamBLabel}</span>` : teamBLabel}</div>
                   <div class="row u-mt-6">${s.teamB.join(' + ')}</div>
-                  <div class="row u-mt-6 u-gap-8">${teamBButtons}</div>
+                  <div class="row mt-3">${teamBButtons}</div>
 
-              <div class="row u-justify-end u-mt-12">
-                <button class="btn good" data-pick="${s.suggestionNo}" type="button">Select This Match</button>
+              <div class="row is-justify-content-flex-end mt-5">
+                <button class="button is-success" data-pick="${s.suggestionNo}" type="button">Select This Match</button>
               </div>
             </div>
           `;
@@ -1676,10 +2001,10 @@ function renderScheduleMatches() {
     <h2>Match Management</h2>
     <div class="grid grid-2">
       <div>
-        <div class="card card--overlay u-mb-10">
+          <div class="card has-background-dark has-text-light u-mb-10">
           <h2>Match Suggestions</h2>
           <div id="suggestions"></div>
-          <div class="u-text-muted u-font-13 u-mt-8">
+          <div class="has-text-grey-light is-size-7 mt-4">
             Open this page to refresh suggestions.
           </div>
         </div>
@@ -1705,23 +2030,23 @@ function renderScheduleMatches() {
 
   $('#suggestions').innerHTML = suggestions
     .map((s) => {
-      const teamAPlayers = s.teamA.map((name) => `<button class="btn" data-skip="${name}" data-suggestion="${s.suggestionNo}">Skip ${name}</button>`).join('');
-      const teamBPlayers = s.teamB.map((name) => `<button class="btn" data-skip="${name}" data-suggestion="${s.suggestionNo}">Skip ${name}</button>`).join('');
+      const teamAPlayers = s.teamA.map((name) => `<button class="button" data-skip="${name}" data-suggestion="${s.suggestionNo}">Skip ${name}</button>`).join('');
+      const teamBPlayers = s.teamB.map((name) => `<button class="button" data-skip="${name}" data-suggestion="${s.suggestionNo}">Skip ${name}</button>`).join('');
 
       return `
         <div class="card card--muted u-mb-10">
-          <div class="row u-justify-between">
-            <h2 class="u-h2-14">Suggestion #${s.suggestionNo}</h2>
-            <div class="pill">Balance: ${s.overallBalanceScore}</div>
+          <div class="row is-justify-content-space-between">
+            <h2 class="is-size-6">Suggestion #${s.suggestionNo}</h2>
+            <div><span class="tag is-dark">Balance: ${s.overallBalanceScore}</span></div>
           </div>
           <div class="grid u-mt-10 u-gap-8">
-            <div><div class="u-text-muted fw-800 u-font-12">${sch.isSparringMode ? `<span class="team-header team-a">${teamALabel}</span>` : teamALabel}</div><div class="row">${s.teamA.join(' + ')}</div></div>
+            <div><div class="has-text-grey-light has-text-weight-bold is-size-7">${sch.isSparringMode ? `<span class="team-header team-a">${teamALabel}</span>` : teamALabel}</div><div class="row">${s.teamA.join(' + ')}</div></div>
             <div class="row">${teamAPlayers}</div>
-            <div><div class="u-text-muted fw-800 u-font-12 u-mt-6">${sch.isSparringMode ? `<span class="team-header team-b">${teamBLabel}</span>` : teamBLabel}</div><div class="row">${s.teamB.join(' + ')}</div></div>
+            <div><div class="has-text-grey-light has-text-weight-bold is-size-7 mt-3">${sch.isSparringMode ? `<span class="team-header team-b">${teamBLabel}</span>` : teamBLabel}</div><div class="row">${s.teamB.join(' + ')}</div></div>
             <div class="row">${teamBPlayers}</div>
           </div>
-          <div class="row u-justify-end u-mt-10">
-            <button class="btn good" data-pick="${s.suggestionNo}">Select This Match</button>
+          <div class="row is-justify-content-flex-end mt-4">
+            <button class="button is-success" data-pick="${s.suggestionNo}">Select This Match</button>
           </div>
         </div>
       `;
@@ -1730,7 +2055,7 @@ function renderScheduleMatches() {
 
   // Selected matches: in this implementation, "Select" immediately plays and stores match.
   $('#selected-matches').innerHTML = `
-    <div class="u-text-muted u-font-13">Selecting a suggestion will add it to history immediately.</div>
+    <div class="has-text-grey-light is-size-7">Selecting a suggestion will add it to history immediately.</div>
   `;
 
   const historyHtml = scheduleMatches
@@ -1738,13 +2063,13 @@ function renderScheduleMatches() {
       const playersText = `${m.playerNames.slice(0, 2).join(' + ')} vs ${m.playerNames.slice(2, 4).join(' + ')}`;
       return `
         <div class="card card--muted u-mb-10">
-          <div class="row u-justify-between">
+          <div class="row is-justify-content-space-between">
             <div>
               <strong>Match #${m.matchNumber}</strong>
-              <div class="u-text-muted u-font-13 u-mt-4">${playersText}</div>
-              <div class="u-text-muted u-font-13 u-mt-4">Shuttlecock: ${m.shuttlecockUsage?.shuttles ?? 0}</div>
+              <div class="has-text-grey-light is-size-7 mt-2">${playersText}</div>
+              <div class="has-text-grey-light is-size-7 mt-2">Shuttlecock: ${m.shuttlecockUsage?.shuttles ?? 0}</div>
             </div>
-            <div class="row u-justify-end">
+            <div class="row is-justify-content-flex-end">
               <button class="btn" data-shuttle-minus="${m.id}" title="Decrement shuttles">[-1 Shuttlecock Logo]</button>
               <button class="btn good" data-shuttle-plus="${m.id}" title="Increment shuttles">[+1 Shuttlecock Logo]</button>
               <button class="btn danger" data-cancel="${m.id}" title="Cancel match">[X Cancel]</button>
@@ -1755,7 +2080,7 @@ function renderScheduleMatches() {
     })
     .join('');
 
-  $('#history').innerHTML = historyHtml || `<div class="u-text-muted u-font-13">No matches selected yet.</div>`;
+  $('#history').innerHTML = historyHtml || `<div class="has-text-grey-light is-size-7">No matches selected yet.</div>`;
 
   appState._latestSuggestions = suggestions;
 
@@ -1844,15 +2169,15 @@ function renderScheduleMatches() {
             .map((name) => `<button class="btn" data-skip="${name}" data-suggestion="${s.suggestionNo}">Skip ${name}</button>`)
             .join('');
           return `
-            <div class="card card--muted u-mb-10">
-              <div class="row u-justify-between">
-                <h2 class="u-h2-14">Suggestion #${s.suggestionNo}</h2>
-                <div class="pill">Balance: ${s.overallBalanceScore}</div>
-              </div>
+                <div class="card card--muted u-mb-10">
+          <div class="row u-justify-between">
+            <h2 class="is-size-6">Suggestion #${s.suggestionNo}</h2>
+            <div><span class="tag is-dark">Balance: ${s.overallBalanceScore}</span></div>
+          </div>
                   <div class="grid u-mt-10 u-gap-8">
-                    <div><div class="u-text-muted fw-800 u-font-12">${currentSch.isSparringMode ? `<span class="team-header team-a">${teamALabel}</span>` : teamALabel}</div><div class="row">${s.teamA.join(' + ')}</div></div>
+                    <div><div class="has-text-grey-light has-text-weight-bold is-size-7">${currentSch.isSparringMode ? `<span class="team-header team-a">${teamALabel}</span>` : teamALabel}</div><div class="row">${s.teamA.join(' + ')}</div></div>
                     <div class="row">${teamAButtons}</div>
-                    <div><div class="u-text-muted fw-800 u-font-12 u-mt-6">${currentSch.isSparringMode ? `<span class="team-header team-b">${teamBLabel}</span>` : teamBLabel}</div><div class="row">${s.teamB.join(' + ')}</div></div>
+                    <div><div class="has-text-grey-light has-text-weight-bold is-size-7 mt-3">${currentSch.isSparringMode ? `<span class="team-header team-b">${teamBLabel}</span>` : teamBLabel}</div><div class="row">${s.teamB.join(' + ')}</div></div>
                     <div class="row">${teamBButtons}</div>
                   </div>
               <div class="row u-justify-end u-mt-10">
@@ -2054,39 +2379,47 @@ function renderPayments() {
 
     return unpaid.length
       ? unpaid
-          .map(
-            (p) => `
-                  <div class="card payment-card card--muted u-mb-10">
-                    <div class="row u-justify-between u-align-start u-gap-12">
-                      <div class="u-min-width-0">
+        .map(
+          (p) => `
+      <div class="card payment-card has-background-dark has-text-light u-mb-10">
+                    <div class="row is-justify-content-space-between is-align-items-flex-start">
+                      <div class="is-flex-basis-0">
                         <div class="fw-900 u-font-15 lh-13">
                           ${p.playerName} - ${formatScheduleLabel(scheduleById.get(p.scheduleId))}
                         </div>
-                        <div class="u-mt-6 u-text-muted u-font-13">
+                        <div class="mt-3 has-text-grey-light is-size-7">
                           Shuttlecock: ${p.shuttlecockUsage?.shuttles ?? 0} (${`Rp${p.totalPayment.toLocaleString('id-ID')}`})
                         </div>
                       </div>
                     </div>
-                    <div class="row u-justify-start u-mt-12">
+                    <div class="row is-justify-content-flex-start mt-5">
                       <button class="btn good" data-pay="${p.id}">Pay</button>
                       <button class="btn" data-collect="${p.id}">Collect Payment</button>
                     </div>
                   </div>
                 `,
-          )
-          .join('')
-      : `<div class="u-text-muted u-font-13">No unpaid payments 🎉</div>`;
+        )
+        .join('')
+      : `<div class="has-text-grey-light is-size-7">No unpaid payments 🎉</div>`;
   };
 
   view.innerHTML = `
-    <div class="card">
-      <h2>Unpaid Payment List</h2>
-      <div class="grid u-gap-10">
-        <div>
-          <input id="payments-search" placeholder="Search by player name" />
-        </div>
-        <div id="payments-list">
-          ${renderUnpaidList()}
+    <div class="grid grid-cols-1">
+      <div class="columns is-multiline">
+        <div class="column is-12">
+          <div class="card">
+            <div class="card-content">
+              <h2>Unpaid Payment List</h2>
+              <div class="columns is-multiline mt-5">
+                <div class="column is-12">
+                  <input class="input" id="payments-search" placeholder="Search by player name" />
+                </div>
+                <div class="column is-12" id="payments-list">
+                  ${renderUnpaidList()}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -2109,19 +2442,27 @@ function renderPayments() {
       const p = appState.data.payments.find((x) => x.id === payId);
       if (!p) return;
       openModal(`
-        <h3>Set Payment Method</h3>
-        <div class="grid u-gap-10">
-          <div>
-            <label>Choose method</label>
-            <div class="row">
-              <button type="button" class="btn primary" id="pm-cash">Cash</button>
-              <button type="button" class="btn primary" id="pm-tf">Transfer (TF)</button>
+        <div class="modal-background"></div>
+        <div class="modal-card" role="document" aria-labelledby="pm-title">
+          <header class="modal-card-head">
+            <p class="modal-card-title" id="pm-title">Set Payment Method</p>
+            <button type="button" class="delete" aria-label="close"></button>
+          </header>
+          <section class="modal-card-body">
+            <div class="grid u-gap-10">
+              <div>
+                <label>Choose method</label>
+                <div class="row">
+                  <button type="button" class="btn primary" id="pm-cash">Cash</button>
+                  <button type="button" class="btn primary" id="pm-tf">Transfer (TF)</button>
+                </div>
+              </div>
+              <div class="has-text-grey-light is-size-7">Player: <strong>${p.playerName}</strong></div>
             </div>
-          </div>
-          <div class="u-text-muted u-font-13">Player: <strong>${p.playerName}</strong></div>
-        </div>
-        <div class="modal-actions">
-          <button value="cancel" class="btn" formmethod="dialog">Close</button>
+          </section>
+          <footer class="modal-card-foot">
+            <button value="cancel" class="btn" formmethod="dialog">Close</button>
+          </footer>
         </div>
       `);
       const modal = $('#modal');
@@ -2144,14 +2485,22 @@ function renderPayments() {
       });
 
       openModal(`
-        <h3>Collect Payment Message</h3>
-        <div>
-          <label>Message</label>
-          <textarea id="collect-text" readonly>${message}</textarea>
-        </div>
-        <div class="modal-actions">
-          <button type="button" class="btn" id="copy">Copy To Clipboard</button>
-          <button value="close" class="btn" formmethod="dialog">Close</button>
+        <div class="modal-background"></div>
+        <div class="modal-card" role="document" aria-labelledby="collect-title">
+          <header class="modal-card-head">
+            <p class="modal-card-title" id="collect-title">Collect Payment Message</p>
+            <button type="button" class="delete" aria-label="close"></button>
+          </header>
+          <section class="modal-card-body">
+            <div>
+              <label>Message</label>
+              <textarea id="collect-text" readonly>${message}</textarea>
+            </div>
+          </section>
+          <footer class="modal-card-foot">
+            <button type="button" class="btn" id="copy">Copy To Clipboard</button>
+            <button value="close" class="btn" formmethod="dialog">Close</button>
+          </footer>
         </div>
       `);
       $('#copy').addEventListener('click', async () => {
@@ -2180,7 +2529,7 @@ function renderImportExport() {
     <div class="grid grid-2">
       <div class="card">
         <h2>Export JSON</h2>
-        <div class="u-text-muted u-font-13 u-mb-10">Copy each JSON file content below and save as the corresponding local files.</div>
+        <div class="has-text-grey-light is-size-7 mb-4">Copy each JSON file content below and save as the corresponding local files.</div>
         <div class="grid u-gap-10">
           <div><label>players.json</label><textarea id="ex-players"></textarea></div>
           <div><label>schedules.json</label><textarea id="ex-schedules"></textarea></div>
@@ -2190,7 +2539,7 @@ function renderImportExport() {
       </div>
       <div class="card">
         <h2>Import JSON</h2>
-        <div class="u-text-muted u-font-13 u-mb-10">Paste JSON arrays for each file then Import.</div>
+        <div class="has-text-grey-light is-size-7 mb-4">Paste JSON arrays for each file then Import.</div>
         <div class="grid u-gap-10">
           <div><label>players.json</label><textarea id="im-players"></textarea></div>
           <div><label>schedules.json</label><textarea id="im-schedules"></textarea></div>
@@ -2287,7 +2636,34 @@ function switchView(key) {
   if (key === 'io') renderImportExport();
 }
 
+function applyTheme(theme) {
+  const t = theme === 'light' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', t);
+
+  const btn = document.getElementById('theme-toggle');
+  if (btn) {
+    const pressed = t === 'dark';
+    btn.setAttribute('aria-pressed', String(pressed));
+    btn.textContent = pressed ? '🌙' : '☀️';
+  }
+}
+
+function initTheme() {
+  const saved = localStorage.getItem('theme');
+  const next = saved === 'light' || saved === 'dark' ? saved : 'dark';
+  applyTheme(next);
+
+  const btn = document.getElementById('theme-toggle');
+  btn?.addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+    const nextTheme = current === 'light' ? 'dark' : 'light';
+    localStorage.setItem('theme', nextTheme);
+    applyTheme(nextTheme);
+  });
+}
+
 async function main() {
+  initTheme();
   ensureSeededDemoData();
   await reloadData();
 
@@ -2317,7 +2693,7 @@ async function main() {
   }
 
   ensureToast();
-  switchView('dashboard');
+  switchView('players');
 
   window.addEventListener('focus', () => {
     // keep dashboard up to date lightly
