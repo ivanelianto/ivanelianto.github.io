@@ -27,7 +27,7 @@ import {
 import { CheckIcon, RepeatIcon, SmallCloseIcon, createIcon } from "@chakra-ui/icons";
 
 const GEM_TYPES = [
-  { id: "diamond", label: "Diamond", bg: "#f8fafc", fg: "#172033", border: "#cbd5e1" },
+  { id: "diamond", label: "Diamond", bg: "#f8fafc", fg: "#172033", border: "#6d6d6d" },
   { id: "sapphire", label: "Sapphire", bg: "#2563eb", fg: "white", border: "#1d4ed8" },
   { id: "emerald", label: "Emerald", bg: "#16a34a", fg: "white", border: "#15803d" },
   { id: "ruby", label: "Ruby", bg: "#dc2626", fg: "white", border: "#b91c1c" },
@@ -703,26 +703,24 @@ function TokenPip({ id, amount = 0, size = "28px", shape = "token" }) {
   const gem = gemMeta(id);
   const isBonus = shape === "bonus";
   return (
-    <Tooltip label={gem.label} hasArrow>
-      <Flex
-        align="center"
-        justify="center"
-        minW={isBonus ? size : amount > 0 ? size : size}
-        w={isBonus ? size : undefined}
-        h={size}
-        px={amount > 0 ? 2 : 0}
-        border="1px solid"
-        borderColor={gem.border}
-        bg={gem.bg}
-        color={gem.fg}
-        borderRadius={isBonus ? "6px" : "999px"}
-        fontSize="xs"
-        fontWeight="800"
-        boxShadow="inset 0 1px 0 rgba(255,255,255,.4)"
-      >
-        {amount > 0 ? amount : ""}
-      </Flex>
-    </Tooltip>
+    <Flex
+      align="center"
+      justify="center"
+      minW={isBonus ? size : amount > 0 ? size : size}
+      w={isBonus ? size : undefined}
+      h={size}
+      px={amount > 0 ? 2 : 0}
+      border="1px solid"
+      borderColor={gem.border}
+      bg={gem.bg}
+      color={gem.fg}
+      borderRadius={isBonus ? "6px" : "999px"}
+      fontSize="xs"
+      fontWeight="800"
+      boxShadow="inset 0 1px 0 rgba(255,255,255,.4)"
+    >
+      {amount > 0 ? amount : ""}
+    </Flex>
   );
 }
 
@@ -762,8 +760,8 @@ function LogPanel({ game }) {
       borderColor="#d7c9ad"
       bg="rgba(255,255,255,.72)"
       borderRadius="8px"
-      p={2.5}
-      h={{ base: "auto", xl: "260px" }}
+      p={{ base: 2, xl: 2.5 }}
+      h="100%"
       minH="0"
       overflow="hidden"
       display="flex"
@@ -827,55 +825,59 @@ function DevelopmentCard({
       border="1px solid"
       borderColor={tierStyle.border}
       bg={tierStyle.bg}
+      p="0.25em"
       color="#172033"
       borderRadius="8px"
       overflow="hidden"
-      h={compact ? "54px" : "92px"}
-      minH={compact ? "54px" : "92px"}
+      minH={compact ? { base: "54px", xl: "44px" } : { base: "92px", xl: "80px" }}
       boxShadow="0 6px 14px rgba(69, 54, 28, .08)"
       opacity={isRemoving ? 0 : 1}
       transform={isRemoving ? "scale(.92)" : "scale(1)"}
       transition="opacity 1s ease, transform .22s ease, box-shadow .22s ease"
-      animation={isRemoving ? undefined : "cardDealIn .36s ease-out"}
+      animation={isRemoving ? undefined : "cardDealIn .5s ease-out"}
       pointerEvents={isRemoving ? "none" : "auto"}
       _hover={
         isRemoving
           ? undefined
           : {
-              transform: "translateY(-4px)",
-              boxShadow: "0 12px 22px rgba(69, 54, 28, .16)"
-            }
+            transform: "translateY(-4px)",
+            boxShadow: "0 12px 22px rgba(69, 54, 28, .16)",
+            cursor: "pointer"
+          }
       }
     >
-      <Flex align="center" color="#111827" px={compact ? 2 : 2.5} py={compact ? 1 : 1} minH={compact ? "24px" : "28px"}>
-        <Text fontSize={compact ? "sm" : "lg"} fontWeight="900" lineHeight="1">
+
+      <Flex
+        align="center"
+        color="#111827"
+        px={compact ? { base: 2, xl: 1.5 } : { base: 2.5, xl: 2 }}
+        py={compact ? { base: 1, xl: 0.75 } : { base: 1, xl: 0.75 }}
+        minH={compact ? { base: "24px", xl: "20px" } : { base: "28px", xl: "24px" }}
+      >
+        <Text fontSize={compact ? { base: "sm", xl: "xs" } : { base: "lg", xl: "md", "2xl": "lg" }} fontWeight="900" lineHeight="1">
           {card.points}🌟
         </Text>
         <Spacer />
-        <TokenPip id={card.bonus} shape="bonus" size={compact ? "17px" : "20px"} />
+        <TokenPip id={card.bonus} shape="bonus" size={compact ? "17px" : "18px"} />
       </Flex>
-      <VStack align="stretch" spacing={1} px={compact ? 2 : 2.5} pb={compact ? 1.5 : 2}>
-        {!compact && (
-          <Badge
-            alignSelf="flex-start"
-            bg="rgba(255,255,255,.72)"
-            color="#172033"
-            border="1px solid"
-            borderColor={tierStyle.border}
-            borderRadius="999px"
-            px={2}
-            fontSize="9px"
-          >
-            {tierStyle.label}
-          </Badge>
-        )}
-        <CostRow cost={card.cost} size={compact ? "17px" : "18px"} />
+
+      <VStack
+        align="flex-start"
+        spacing={compact ? 0.75 : 1}
+        px={compact ? { base: 2, xl: 1.5 } : { base: 2.5, xl: 2 }}
+        py={compact ? { base: 1.5, xl: 1 } : { base: 2, xl: 1.5 }}
+        w={"50%"}
+      >
+        <CostRow cost={card.cost} size={compact ? "16px" : "18px"} />
       </VStack>
+
       {hasActions && (
         <HStack
           position="absolute"
-          right={compact ? 1.5 : 2}
-          bottom={compact ? 1.5 : 2}
+          right={compact ? 1 : 2}
+          bottom={compact ? 1 : 2}
+          spacing={1}
+          justify="flex-end"
           opacity={actionsAlwaysVisible ? 1 : 0}
           transform={actionsAlwaysVisible ? "translateY(0)" : "translateY(8px)"}
           transition="opacity .18s ease, transform .18s ease"
@@ -883,36 +885,34 @@ function DevelopmentCard({
           _groupHover={{ opacity: 1, transform: "translateY(0)", pointerEvents: "auto" }}
           _groupFocusWithin={{ opacity: 1, transform: "translateY(0)", pointerEvents: "auto" }}
         >
+          {onReserve && (
+            <Button
+              size="sm"
+              h={compact ? "24px" : "28px"}
+              w={compact ? "24px" : "28px"}
+              bg="#111827"
+              color={KEEP_GOLD}
+              border="1px solid"
+              borderColor="#111827"
+              _hover={{ bg: "#0b1220" }}
+              _active={{ bg: "#050816" }}
+              onClick={onReserve}
+            >
+              <BookmarkIcon color={KEEP_GOLD} />
+            </Button>
+          )}
+
           {onBuy && (
             <Button
               size="sm"
               colorScheme="green"
               h={compact ? "24px" : "28px"}
-              minW={compact ? "48px" : "58px"}
+              w={compact ? "24px" : "28px"}
               px={2}
-              isDisabled={!canBuy}
+              display={canBuy ? "block" : "none"}
               onClick={onBuy}
-              leftIcon={<CheckIcon />}
             >
-              Beli
-            </Button>
-          )}
-          {onReserve && (
-            <Button
-              size="sm"
-              h={compact ? "24px" : "28px"}
-              minW={compact ? "52px" : "62px"}
-              px={2}
-              bg="#111827"
-              color={KEEP_GOLD}
-              border="1px solid"
-              borderColor="#111827"
-              leftIcon={<BookmarkIcon color={KEEP_GOLD} />}
-              _hover={{ bg: "#0b1220" }}
-              _active={{ bg: "#050816" }}
-              onClick={onReserve}
-            >
-              Keep
+              <CheckIcon />
             </Button>
           )}
         </HStack>
@@ -923,13 +923,16 @@ function DevelopmentCard({
 
 function NobleTile({ noble }) {
   return (
-    <Box border="1px solid" bg="#111827" borderRadius="8px" p={1.5}>
-      <Flex align="center" mb={1} color="white">
-        <Text fontSize="lg" fontWeight="900" lineHeight="1">
+    <Box border="1mm ridge #ae28d1" bg="#ae28d124" borderRadius="8px" flex={1} p="0.25em">
+      <Flex align="center" mb={1} color="white" px="0.5em">
+        <Text fontSize={{ base: "lg", xl: "md", "2xl": "lg" }} fontWeight="900" color="#111827">
           {noble.points}🌟
         </Text>
       </Flex>
-      <CostRow cost={noble.requirement} size="18px" />
+
+      <Box px="0.5em">
+        <CostRow cost={noble.requirement} size="18px" />
+      </Box>
     </Box>
   );
 }
@@ -948,17 +951,22 @@ function BankTokenPanel({
       borderColor="#d7c9ad"
       bg="rgba(255,255,255,.72)"
       borderRadius="8px"
-      p={2.5}
-      h={{ base: "auto", xl: "424px" }}
+      p={{ base: 2, xl: 2.5 }}
+      h="100%"
+      minH="0"
+      overflow="hidden"
+      display="flex"
+      flexDirection="column"
     >
-      <Flex align="center" mb={2}>
+      <Flex align="center" mb={2} flexShrink={0}>
         <Heading size="sm">Token</Heading>
         <Spacer />
         <Text fontSize="xs" color="#66736d">
           Pilih: {selectedTotal}
         </Text>
       </Flex>
-      <Stack spacing={2}>
+
+      <Stack spacing={{ base: 2, xl: 1.5, "2xl": 2 }} flex="1" minH="0">
         {GEM_IDS.map((id) => {
           const meta = gemMeta(id);
           const selected = game.selectedTokens[id] || 0;
@@ -966,15 +974,15 @@ function BankTokenPanel({
           return (
             <Button
               key={id}
-              h="38px"
+              h={{ base: "38px", xl: "clamp(34px, 5vh, 42px)" }}
               justifyContent="flex-start"
-              bg={isSelected ? meta.bg : "transparent"}
-              color={isSelected ? meta.fg : "#172033"}
-              border="2px solid"
-              borderColor={isSelected ? meta.border : meta.border}
+              // bg={isSelected ? meta.bg : "transparent"}
+              bg="transparent"
+              color="#172033"
+              border={isSelected ? "3px solid" : "1px solid"}
+              borderColor={meta.border}
               boxShadow={isSelected ? "inset 0 1px 0 rgba(255,255,255,.35)" : "none"}
               _hover={{
-                bg: isSelected ? meta.bg : "rgba(255,255,255,.62)",
                 transform: "translateY(-1px)"
               }}
               _active={{ transform: "translateY(0)" }}
@@ -982,18 +990,22 @@ function BankTokenPanel({
               isDisabled={!isPlayerTurn || game.tokenPool[id] === 0}
             >
               <HStack spacing={2} w="100%" justify="space-between">
-                <Text fontSize="sm" fontWeight="900" minW="20px" textAlign="left">
-                  {game.tokenPool[id]}
-                </Text>
-                <Box
-                  w="18px"
-                  h="18px"
-                  border="1px solid"
-                  borderColor={isSelected ? "rgba(255,255,255,.75)" : meta.border}
-                  bg={meta.bg}
-                  borderRadius="999px"
-                  boxShadow="inset 0 1px 0 rgba(255,255,255,.4)"
-                />
+                <HStack>
+                  <Text fontSize="sm" fontWeight="900" minW="20px" textAlign="left">
+                    {game.tokenPool[id]}
+                  </Text>
+
+                  <Box
+                    w="18px"
+                    h="18px"
+                    border="1px solid"
+                    borderColor={meta.border}
+                    bg={meta.bg}
+                    borderRadius="999px"
+                    boxShadow="inset 0 1px 0 rgba(255,255,255,.4)"
+                  />
+                </HStack>
+
                 <Text fontSize="sm" fontWeight="900" minW="28px" textAlign="right">
                   {selected ? `${selected}x` : ""}
                 </Text>
@@ -1002,6 +1014,7 @@ function BankTokenPanel({
           );
         })}
       </Stack>
+
       <HStack mt={2}>
         <Button
           colorScheme="green"
@@ -1023,6 +1036,7 @@ function BankTokenPanel({
           />
         </Tooltip>
       </HStack>
+
       {selectedTotal === 1 && (
         <Text mt={1.5} fontSize="10px" color="#66736d">
           Klik warna yang sama lagi untuk ambil 2, jika bank masih minimal 4.
@@ -1047,12 +1061,15 @@ function PlayerPanel({
       borderColor={isActive ? "#111827" : "#d7c9ad"}
       bg={isActive ? "#fffdf6" : "rgba(255,255,255,.72)"}
       borderRadius="8px"
-      p={2.5}
+      p={{ base: 2, xl: 2.5 }}
       boxShadow={isActive ? "0 0 0 2px rgba(242, 201, 76, .7)" : "none"}
-      h={{ base: "auto", xl: "260px" }}
+      h="100%"
+      minH="0"
       overflow="hidden"
+      display="flex"
+      flexDirection="column"
     >
-      <Flex align="center" mb={1.5}>
+      <Flex align="center" mb={{ base: 1.5, xl: 1 }} flexShrink={0}>
         <Box>
           <Text fontSize="xs" color="#66736d">
             {player.isBot ? "🤖 Bot" : "Pemain"}
@@ -1077,12 +1094,12 @@ function PlayerPanel({
         </Box>
       </Flex>
 
-      <Stack spacing={1.25}>
+      <Stack flex="1" minH="0">
         <Box>
           <Text fontSize="10px" fontWeight="800" color="#66736d" mb={0.5}>
             Token ({sumTokens(player.tokens)}/10)
           </Text>
-          <HStack spacing={1} wrap="nowrap">
+          <HStack spacing={1} wrap="nowrap" overflow="hidden">
             {ALL_TOKEN_IDS.map((id) => (
               <TokenPip key={id} id={id} amount={player.tokens[id]} size="19px" />
             ))}
@@ -1093,7 +1110,7 @@ function PlayerPanel({
           <Text fontSize="10px" fontWeight="800" color="#66736d" mb={0.5}>
             Bonus
           </Text>
-          <HStack spacing={1} wrap="nowrap">
+          <HStack spacing={1} wrap="nowrap" overflow="hidden">
             {GEM_IDS.map((id) => (
               <TokenPip key={id} id={id} amount={player.bonuses[id]} shape="bonus" size="19px" />
             ))}
@@ -1106,10 +1123,7 @@ function PlayerPanel({
           <Text>Bangsawan: {player.nobles.length}</Text>
         </HStack>
 
-        <Box>
-          <Text fontSize="xs" fontWeight="800" color="#66736d" mb={2}>
-            Keep
-          </Text>
+        <Box minH="110px" overflow="hidden" pt="0.25em">
           <SimpleGrid columns={player.reserved.length > 0 ? 3 : 1} spacing={1}>
             {player.reserved.length === 0 && (
               <Text fontSize="xs" color="#66736d">
@@ -1441,17 +1455,17 @@ export default function Home() {
             w="100%"
           >
             <SimpleGrid columns={{ base: 1, md: 2, xl: Math.min(game.players.length, 4) }} spacing={3}>
-                {game.players.map((player) => (
-                  <PlayerPanel
-                    key={player.id}
-                    player={player}
-                    isActive={player.id === game.activePlayerId}
-                    canControl={isPlayerTurn && player.id === game.activePlayerId}
-                    onBuyReserved={(card) => handleBuy(card, "reserved", card.tier)}
-                    removingCardIds={removingCardIds}
-                    actionsAlwaysVisible={actionsAlwaysVisible}
-                  />
-                ))}
+              {game.players.map((player) => (
+                <PlayerPanel
+                  key={player.id}
+                  player={player}
+                  isActive={player.id === game.activePlayerId}
+                  canControl={isPlayerTurn && player.id === game.activePlayerId}
+                  onBuyReserved={(card) => handleBuy(card, "reserved", card.tier)}
+                  removingCardIds={removingCardIds}
+                  actionsAlwaysVisible={actionsAlwaysVisible}
+                />
+              ))}
             </SimpleGrid>
             <LogPanel game={game} />
           </Grid>
@@ -1472,15 +1486,18 @@ export default function Home() {
                 borderRadius="8px"
                 p={2.5}
                 h={{ base: "auto", xl: "424px" }}
+                display="flex"
+                flexDirection="column"
               >
-                <Heading size="sm" mb={2}>
+                <Heading size="sm" mb={2} flexShrink={0}>
                   Bangsawan
                 </Heading>
-                <Stack spacing={1.5}>
+
+                <VStack spacing={1.5} align="stretch" flex="1" minH={0}>
                   {game.nobles.map((noble) => (
                     <NobleTile key={noble.id} noble={noble} />
                   ))}
-                </Stack>
+                </VStack>
               </Box>
             </VStack>
 
@@ -1491,21 +1508,34 @@ export default function Home() {
               borderRadius="8px"
               p={2.5}
               h={{ base: "auto", xl: "424px" }}
+              display="flex"
+              flexDirection="column"
             >
-              <Heading size="sm" mb={2}>
+              <Heading size="sm" mb={2} flexShrink={0}>
                 Pasar Kartu
               </Heading>
-              <VStack align="stretch" spacing={2}>
+
+              <VStack align="stretch" spacing={2} flex={1} minH={0}>
                 {[3, 2, 1].map((tier) => (
-                  <Box key={tier}>
-                    <Flex align="center" mb={1.5}>
+                  <Box key={tier}
+                    flex={1}
+                    minH={0}
+                    display="flex"
+                    flexDirection="column"
+                  >
+                    <Flex align="center" mb={1.5} flexShrink={0}>
                       <Heading size="sm">Tier {tier}</Heading>
                       <Spacer />
+
                       <Text fontSize="xs" color="#66736d">
                         Deck: {game.decks[tier].length}
                       </Text>
                     </Flex>
-                    <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} spacing={2}>
+
+                    <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} spacing={2}
+                      flex={1}
+                      minH={0}
+                    >
                       {game.market[tier].map((card) => (
                         <DevelopmentCard
                           key={card.id}
