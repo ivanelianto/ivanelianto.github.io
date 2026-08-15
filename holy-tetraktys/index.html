@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Holy Tetraktys</title>
+  </head>
+
+  <body>
+    <div>
+      <span>Date of Birth:</span>
+      <input type="date" id="dob" value="2000-01-01" />
+      <input type="button" value="Predict Me" onclick="execute()" />
+    </div>
+
+    <div id="rnd"></div>
+    <div id="lpd"></div>
+    <div id="exd"></div>
+    <div id="ind"></div>
+    <div id="hdn"></div>
+    <div id="healthList"></div>
+    <div id="career"></div>
+
+    <fieldset>
+      <legend>Partner Possibilities:</legend>
+      <label>Partner Date of Birth</label>
+      <input type="date" id="dobPartner" value="2000-01-01" />
+      <input type="submit" value="Check" onclick="calculatePartnership()" />
+
+      <div id="partnerResult"></div>
+    </fieldset>
+  </body>
+
+  <script src="rn.js"></script>
+  <script src="lp.js"></script>
+  <script src="snrhs.js"></script>
+  <script src="hdn.js"></script>
+  <script src="avatar.js"></script>
+  <script src="crn.js"></script>
+  <script>
+    function execute() {
+      document.getElementById('rnd').innerHTML = '';
+      document.getElementById('lpd').innerHTML = '';
+      document.getElementById('exd').innerHTML = '';
+      document.getElementById('hdn').innerHTML = '';
+      document.getElementById('ind').innerHTML = '';
+      document.getElementById('healthList').innerHTML = '';
+      document.getElementById('career').innerHTML = '';
+
+      const dob = document.getElementById('dob').value.toString();
+
+      const { insideNumbers, outsideNumbers } = calculate(dob);
+
+      console.log('Inside Numbers', insideNumbers);
+      console.log('Outside Numbers', outsideNumbers);
+
+      describeCommon(insideNumbers, outsideNumbers);
+
+      describeExtras(insideNumbers, outsideNumbers);
+
+      describeHdn(insideNumbers, outsideNumbers);
+
+      describeInd(insideNumbers, outsideNumbers);
+
+      describeHealth(insideNumbers, outsideNumbers);
+
+      describeCareer(insideNumbers, outsideNumbers);
+    }
+
+    function calculate(dob) {
+      const date = dob.substring(
+        dob.lastIndexOf('-') + 1,
+        dob.lastIndexOf('-') + 3,
+      );
+      const month = dob.substring(dob.indexOf('-') + 1, dob.indexOf('-') + 3);
+      const year = dob.substring(0, 4);
+
+      const insideNumbers = [];
+      const outsideNumbers = [];
+
+      insideNumbers.push(getSingleDigit(date));
+      insideNumbers.push(getSingleDigit(month));
+      insideNumbers.push(getSingleDigit(year.substring(0, 2)));
+      insideNumbers.push(getSingleDigit(year.substring(2, 4)));
+
+      insideNumbers.push(
+        getSingleDigit(
+          insideNumbers[0].toString() + insideNumbers[1].toString(),
+        ),
+      );
+
+      insideNumbers.push(
+        getSingleDigit(
+          insideNumbers[2].toString() + insideNumbers[3].toString(),
+        ),
+      );
+
+      insideNumbers.push(
+        getSingleDigit(
+          insideNumbers[4].toString() + insideNumbers[5].toString(),
+        ),
+      );
+
+      outsideNumbers.push(
+        getSingleDigit(
+          insideNumbers[0].toString() + insideNumbers[4].toString(),
+        ),
+      );
+
+      outsideNumbers.push(
+        getSingleDigit(
+          insideNumbers[1].toString() + insideNumbers[4].toString(),
+        ),
+      );
+
+      outsideNumbers.push(
+        getSingleDigit(
+          insideNumbers[2].toString() + insideNumbers[5].toString(),
+        ),
+      );
+
+      outsideNumbers.push(
+        getSingleDigit(
+          insideNumbers[3].toString() + insideNumbers[5].toString(),
+        ),
+      );
+
+      outsideNumbers.push(
+        getSingleDigit(
+          insideNumbers[5].toString() + insideNumbers[6].toString(),
+        ),
+      );
+
+      outsideNumbers.push(
+        getSingleDigit(
+          insideNumbers[4].toString() + insideNumbers[6].toString(),
+        ),
+      );
+
+      outsideNumbers.push(
+        getSingleDigit(
+          outsideNumbers[4].toString() + outsideNumbers[5].toString(),
+        ),
+      );
+
+      console.log(`Your Root Number: ${insideNumbers[6]}`);
+
+      return { insideNumbers, outsideNumbers };
+    }
+
+    function describeCommon(insideNumbers, outsideNumbers) {
+      const descriptions = [];
+      const mainTrait =
+        rnd[
+          getSingleDigit(
+            insideNumbers[4].toString() + insideNumbers[5].toString(),
+          ) - 1
+        ];
+
+      const lpd = document.getElementById('lpd');
+      lpd.innerHTML = wrap('ul', wrap('li', mainTrait));
+
+      // 2nd Desc
+      console.log(insideNumbers[0], insideNumbers[1]);
+      descriptions.push(lp[`${insideNumbers[0]}`][`${insideNumbers[1]}`]);
+
+      // 3rd Desc
+      console.log(insideNumbers[2], insideNumbers[3]);
+      descriptions.push(lp[`${insideNumbers[2]}`][`${insideNumbers[3]}`]);
+
+      // 4th Desc
+      console.log(insideNumbers[4], insideNumbers[5]);
+      descriptions.push(lp[`${insideNumbers[4]}`][`${insideNumbers[5]}`]);
+
+      // 5th Desc
+      console.log(outsideNumbers[0], outsideNumbers[1]);
+      descriptions.push(lp[`${outsideNumbers[0]}`][`${outsideNumbers[1]}`]);
+
+      // 6th Desc
+      console.log(outsideNumbers[2], outsideNumbers[3]);
+      descriptions.push(lp[`${outsideNumbers[2]}`][`${outsideNumbers[3]}`]);
+
+      // 7th Desc
+      console.log(outsideNumbers[4], outsideNumbers[5]);
+      descriptions.push(lp[`${outsideNumbers[4]}`][`${outsideNumbers[5]}`]);
+
+      // 8th Desc
+      console.log(insideNumbers[3], insideNumbers[5]);
+      descriptions.push(lp[`${insideNumbers[3]}`][`${insideNumbers[5]}`]);
+
+      // 9th Desc
+      console.log(insideNumbers[5]);
+      descriptions.push(snrhs[`${insideNumbers[5] - 1}`]);
+
+      // 10th Desc
+      console.log(insideNumbers[5], insideNumbers[6]);
+      descriptions.push(lp[`${insideNumbers[5]}`][`${insideNumbers[6]}`]);
+
+      // 11st Desc
+      console.log(insideNumbers[6], outsideNumbers[4]);
+      descriptions.push(lp[`${insideNumbers[6]}`][`${outsideNumbers[4]}`]);
+
+      lpd.innerHTML += wrap(
+        'ul',
+        Array.from(new Set(descriptions))
+          .map((desc) => wrap('li', desc))
+          .toString()
+          .replaceAll(',', ''),
+      );
+    }
+
+    function describeExtras(insideNumbers, outsideNumbers) {
+      const descriptions = [];
+      /**
+       *  START: Extra Description Section
+       */
+
+      const exd = document.getElementById('exd');
+
+      if (
+        insideNumbers[1] === 1 &&
+        insideNumbers[2] === 1 &&
+        insideNumbers[5] === 1
+      ) {
+        descriptions.push(
+          'The individual will be accident‐prone. Such accidents may involve cars, motor bikes or some kind of small vehicles',
+        );
+      }
+
+      if (
+        insideNumbers[1] === 6 &&
+        insideNumbers[2] === 1 &&
+        insideNumbers[5] === 6
+      ) {
+        descriptions.push(
+          'This individual will be accident prone and the accident may involve Trailers, Big Buses or a very serious accident',
+        );
+      }
+
+      if (insideNumbers[4] === 1 && insideNumbers[6] === 1) {
+        descriptions.push(
+          'This Individual may have some light mental problems. Perhaps have weird thoughts',
+        );
+      }
+
+      if (insideNumbers[4] === 6 && insideNumbers[6] === 6) {
+        descriptions.push(
+          'This individual is likely to have serious mental problems',
+        );
+      }
+
+      if (
+        insideNumbers[0] === 3 &&
+        insideNumbers[4] === 3 &&
+        insideNumbers[6] === 3
+      ) {
+        descriptions.push('A very hot temper individual');
+      }
+
+      if (
+        insideNumbers[0] === 3 &&
+        insideNumbers[4] === 3 &&
+        insideNumbers[6] === 3
+      ) {
+        descriptions.push('Hot temper person but the temper is a "cool" one.');
+      }
+
+      if (
+        insideNumbers[0] === 8 &&
+        insideNumbers[4] === 8 &&
+        insideNumbers[6] === 8
+      ) {
+        descriptions.push('Hot temper person but the temper is a "cool" one.');
+      }
+
+      if (
+        insideNumbers[0] === 2 &&
+        insideNumbers[4] === 2 &&
+        insideNumbers[6] === 2
+      ) {
+        descriptions.push(
+          'This person should avoid swimming. Accidents may occur in a small pool or a small waterfall or a small river.',
+        );
+      }
+
+      if (
+        insideNumbers[0] === 7 &&
+        insideNumbers[4] === 7 &&
+        insideNumbers[6] === 7
+      ) {
+        descriptions.push(
+          'This person should avoid going to the sea or swim in the deep area of an Olympic‐size pool or a big river',
+        );
+      }
+
+      exd.innerHTML += wrap(
+        'ul',
+        Array.from(new Set(descriptions))
+          .map((desc) => wrap('li', desc))
+          .toString()
+          .replaceAll(',', ''),
+      );
+
+      /**
+       *  END: Extra Description Section
+       */
+    }
+
+    function describeHdn(insideNumbers, outsideNumbers) {
+      /**
+       * START: Hdn
+       */
+
+      const hdn = document.getElementById('hdn');
+      const hdnv = getSingleDigit(
+        insideNumbers[1].toString() + insideNumbers[2].toString(),
+      );
+
+      console.log('Hidden: ', hdnv);
+      hdn.innerHTML += wrap(
+        'ul',
+        wrap(
+          'li',
+          [
+            'When you are old, or at your current age, you may realize sometimes you are ',
+            hdnd[hdnv - 1].toLowerCase(),
+          ]
+            .toString()
+            .replaceAll(',', ''),
+        ),
+      );
+
+      /**
+       * END: Hdn
+       */
+    }
+
+    function describeInd(insideNumbers, outsideNumbers) {
+      /**
+       * START: Ind
+       */
+      const descriptions = [];
+      const ind = document.getElementById('ind');
+
+      if (
+        insideNumbers[4] === 1 &&
+        insideNumbers[5] === 1 &&
+        insideNumbers[6] === 2
+      ) {
+        descriptions.push('In business, good as a middleman and/or broker');
+        descriptions.push('Good as a peace maker');
+        descriptions.push('Split personality');
+        descriptions.push('Good Public Relation building');
+      }
+
+      if (
+        insideNumbers[4] === 2 &&
+        insideNumbers[5] === 2 &&
+        insideNumbers[6] === 4
+      ) {
+        descriptions.push('A very straight forward being');
+        descriptions.push('Not able to keep confidential matters');
+        descriptions.push(
+          'Listen to both parties and can create 2 different stories',
+        );
+        descriptions.push(
+          'If this is a male, he is "soft" – towards feminine (female) – easily tricked',
+        );
+        descriptions.push(
+          'Take more often than giving in. Do not like to plan and contribute ideas',
+        );
+        descriptions.push('If this a female, very outspoken');
+      }
+
+      if (
+        insideNumbers[4] === 3 &&
+        insideNumbers[5] === 3 &&
+        insideNumbers[6] === 6
+      ) {
+        descriptions.push('A spiritual being');
+        descriptions.push("Talk to one's self");
+        descriptions.push('Very emotional');
+        descriptions.push(
+          'Cannot handle matters and cannot achieve much in work',
+        );
+      }
+
+      if (
+        insideNumbers[4] === 4 &&
+        insideNumbers[5] === 4 &&
+        insideNumbers[6] === 8
+      ) {
+        descriptions.push('Loves to be pampered');
+        descriptions.push('A "book‐worm"');
+        descriptions.push(
+          'Intelligent and Smart – Sometimes cannot wait to show how smart he/she is',
+        );
+        descriptions.push('Has a purpose to succeed');
+      }
+
+      if (
+        insideNumbers[4] === 5 &&
+        insideNumbers[5] === 5 &&
+        insideNumbers[6] === 1
+      ) {
+        descriptions.push('Very stubborn and selfish');
+        descriptions.push('Normally wear glasses or contact lenses');
+        descriptions.push('Very old fashioned and no ideas');
+        descriptions.push('A "Police Informer" – will leak out information');
+      }
+
+      if (
+        insideNumbers[4] === 6 &&
+        insideNumbers[5] === 6 &&
+        insideNumbers[6] === 3
+      ) {
+        descriptions.push(
+          'A very shy person but 80% of these people are con‐man [Confidence Trickster]',
+        );
+        descriptions.push('50% of these people likes to "talk big"');
+        descriptions.push(
+          'Always want to be different from others like to go against the norm',
+        );
+        descriptions.push('Very quick temper and very impatient');
+        descriptions.push('Always want to be "No 1" instead of "No 2"');
+      }
+
+      if (
+        insideNumbers[4] === 7 &&
+        insideNumbers[5] === 7 &&
+        insideNumbers[6] === 5
+      ) {
+        descriptions.push('A very lucky person');
+        descriptions.push('Lots of friends and supporters');
+        descriptions.push('Strong leadership but dictatorship style');
+        descriptions.push('Make use of people');
+        descriptions.push(
+          'Attracts a lot of supporters – normally the opposite sex',
+        );
+      }
+
+      if (
+        insideNumbers[4] === 8 &&
+        insideNumbers[5] === 8 &&
+        insideNumbers[6] === 7
+      ) {
+        descriptions.push('Very stressful');
+        descriptions.push(
+          'Not focus in life and ‘couldn’t care less’ attitude after the age of 30 onwards',
+        );
+        descriptions.push('Will divorce in life');
+        descriptions.push('Normally have big eyes');
+      }
+
+      if (
+        insideNumbers[4] === 9 &&
+        insideNumbers[5] === 9 &&
+        insideNumbers[6] === 9
+      ) {
+        descriptions.push('Can be very greedy');
+        descriptions.push(
+          'Lots of ideas but ideas are all to his/her benefits',
+        );
+        descriptions.push('Good in P.R. and smart to ‘buy’ people’s heart');
+        descriptions.push('Not a good boss. Will always make staff to work');
+        descriptions.push('Later life, a very lonely person');
+      }
+
+      ind.innerHTML += wrap(
+        'ul',
+        descriptions
+          .map((desc) => wrap('li', desc))
+          .toString()
+          .replaceAll(',', ''),
+      );
+      /**
+       * END: Ind
+       */
+    }
+
+    function describeHealth(insideNumbers, outsideNumbers) {
+      const healthList = document.getElementById('healthList');
+      const insideIndexes = [4, 5, 6];
+      const outsideIndexes = [4, 5, 6];
+
+      const userRawElements = insideIndexes
+        .map((i) => elements[insideNumbers[i] - 1])
+        .concat(outsideIndexes.map((i) => elements[outsideNumbers[i] - 1]));
+
+      const userElements = Array.from(new Set(userRawElements));
+
+      const userLackElements = Array.from(
+        new Set(elements.filter((elem) => userElements.indexOf(elem) === -1)),
+      );
+
+      const flattenDiseases = (diseases) =>
+        diseases
+          .split(';')
+          .map((disease) => wrap('li', disease))
+          .toString()
+          .replaceAll(',', '');
+
+      healthList.innerHTML += wrap(
+        'ul',
+        wrap('li', 'Potential health problems:'),
+      );
+
+      if (userElements.length === 1) {
+        healthList.innerHTML += wrap(
+          'ul',
+          wrap('ul', flattenDiseases(lackness[userElements[0]])),
+        );
+      } else if (userLackElements.length > 0) {
+        healthList.innerHTML += wrap(
+          'ul',
+          userLackElements
+            .map((e) => wrap('ul', flattenDiseases(lackness[e])))
+            .toString()
+            .replaceAll(',', ''),
+        );
+      } else if (userLackElements.length < 1) {
+        healthList.innerHTML += wrap(
+          'ul',
+          wrap(
+            'ul',
+            [
+              wrap('li', '(Your health problem is hereditary)'),
+              flattenDiseases(lackness[elements[insideNumbers[0] - 1]]),
+            ]
+              .toString()
+              .replaceAll(',', ''),
+          ),
+        );
+      }
+    }
+
+    function describeCareer(insideNumbers, outsideNumbers) {
+      const career = document.getElementById('career');
+      const userElement = elements[insideNumbers[6] - 1];
+
+      const sweetWordsCareerSection = [
+        'You will most likely to VERY SUCCEED from this career:',
+        'You will most likely to SUCCEED from this career:',
+        'You will okay from this career:',
+        'You will going nowhere from this career:',
+        'You will most likely to FAIL HARD from this career:',
+      ];
+
+      careerElementPriorities[userElement].forEach((elem, i) => {
+        career.innerHTML += wrap(
+          'ul',
+          [
+            wrap('li', sweetWordsCareerSection[i]),
+            careerOptions[elem]
+              .replace('Profession:', '')
+              .split('Business:')
+              .map((careerType, i) =>
+                wrap(
+                  'ul',
+                  [
+                    wrap('li', i === 0 ? 'Profession:' : 'Business'),
+                    wrap(
+                      'ul',
+                      careerType.split(',').map((c) => wrap('li', c)),
+                    ),
+                  ]
+                    .toString()
+                    .replace(',', ''),
+                ),
+              ),
+          ]
+            .toString()
+            .replaceAll(',', ''),
+        );
+      });
+    }
+
+    function getSingleDigit(n) {
+      if (+n[0] === 0 && +n[1] === 0) return 5;
+
+      let i = 0;
+      i = +n[0] + +n[1];
+
+      if (i.toString().length > 1) {
+        const fd = +i.toString()[0];
+        const sd = +i.toString()[1];
+
+        return fd + sd;
+      }
+
+      return i;
+    }
+
+    function wrap(tag, content) {
+      return `<${tag}>${content}</${tag}>`;
+    }
+
+    function calculatePartnership() {
+      const dob = document.getElementById('dob').value.toString();
+      const { insideNumbers } = calculate(dob);
+
+      const dobPartner = document.getElementById('dobPartner').value.toString();
+      const { insideNumbers: insideNumbersPartner } = calculate(dobPartner);
+
+      const crn = getSingleDigit(
+        `${insideNumbers[6]}${insideNumbersPartner[6]}`,
+      );
+
+      console.log('Combined: ', crn);
+
+      document.getElementById('partnerResult').innerHTML = crnList[crn - 1];
+    }
+  </script>
+</html>

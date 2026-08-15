@@ -1,0 +1,644 @@
+:root {
+  --bg: #0b1220;
+  --panel: #111c33;
+  --panel2: #0f1930;
+  --text: #e8eefc;
+  --muted: #a9b4d0;
+  --border: rgba(255, 255, 255, .20);
+
+  /* base typography scale (Material-ish baseline) */
+  --font-base: 16px;
+  --font-surface: 0.875rem; /* 14px */
+  --font-body: 1rem;         /* 16px */
+  --font-title: 1.125rem;   /* 18px */
+  --font-h6: 0.8125rem;      /* 13px */
+  --font-h5: 0.875rem;       /* 14px */
+
+  --accent: #4f8cff;
+  --accent2: #56d364;
+  --danger: #ff4d4d;
+  --team-a: #4f8cff;
+  --team-a-tint: rgba(79,140,255,0.12);
+  --team-b: #ff4d4d;
+  --team-b-tint: rgba(255,77,77,0.12);
+  --warn: #ffcc33;
+  --shadow: 0 12px 30px rgba(0, 0, 0, .35);
+  --radius: 8px;
+}
+
+.modal-card, .box {
+  background: rgba(17, 28, 51, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  color: var(--text);
+}
+
+.modal-card-head {
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  /* border-start-end-radius: 0;
+  border-start-start-radius: 0; */
+}
+* {
+  box-sizing: border-box;
+}
+
+/* Prevent iOS auto-zoom on inputs by ensuring text size and disabling text-size-adjust */
+html { -webkit-text-size-adjust: 100%; }
+
+/* Ensure form controls use at least 16px font to avoid mobile auto-zoom */
+input, textarea, select, button {
+  font-size: 16px;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  font-size: var(--font-body); /* 1rem = 16px */
+  line-height: 1.5;
+  background: #070b12; /* simple high-contrast dark */
+  color: var(--text);
+}
+
+.app {
+  position: relative;
+  width: min(100vw, 430px);
+  min-height: 100%;
+  margin: 0 auto;
+  padding: 0 12px 32px;
+  overflow-x: hidden;
+  background: #070b12; /* simple high-contrast dark */
+  box-shadow: 0 0 34px rgba(0, 0, 0, .45);
+}
+
+.mobile-header {
+  position: fixed;
+  top: 0;
+  z-index: 30;
+  grid-template-columns: 44px 1fr 44px;
+  align-items: center;
+  padding: 10px 12px;
+  background: rgba(11, 18, 32, .92);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(14px);
+  width: 430px;
+  margin-left: -12px;
+}
+
+/* Theme toggle (top-right) */
+.theme-toggle {
+  margin-left: auto;
+  height: 36px;
+  min-width: 36px;
+  padding: 0 10px;
+  border-radius: 10px;
+  color: var(--text);
+}
+
+/* Bulma navbar spacing can push our burger away from the left on mobile.
+   Override it to keep the hamburger flush with our grid. */
+.mobile-header .navbar-brand {
+  margin: 0 !important;
+  padding: 0 !important;
+  display: flex !important;
+  justify-content: flex-start !important;
+  align-items: center !important;
+  width: 100%;
+}
+
+.mobile-header .navbar-burger.menu-toggle,
+.mobile-header .navbar-burger {
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+}
+
+.mobile-header h1 {
+  margin: 0;
+  font-size: 1.0625rem; /* 17px */
+  font-weight: 800;
+  text-align: center;
+  letter-spacing: 0;
+}
+
+.menu-toggle {
+  appearance: none;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.5rem; /* 24px */
+  line-height: 1;
+}
+
+.menu-toggle:hover {
+  background: rgba(255, 255, 255, .08);
+}
+
+.drawer-backdrop {
+  position: absolute;
+  inset: 0;
+  width: min(100vw, 430px);
+  background: rgba(0, 0, 0, .48);
+  opacity: 0;
+  transition: opacity 280ms ease;
+  z-index: 40;
+  pointer-events: none;
+}
+
+.drawer-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.navigation-drawer {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  z-index: 80; /* above bottom nav (z-index: 60) */
+  width: 280px;
+  max-width: 85vw;
+  padding: 18px 12px;
+  overflow: auto;
+  color: var(--text);
+  background: rgba(11, 18, 32, .98);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, .55);
+  transform: translateX(-104%);
+  transition: transform 280ms cubic-bezier(.2, 0, 0, 1);
+  margin-left: -12px;
+}
+
+.navigation-drawer.open {
+  transform: translateX(0);
+}
+
+@media (min-width: 821px) {
+  .navigation-drawer {
+    opacity: 0;
+    transform: translateX(-104%);
+    transition: opacity 280ms cubic-bezier(.2, 0, 0, 1);
+  }
+
+  .navigation-drawer.open {
+    transform: translateX(0);
+    opacity: 1;
+    transition: opacity 280ms cubic-bezier(.2, 0, 0, 1);
+  }
+}
+
+.drawer-profile {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem; /* 12px */
+  min-height: 118px;
+  margin: 0 -0.75rem 0.875rem; /* -12px and 14px */
+  padding: 1.125rem 1rem 1rem; /* 18px 16px 16px */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.drawer-avatar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  color: #fff;
+  background: linear-gradient(135deg, #4f8cff, #56d364);
+  font-size: 1.25rem; /* 20px */
+  font-weight: 900;
+}
+
+.drawer-profile-copy {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+
+.drawer-profile-copy strong {
+  font-size: 15px;
+  line-height: 1.2;
+}
+
+.drawer-profile-copy span {
+  color: #6b7280;
+  font-size: 0.75rem; /* 12px */
+}
+
+.drawer-arrow {
+  color: #5f6368;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.drawer-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 6px;
+}
+
+.drawer-menu-item {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: 1.125rem; /* 18px */
+  width: 100%;
+  min-height: 48px;
+  border: 0;
+  border-radius: 0 24px 24px 0;
+  padding: 0 1.125rem; /* 18px */
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.875rem; /* 14px */
+  font-weight: 700;
+  text-align: left;
+}
+
+.drawer-menu-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.drawer-menu-item[aria-current="page"] {
+  background: rgba(79, 140, 255, 0.20);
+  color: #ffffff;
+}
+
+.menu-icon {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  font-size: 18px;
+  filter: grayscale(1);
+}
+
+.drawer-menu-item[aria-current="page"] .menu-icon {
+  filter: none;
+}
+
+/* Keep view switching styles (app-specific). Everything else should use Bulma. */
+.view {
+  display: none;
+}
+.view.active {
+  display: block;
+}
+
+/* Custom class radio control (not available in Bulma) */
+.class-radio-group {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.class-radio { display: block; position: relative; }
+.class-radio input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.class-radio span {
+  display: grid;
+  place-items: center;
+  min-height: 42px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .04);
+  color: var(--text);
+  font-weight: 800;
+  font-size: 0.8125rem; /* 13px */
+  cursor: pointer;
+  user-select: none;
+}
+.class-radio input:checked + span {
+  border-color: rgba(79, 140, 255, .55);
+  background: rgba(79, 140, 255, .18);
+  color: #fff;
+}
+
+/* Light-theme: selected radio label should use dark text */
+[data-theme="light"] .class-radio input:checked + span {
+  color: #0b1220;
+}
+
+/* Custom .btn removed; use Bulma .button variants instead */
+
+/* Toggle switch for nicer sparring control */
+.switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.switch-wrapper { display: block; }
+.switch input {
+  appearance: none;
+  width: 44px;
+  height: 24px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 999px;
+  outline: none;
+  border: 1px solid var(--border);
+  box-sizing: border-box;
+}
+.switch input:checked { background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+.switch-slider {
+  position: absolute;
+  left: 8px;
+  top: 7px;
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  transform: none;
+  transition: transform 160ms ease, left 160ms ease;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+}
+.switch input:checked + .switch-slider { transform: translateX(20px); }
+
+/* Remove custom pill/badge/table/button styles in strict Bulma mode */
+
+/* Keep Bulma modals; custom .modal overrides removed */
+
+/* Bottom mobile navigation (required app layout).
+   Minimal styles to ensure visibility/positioning after strict Bulma migration. */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  z-index: 60;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(100vw, 430px);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 8px 6px;
+  background: rgba(11,18,32,0.98);
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.bottom-nav-btn {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px;
+  border-radius: 10px;
+}
+
+.bottom-nav-btn .bn-label {
+  font-size: 11px;
+  display: block;
+}
+
+.bottom-nav-btn[aria-current="page"],
+.bottom-nav-btn.tab[aria-current="page"] {
+  color: var(--accent);
+}
+
+/* Avoid overlapping content with bottom nav */
+main.content { padding-bottom: 72px; margin-top: 6em; }
+
+/* Remove custom bottom-nav and confirm-dialog styles in strict mode */
+
+.autocomplete-shell {
+  position: relative;
+  width: 100%;
+}
+
+.autocomplete-menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 0.375rem); /* 6px */
+  z-index: 60;
+  display: grid;
+  gap: 0.25rem; /* 4px */
+  max-height: 220px; /* keep layout height as-is */
+  overflow: auto;
+  padding: 0.5rem; /* 8px */
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(11, 18, 32, .98);
+  box-shadow: var(--shadow);
+}
+
+.autocomplete-menu[hidden] {
+  display: none !important;
+}
+
+.autocomplete-item {
+  appearance: none;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, .04);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 0.625rem 0.75rem; /* 10px 12px */
+  text-align: left;
+  font-size: 0.8125rem; /* 13px */
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.autocomplete-item.active,
+.autocomplete-item:hover {
+  border-color: rgba(79, 140, 255, .45);
+  background: rgba(79, 140, 255, .16);
+}
+
+/* Strict Bulma-only mode:
+   Remove custom utility shims. Templates should use Bulma classes. */
+
+/* ===== Bulma Harmony Overrides (loaded after Bulma) ===== */
+
+/* Ensure Bulma modal is above fixed bottom navigation bar */
+#modal.modal {
+  z-index: 1000; /* must be > .bottom-nav z-index (60) */
+}
+
+#modal.modal .modal-background {
+  z-index: 1;
+}
+
+#modal.modal .modal-card {
+  z-index: 2;
+}
+
+
+:root {
+  --app-bg: var(--bg);
+  --app-surface: var(--panel);
+  --app-accent: var(--accent);
+}
+
+/* Ensure base still matches app theme */
+/* body { background: radial-gradient(620px 340px at 20% -8%, rgba(79, 140, 255, .26), transparent 62%), radial-gradient(520px 280px at 90% 0%, rgba(86, 211, 100, .14), transparent 58%), var(--bg); color: var(--text); } */
+
+/* Buttons: align visual language with existing .btn styles */
+/* .button { border-radius: 12px; font-weight: 700; border: 1px solid var(--border); }
+.button:not(.is-light):not(.is-white) { color: var(--text); }
+.button.is-primary { background: rgba(79,140,255,0.18); border-color: rgba(79,140,255,0.55); color: #fff; }
+.button.is-success { background: rgba(86,211,100,0.16); border-color: rgba(86,211,100,0.55); color: #fff; }
+.button.is-danger { background: rgba(255,77,77,0.16); border-color: rgba(255,77,77,0.55); color: #fff; }
+.button.is-warning { background: rgba(255,204,51,0.16); border-color: rgba(255,204,51,0.65); color: #111827; } */
+
+/* Modal backdrop and card adjustments */
+.modal-background { background-color: rgba(2,6,23,0.72); }
+.modal-card, .box { background: rgba(17,28,51,0.95); border: 1px solid rgba(255,255,255,0.04); color: var(--text); }
+
+/* Navbar tweaks to preserve app header look */
+.navbar, .navbar-menu, .navbar-item { background: transparent; color: var(--text); }
+
+/* Bottom navigation: prefer existing bottom-nav styles but tolerate Bulma helpers */
+.bottom-nav { left: 50%; transform: translateX(-50%); width: min(100vw, 430px); }
+.bottom-nav .button { background: transparent; border: none; color: var(--muted); padding: 6px 8px; }
+.bottom-nav .button[aria-current="page"] { color: var(--accent); }
+
+/* Focus-visible harmony */
+:where(.button, a, input, select, textarea):focus-visible { outline: 3px solid rgba(79,140,255,0.24); outline-offset: 3px; box-shadow: 0 0 0 4px rgba(79,140,255,0.08); }
+
+/* Disabled state parity */
+.button[disabled], button[disabled], .is-disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+
+/* (removed .u-w-100 utility shim; templates should use Bulma classes) */
+
+/* Small helper to avoid Bulma's global .container width issues inside app */
+.app { max-width: 430px; }
+
+/* End Bulma Harmony Overrides */
+
+/* Ensure dark background stays consistent even with Bulma defaults */
+:root {
+  color-scheme: dark;
+}
+
+html, body {
+  background: var(--bg, #070b12) !important;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f7f8fb;
+  --text: #0b1220;
+  --muted: #4b5563;
+  --border: rgba(0, 0, 0, .12);
+  --panel: #ffffff;
+  --panel2: #f3f4f6;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0b1220;
+  --text: #e8eefc;
+  --muted: #a9b4d0;
+  --border: rgba(255, 255, 255, .20);
+  --panel: #111c33;
+  --panel2: #0f1930;
+}
+
+[data-theme="light"] body,
+[data-theme="light"] .app {
+  background: var(--bg) !important;
+  color: var(--text) !important;
+}
+
+[data-theme="light"] .mobile-header,
+[data-theme="light"] .drawer-backdrop,
+[data-theme="light"] .bottom-nav {
+  background: rgba(255,255,255,0.92) !important;
+  border-color: rgba(0,0,0,.08) !important;
+}
+
+[data-theme="light"] .navigation-drawer {
+  background: rgba(255,255,255,0.98) !important;
+  color: var(--text) !important;
+  box-shadow: 0 20px 48px rgba(0,0,0,.18) !important;
+  border-right-color: rgba(0,0,0,.06) !important;
+}
+
+[data-theme="light"] .drawer-menu-item {
+  color: var(--text) !important;
+}
+
+[data-theme="light"] .drawer-menu-item:hover {
+  background: rgba(0,0,0,0.04) !important;
+}
+
+[data-theme="light"] .drawer-menu-item[aria-current="page"] {
+  background: rgba(79, 140, 255, 0.16) !important;
+}
+
+.modal-card-foot {
+  justify-content: flex-end;
+}
+
+input[type="date"] {
+    width: 100%;
+    position: relative;
+    padding-right: 44px;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23e8eefc" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>');
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 1rem 1rem;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+    position: absolute;
+    right: 8px;
+    cursor: pointer;
+    opacity: 0;
+    width: 1rem;
+    height: 1rem;
+}
+
+input.switch {
+  position: relative;
+  top: 0.5rem;
+  appearance: none;
+  width: 46px;
+  height: 24px;
+  background: #ccc;
+  border-radius: 20px;
+  outline: none;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+input.switch:checked {
+  background: #48c78e;
+}
+
+input.switch::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  background: white;
+  border-radius: 50%;
+  transition: 0.2s;
+}
+
+input.switch:checked::after {
+  transform: translateX(22px);
+}
+
+.player-list > *:not(:last-child) {
+  border-bottom: 1px solid var(--bulma-border);
+}

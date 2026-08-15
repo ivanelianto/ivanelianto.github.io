@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tokenomics Calculator</title>
+  </head>
+  <body>
+    <div>
+      <label>Current Price:</label>
+      <input type="number" id="currentPrice" />
+    </div>
+
+    <div>
+      <label>Current Circulating Supply:</label>
+      <input type="number" id="circSupply" />
+    </div>
+
+    <div>
+      <label>Price Target:</label>
+      <input type="number" id="priceTarget" />
+    </div>
+
+    <div>
+      <label
+        >Price Diff. Percentage: <strong id="diffPercentage"></strong
+      ></label>
+    </div>
+
+    <div>
+      <label>Current Market Cap: <span id="currentMarketCap"></span></label>
+    </div>
+
+    <div>
+      <label
+        >Required Money to Reach Price Target:
+        <strong id="requiredInvestement"></strong
+      ></label>
+    </div>
+
+    <div>
+      <label>Final Market Cap: <span id="finalMarketCap"></span></label>
+    </div>
+
+    <button onclick="calculate()">Calculate</button>
+  </body>
+
+  <script>
+    function calculate() {
+      currentPrice = +document.querySelector('#currentPrice').value;
+      circSupply = +document.querySelector('#circSupply').value;
+      marketcap = document.querySelector('#currentMarketCap');
+
+      marketcap.innerHTML = '$' + (currentPrice * circSupply).toLocaleString();
+
+      priceTarget = +document.querySelector('#priceTarget').value;
+
+      diffPercentage = document.querySelector('#diffPercentage');
+      diffPercentage.innerHTML =
+        ((priceTarget / currentPrice - 1) * 100).toFixed(2) + '%';
+
+      deltaMarketCap = priceTarget * circSupply - currentPrice * circSupply;
+
+      document.querySelector(
+        '#requiredInvestement',
+      ).innerHTML = `$${deltaMarketCap.toLocaleString()}`;
+
+      document.querySelector('#finalMarketCap').innerHTML = `$${(
+        currentPrice * circSupply +
+        deltaMarketCap
+      ).toLocaleString()}`;
+    }
+  </script>
+</html>
+​
