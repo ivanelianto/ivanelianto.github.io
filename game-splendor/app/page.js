@@ -185,7 +185,7 @@ const CARD_PATTERNS = {
       { points: 0, cost: [0, 2, 0, 1, 0] },
       { points: 0, cost: [0, 0, 2, 2, 0] },
       { points: 0, cost: [0, 1, 0, 3, 1] },
-      { points: 0, cost: [0, 1, 1, 1, 0] },
+      { points: 0, cost: [1, 1, 1, 1, 0] },
       { points: 0, cost: [2, 1, 1, 1, 0] },
       { points: 0, cost: [2, 0, 2, 1, 0] },
       { points: 0, cost: [0, 0, 3, 0, 0] },
