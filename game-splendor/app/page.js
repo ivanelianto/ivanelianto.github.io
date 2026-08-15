@@ -28,10 +28,10 @@ import { CheckIcon, RepeatIcon, SmallCloseIcon, createIcon } from "@chakra-ui/ic
 
 const GEM_TYPES = [
   { id: "diamond", label: "Diamond", bg: "#f8fafc", fg: "#172033", border: "#6d6d6d" },
+  { id: "onyx", label: "Onyx", bg: "#27272a", fg: "white", border: "#18181b" },
+  { id: "ruby", label: "Ruby", bg: "#dc2626", fg: "white", border: "#b91c1c" },
   { id: "sapphire", label: "Sapphire", bg: "#2563eb", fg: "white", border: "#1d4ed8" },
   { id: "emerald", label: "Emerald", bg: "#16a34a", fg: "white", border: "#15803d" },
-  { id: "ruby", label: "Ruby", bg: "#dc2626", fg: "white", border: "#b91c1c" },
-  { id: "onyx", label: "Onyx", bg: "#27272a", fg: "white", border: "#18181b" }
 ];
 
 const GOLD = { id: "gold", label: "Gold", bg: "#d9a441", fg: "#1d2525", border: "#ad7c1f" };
@@ -67,6 +67,148 @@ const DEFAULT_PLAYER_CONFIGS = [
   { name: "Player 1", isBot: false },
   { name: "Player 2", isBot: true }
 ];
+const CARD_PATTERNS = {
+  onyx: {
+    1: [
+      { points: 0, cost: [0, 1, 1, 1, 1] },
+      { points: 0, cost: [0, 0, 1, 0, 2] },
+      { points: 0, cost: [0, 2, 0, 0, 2] },
+      { points: 0, cost: [1, 0, 3, 0, 1] },
+      { points: 0, cost: [0, 0, 0, 0, 3] },
+      { points: 0, cost: [0, 1, 1, 2, 1] },
+      { points: 0, cost: [0, 2, 1, 2, 0] },
+      { points: 1, cost: [0, 0, 0, 4, 0] },
+    ],
+
+    2: [
+      { points: 1, cost: [0, 3, 0, 2, 2] },
+      { points: 1, cost: [2, 3, 0, 0, 3] },
+      { points: 2, cost: [0, 0, 2, 1, 4] },
+      { points: 2, cost: [0, 5, 0, 0, 0] },
+      { points: 2, cost: [0, 0, 3, 0, 5] },
+      { points: 3, cost: [6, 0, 0, 0, 0] },
+    ],
+
+    3: [
+      { points: 3, cost: [0, 3, 3, 3, 5] },
+      { points: 4, cost: [0, 0, 7, 0, 0] },
+      { points: 4, cost: [3, 0, 6, 0, 3] },
+      { points: 5, cost: [3, 0, 7, 0, 0] },
+    ],
+  },
+  diamond: {
+    1: [
+      { points: 0, cost: [1, 0, 0, 2, 2] },
+      { points: 0, cost: [1, 0, 2, 0, 0] },
+      { points: 0, cost: [1, 0, 1, 1, 1] },
+      { points: 0, cost: [0, 0, 0, 3, 0] },
+      { points: 0, cost: [0, 0, 0, 2, 2] },
+      { points: 0, cost: [1, 0, 1, 1, 2] },
+      { points: 0, cost: [1, 3, 0, 1, 0] },
+      { points: 1, cost: [0, 0, 0, 0, 4] },
+    ],
+
+    2: [
+      { points: 1, cost: [2, 0, 2, 0, 3] },
+      { points: 1, cost: [0, 2, 3, 3, 0] },
+      { points: 2, cost: [2, 0, 4, 0, 1] },
+      { points: 2, cost: [0, 0, 5, 0, 0] },
+      { points: 2, cost: [3, 0, 5, 0, 0] },
+      { points: 3, cost: [0, 6, 0, 0, 0] },
+    ],
+
+    3: [
+      { points: 3, cost: [3, 0, 5, 3, 3] },
+      { points: 4, cost: [7, 0, 0, 0, 0] },
+      { points: 4, cost: [6, 0, 3, 0, 0] },
+      { points: 5, cost: [7, 3, 0, 0, 0] },
+    ],
+  },
+  ruby: {
+    1: [
+      { points: 0, cost: [0, 3, 0, 0, 0] },
+      { points: 0, cost: [3, 1, 1, 0, 0] },
+      { points: 0, cost: [0, 0, 0, 2, 1] },
+      { points: 0, cost: [2, 2, 0, 0, 1] },
+      { points: 0, cost: [1, 2, 0, 1, 1] },
+      { points: 0, cost: [1, 1, 0, 1, 1] },
+      { points: 0, cost: [0, 2, 2, 0, 0] },
+      { points: 1, cost: [0, 4, 0, 0, 0] },
+    ],
+
+    2: [
+      { points: 1, cost: [3, 0, 2, 3, 0] },
+      { points: 1, cost: [3, 2, 2, 0, 0] },
+      { points: 2, cost: [0, 1, 0, 4, 2] },
+      { points: 2, cost: [5, 3, 0, 0, 0] },
+      { points: 2, cost: [5, 0, 0, 0, 0] },
+      { points: 3, cost: [0, 0, 6, 0, 0] },
+    ],
+
+    3: [
+      { points: 3, cost: [3, 3, 0, 5, 3] },
+      { points: 4, cost: [0, 0, 0, 0, 7] },
+      { points: 4, cost: [0, 0, 3, 3, 6] },
+      { points: 5, cost: [0, 0, 3, 0, 7] },
+    ],
+  },
+  sapphire: {
+    1: [
+      { points: 0, cost: [2, 1, 0, 0, 0] },
+      { points: 0, cost: [1, 1, 2, 0, 1] },
+      { points: 0, cost: [1, 1, 1, 0, 1] },
+      { points: 0, cost: [0, 0, 1, 1, 3] },
+      { points: 0, cost: [3, 0, 0, 0, 0] },
+      { points: 0, cost: [0, 1, 2, 0, 2] },
+      { points: 0, cost: [2, 0, 0, 0, 2] },
+      { points: 1, cost: [0, 0, 4, 0, 0] },
+    ],
+
+    2: [
+      { points: 1, cost: [0, 0, 3, 2, 2] },
+      { points: 1, cost: [3, 0, 0, 2, 3] },
+      { points: 2, cost: [0, 5, 0, 3, 0] },
+      { points: 2, cost: [0, 0, 0, 5, 0] },
+      { points: 2, cost: [4, 2, 1, 0, 0] },
+      { points: 3, cost: [0, 0, 0, 6, 0] },
+    ],
+
+    3: [
+      { points: 3, cost: [5, 3, 3, 0, 3] },
+      { points: 4, cost: [0, 7, 0, 0, 0] },
+      { points: 4, cost: [3, 6, 0, 3, 0] },
+      { points: 5, cost: [0, 7, 0, 3, 0] },
+    ],
+  },
+  emerald: {
+    1: [
+      { points: 0, cost: [0, 2, 0, 1, 0] },
+      { points: 0, cost: [0, 0, 2, 2, 0] },
+      { points: 0, cost: [0, 1, 0, 3, 1] },
+      { points: 0, cost: [0, 1, 1, 1, 0] },
+      { points: 0, cost: [2, 1, 1, 1, 0] },
+      { points: 0, cost: [2, 0, 2, 1, 0] },
+      { points: 0, cost: [0, 0, 3, 0, 0] },
+      { points: 1, cost: [4, 0, 0, 0, 0] },
+    ],
+
+    2: [
+      { points: 1, cost: [0, 3, 3, 0, 2] },
+      { points: 1, cost: [2, 2, 0, 3, 0] },
+      { points: 2, cost: [1, 4, 0, 2, 0] },
+      { points: 2, cost: [0, 0, 0, 0, 5] },
+      { points: 2, cost: [0, 0, 0, 5, 3] },
+      { points: 3, cost: [0, 0, 0, 0, 6] },
+    ],
+
+    3: [
+      { points: 3, cost: [3, 5, 3, 3, 0] },
+      { points: 4, cost: [0, 3, 0, 6, 3] },
+      { points: 4, cost: [0, 0, 0, 7, 0] },
+      { points: 5, cost: [3, 0, 0, 7, 3] },
+    ],
+  },
+};
 
 function emptyCounts(value = 0) {
   return ALL_TOKEN_IDS.reduce((counts, id) => {
@@ -122,72 +264,31 @@ function shuffle(items, rng) {
   return copy;
 }
 
-function rotatedTargets(bonusIndex, variant) {
-  const targets = [];
-  for (let offset = 1; offset <= GEM_IDS.length; offset += 1) {
-    targets.push(GEM_IDS[(bonusIndex + variant + offset) % GEM_IDS.length]);
-  }
-  return targets;
-}
-
-function makeCost(tier, bonusIndex, variant) {
-  const patterns = {
-    1: [
-      [2, 1, 0, 0, 0],
-      [1, 1, 1, 0, 0],
-      [2, 2, 0, 0, 0],
-      [3, 1, 1, 0, 0],
-      [1, 2, 2, 0, 0],
-      [4, 0, 0, 0, 0],
-      [3, 2, 0, 0, 0],
-      [2, 1, 1, 1, 0]
-    ],
-    2: [
-      [3, 2, 2, 0, 0],
-      [4, 2, 1, 0, 0],
-      [5, 3, 0, 0, 0],
-      [3, 3, 2, 0, 0],
-      [5, 2, 1, 1, 0],
-      [6, 2, 0, 0, 0]
-    ],
-    3: [
-      [6, 3, 3, 0, 0],
-      [7, 3, 0, 0, 0],
-      [5, 3, 3, 3, 0],
-      [7, 2, 2, 0, 0]
-    ]
+function arrayToCost(values) {
+  return {
+    onyx: values[0],
+    diamond: values[1],
+    ruby: values[2],
+    sapphire: values[3],
+    emerald: values[4],
   };
-  const cost = emptyCounts(0);
-  const pattern = patterns[tier][variant % patterns[tier].length];
-  const targets = rotatedTargets(bonusIndex, variant);
-
-  pattern.forEach((amount, index) => {
-    if (amount > 0) cost[targets[index]] += amount;
-  });
-
-  return cost;
-}
-
-function pointsFor(tier, variant) {
-  if (tier === 1) return variant >= 6 ? 1 : 0;
-  if (tier === 2) return variant >= 4 ? 3 : variant >= 2 ? 2 : 1;
-  return variant >= 2 ? 5 : 4;
 }
 
 function buildDeck(tier) {
-  const copiesByTier = { 1: 8, 2: 6, 3: 4 };
   const deck = [];
 
-  GEM_TYPES.forEach((gem, bonusIndex) => {
-    for (let variant = 0; variant < copiesByTier[tier]; variant += 1) {
+  GEM_TYPES.forEach((gem) => {
+    const patterns = CARD_PATTERNS[gem.id][tier];
+
+    patterns.forEach((pattern, variant) => {
       deck.push({
         id: `t${tier}-${gem.id}-${variant}`,
         tier,
         bonus: gem.id,
-        points: pointsFor(tier, variant),
-        cost: makeCost(tier, bonusIndex, variant)
+        points: pattern.points,
+        cost: arrayToCost(pattern.cost),
       });
-    }
+    });
   });
 
   return deck;
@@ -195,19 +296,55 @@ function buildDeck(tier) {
 
 function buildNobles() {
   const nobles = [];
-  for (let i = 0; i < GEM_IDS.length; i += 1) {
+
+  // Urutan warna yang digunakan oleh pattern Noble di Splendor
+  const nobleOrder = [
+    "diamond",
+    "sapphire",
+    "emerald",
+    "ruby",
+    "onyx",
+  ];
+
+  // Noble 1-5
+  // 4 Diamond + 4 Sapphire
+  // 4 Sapphire + 4 Emerald
+  // 4 Emerald + 4 Ruby
+  // 4 Ruby + 4 Onyx
+  // 4 Onyx + 4 Diamond
+  for (let i = 0; i < nobleOrder.length; i += 1) {
     const requirement = emptyCounts(0);
-    requirement[GEM_IDS[i]] = 3;
-    requirement[GEM_IDS[(i + 1) % GEM_IDS.length]] = 3;
-    requirement[GEM_IDS[(i + 2) % GEM_IDS.length]] = 3;
-    nobles.push({ id: `noble-three-${i}`, points: 3, requirement });
+
+    requirement[nobleOrder[i]] = 4;
+    requirement[nobleOrder[(i + 1) % nobleOrder.length]] = 4;
+
+    nobles.push({
+      id: `noble-two-${i}`,
+      points: 3,
+      requirement,
+    });
   }
-  for (let i = 0; i < GEM_IDS.length; i += 1) {
+
+  // Noble 6-10
+  // 3 Diamond + 3 Sapphire + 3 Emerald
+  // 3 Sapphire + 3 Emerald + 3 Ruby
+  // 3 Emerald + 3 Ruby + 3 Onyx
+  // 3 Ruby + 3 Onyx + 3 Diamond
+  // 3 Onyx + 3 Diamond + 3 Sapphire
+  for (let i = 0; i < nobleOrder.length; i += 1) {
     const requirement = emptyCounts(0);
-    requirement[GEM_IDS[i]] = 4;
-    requirement[GEM_IDS[(i + 2) % GEM_IDS.length]] = 4;
-    nobles.push({ id: `noble-two-${i}`, points: 3, requirement });
+
+    requirement[nobleOrder[i]] = 3;
+    requirement[nobleOrder[(i + 1) % nobleOrder.length]] = 3;
+    requirement[nobleOrder[(i + 2) % nobleOrder.length]] = 3;
+
+    nobles.push({
+      id: `noble-three-${i}`,
+      points: 3,
+      requirement,
+    });
   }
+
   return nobles;
 }
 
@@ -391,10 +528,9 @@ function buyCard(game, playerId, card, source, tier) {
 
   player.cards.push(card);
   player.bonuses[card.bonus] += 1;
-  const noble = awardNobleIfEligible(game, player);
-  const nobleText = noble ? " dan menarik bangsawan" : "";
-  pushLog(game, `${player.name} membeli kartu tier ${card.tier}${nobleText}.`);
-  resolveWinner(game);
+  pushLog(game, `${player.name} membeli kartu tier ${card.tier}.`);
+
+  checkAndAwardNoble(game, player);
 }
 
 function takeTokens(game, playerId, selection) {
@@ -407,7 +543,28 @@ function takeTokens(game, playerId, selection) {
     game.tokenPool[id] -= amount;
     taken[id] = amount;
   });
+
   pushLog(game, `${player.name} mengambil token`, taken);
+
+  // Token sudah masuk ke player → cek Noble
+  checkAndAwardNoble(game, player);
+
+  return true;
+}
+
+function checkAndAwardNoble(game, player) {
+  const noble = awardNobleIfEligible(game, player);
+
+  if (noble) {
+    pushLog(
+      game,
+      `${player.name} mendapatkan Noble +${noble.points} poin.`
+    );
+  }
+
+  resolveWinner(game);
+
+  return noble;
 }
 
 function payableShortfall(player, card) {
@@ -502,6 +659,9 @@ function reserveCard(game, playerId, card, tier) {
   }
 
   pushLog(game, `${player.name} Keep kartu tier ${card.tier}.`);
+
+  // Setelah semua perubahan selesai, cek Noble
+  checkAndAwardNoble(game, player);
   return true;
 }
 
@@ -1176,12 +1336,12 @@ export default function Home() {
   }, [game?.activePlayerId, game?.winner, activePlayer?.isBot]);
 
   useEffect(() => {
-    if (!game) return undefined;
+    if (!game || game.winner) return undefined;
     const timer = window.setInterval(() => {
       setCurrentTime(Date.now());
     }, GAME_TIME_TICK_MS);
     return () => window.clearInterval(timer);
-  }, [game?.startedAt]);
+  }, [game?.startedAt, game?.winner]);
 
   function showError(message) {
     toast({ title: message, status: "warning", duration: 1800, isClosable: true, position: "top" });
