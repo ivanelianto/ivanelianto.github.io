@@ -25,6 +25,7 @@ import {
   useToast
 } from "@chakra-ui/react";
 import { CheckIcon, RepeatIcon, SmallCloseIcon, createIcon } from "@chakra-ui/icons";
+import { playSound, SOUNDS } from "./util";
 
 const GEM_TYPES = [
   { id: "onyx", label: "Onyx", bg: "#9138a1", fg: "white", border: "#472e98" },
@@ -371,6 +372,7 @@ function buildNobles() {
       id: `noble-two-${i}`,
       points: 3,
       requirement,
+      sound: SOUNDS.NOBLE_VISIT_1,
     });
   }
 
@@ -391,6 +393,7 @@ function buildNobles() {
       id: `noble-three-${i}`,
       points: 3,
       requirement,
+      sound: SOUNDS.NOBLE_VISIT_2,
     });
   }
 
@@ -554,13 +557,37 @@ function awardNobleIfEligible(game, player) {
   return noble;
 }
 
+function checkAndAwardNoble(game, player) {
+  const noble = awardNobleIfEligible(game, player);
+
+  if (noble) {
+    playSound(noble.sound)
+
+    pushLog(
+      game,
+      `${player.name} mendapatkan Noble +${noble.points} poin.`
+    );
+  }
+
+  resolveWinner(game);
+
+  return noble;
+}
+
 function resolveWinner(game) {
   if (game.players.every((player) => scoreFor(player) < WIN_SCORE)) return;
 
   const standings = game.players
-    .map((player) => ({ id: player.id, score: scoreFor(player), cards: player.cards.length }))
+    .map((player) => ({
+      id: player.id,
+      score: scoreFor(player),
+      cards: player.cards.length,
+      isBot: player.isBot,
+    }))
     .sort((a, b) => b.score - a.score || a.cards - b.cards);
   const [first, second] = standings;
+
+  !first.isBot ? playSound(SOUNDS.WIN) : playSound(SOUNDS.LOSE);
 
   game.winner = second && first.score === second.score && first.cards === second.cards ? "draw" : first.id;
 }
@@ -599,21 +626,6 @@ function takeTokens(game, playerId, selection) {
   checkAndAwardNoble(game, player);
 
   return true;
-}
-
-function checkAndAwardNoble(game, player) {
-  const noble = awardNobleIfEligible(game, player);
-
-  if (noble) {
-    pushLog(
-      game,
-      `${player.name} mendapatkan Noble +${noble.points} poin.`
-    );
-  }
-
-  resolveWinner(game);
-
-  return noble;
 }
 
 function payableShortfall(player, card) {
@@ -1117,6 +1129,149 @@ function CostRow({ cost, size = `${SPRITE_SIZE}px` }) {
   );
 }
 
+function DevelopmentCardKeep({
+  card,
+  canBuy,
+  onBuy,
+  onReserve,
+  compact = false,
+  isRemoving = false,
+  actionsAlwaysVisible = false,
+}) {
+  const tierStyle = TIER_STYLES[card.tier];
+  const hasActions = Boolean(onBuy || onReserve);
+  return (
+    <Box
+      role="group"
+      position="relative"
+      border="1px solid"
+      borderColor={tierStyle.border}
+      position="relative"
+      overflow="hidden"
+      bg={card.bgUrl ? "transparent" : tierStyle.bg}
+      p="0.25em"
+      color="#172033"
+      borderRadius="8px"
+      overflow="hidden"
+      minH="133.5px"
+      boxShadow="0 6px 14px rgba(69, 54, 28, .08)"
+      opacity={isRemoving ? 0 : 1}
+      transform={isRemoving ? "scale(.92)" : "scale(1)"}
+      transition="opacity 1s ease, transform .22s ease, box-shadow .22s ease"
+      animation={isRemoving ? undefined : "cardDealIn .5s ease-out"}
+      pointerEvents={isRemoving ? "none" : "auto"}
+      _hover={
+        isRemoving
+          ? undefined
+          : {
+            transform: "translateY(-4px)",
+            boxShadow: "0 12px 22px rgba(69, 54, 28, .16)",
+            cursor: "pointer"
+          }
+      }
+    >
+      {card.bgUrl && (
+        <>
+          <Box
+            position="absolute"
+            inset={0}
+            backgroundImage={`url(${card.bgUrl})`}
+            backgroundPosition="center"
+            backgroundSize="cover"
+            backgroundRepeat="no-repeat"
+            zIndex={-2}
+          />
+
+          {Vignette()}
+        </>
+      )}
+
+      <Flex
+        align="center"
+        color="#111827"
+        px={compact ? { base: 2, xl: 1.5 } : { base: 2.5, xl: 2 }}
+        py={compact ? { base: 1, xl: 0.75 } : { base: 1, xl: 0.75 }}
+        w={"100%"}
+        minH={compact ? { base: "24px", xl: "20px" } : { base: "28px", xl: "24px" }}
+      >
+        {card.points > 0 && (
+          <Text
+            fontFamily={"'Kablammo'"}
+            fontSize="lg"
+            fontWeight="900"
+            lineHeight="1"
+            color={card.bgUrl ? "gray.100" : "gray.700"}
+            textShadow="1px 1px 2px rgba(0, 0, 0, 0.5)"
+          >
+            {card.points}
+          </Text>
+        )}
+
+        <Spacer />
+
+        <TokenPip id={card.bonus} size="24px" spriteUrl={GEM_SPRITE} />
+      </Flex>
+
+      <VStack
+        align="flex-start"
+        spacing={compact ? 0.75 : 1}
+        px={compact ? { base: 2, xl: 1.5 } : { base: 2.5, xl: 2 }}
+        py={compact ? { base: 1.5, xl: 1 } : { base: 2, xl: 1.5 }}
+        w={"50%"}
+      >
+        <CostRow cost={card.cost} size="1.25em" />
+      </VStack>
+
+      {hasActions && (
+        <HStack
+          position="absolute"
+          right={compact ? 1 : 2}
+          bottom={compact ? 1 : 2}
+          spacing={1}
+          justify="flex-end"
+          opacity={actionsAlwaysVisible ? 1 : 0}
+          transform={actionsAlwaysVisible ? "translateY(0)" : "translateY(8px)"}
+          transition="opacity .18s ease, transform .18s ease"
+          pointerEvents={actionsAlwaysVisible ? "auto" : "none"}
+          _groupHover={{ opacity: 1, transform: "translateY(0)", pointerEvents: "auto" }}
+          _groupFocusWithin={{ opacity: 1, transform: "translateY(0)", pointerEvents: "auto" }}
+        >
+          {onReserve && (
+            <Button
+              size="sm"
+              h={compact ? "24px" : "28px"}
+              w={compact ? "24px" : "28px"}
+              bg="#111827"
+              color={KEEP_GOLD}
+              border="1px solid"
+              borderColor="#111827"
+              _hover={{ bg: "#0b1220" }}
+              _active={{ bg: "#050816" }}
+              onClick={onReserve}
+            >
+              <BookmarkIcon color={KEEP_GOLD} />
+            </Button>
+          )}
+
+          {onBuy && (
+            <Button
+              size="sm"
+              colorScheme="green"
+              h={compact ? "24px" : "28px"}
+              w={compact ? "24px" : "28px"}
+              px={2}
+              display={canBuy ? "block" : "none"}
+              onClick={onBuy}
+            >
+              <CheckIcon />
+            </Button>
+          )}
+        </HStack>
+      )}
+    </Box>
+  );
+}
+
 function DevelopmentCard({
   card,
   canBuy,
@@ -1325,6 +1480,7 @@ function BankTokenPanel({
               _active={{ transform: "translateY(0)" }}
               onClick={() => onSelectToken(id)}
               isDisabled={!isPlayerTurn || game.tokenPool[id] === 0}
+              className="hand-cursor"
             >
               <HStack spacing={2} w="100%" justify="space-between">
                 <HStack>
@@ -1464,12 +1620,21 @@ function PlayerPanel({
         </HStack>
 
         <HStack fontSize="xs" justify="space-between">
-          <Text>Kartu: {player.cards.length}</Text>
-          <Text>Keep: {player.reserved.length}/3</Text>
-          <Text>Bangsawan: {player.nobles.length}</Text>
+          <Box>
+            <Text>Kartu:</Text>
+            <Text>{player.cards.length}</Text>
+          </Box>
+          <Box>
+            <Text>Keep:</Text>
+            <Text>{player.reserved.length}/3</Text>
+          </Box>
+          <Box>
+            <Text>Bangsawan:</Text>
+            <Text>{player.nobles.length}</Text>
+          </Box>
         </HStack>
 
-        <Box minH="110px" overflow="hidden" pt="0.25em">
+        <Box minH="110px" overflow="hidden" pt="0.25em" minW={0}>
           <SimpleGrid columns={player.reserved.length > 0 ? 3 : 1} spacing={1}>
             {player.reserved.length === 0 && (
               <Text fontSize="xs" >
@@ -1477,7 +1642,7 @@ function PlayerPanel({
               </Text>
             )}
             {player.reserved.map((card) => (
-              <DevelopmentCard
+              <DevelopmentCardKeep
                 key={card.id}
                 card={card}
                 compact
@@ -1569,10 +1734,15 @@ export default function Home() {
   const actionsAlwaysVisible = cardActionVisibility === "always";
 
   useEffect(() => {
-    if (!game || game.winner || !activePlayer?.isBot) return undefined;
+    if (!game || game.winner || !activePlayer?.isBot) {
+      playSound(SOUNDS.YOUR_TURN);
+      return undefined;
+    }
+
     const timer = window.setTimeout(() => {
       setGame((current) => runBotTurn(current));
     }, BOT_DELAY_MS);
+    
     return () => window.clearTimeout(timer);
   }, [game?.activePlayerId, game?.winner, activePlayer?.isBot]);
 
@@ -1583,6 +1753,16 @@ export default function Home() {
     }, GAME_TIME_TICK_MS);
     return () => window.clearInterval(timer);
   }, [game?.startedAt, game?.winner]);
+
+
+  const marketCardIds = Object.values(game?.market ?? {})
+    .flat()
+    .map((card) => card.id)
+    .join(",");
+
+  useEffect(() => {
+    playSound(SOUNDS.DEAL_CARD);
+  }, [marketCardIds]);
 
   function showError(message) {
     toast({ title: message, status: "warning", duration: 1800, isClosable: true, position: "top" });
@@ -1659,6 +1839,8 @@ export default function Home() {
   }
 
   function takeSelectedTokens() {
+    playSound(SOUNDS.TAKE_TOKEN);
+
     if (!isPlayerTurn) return;
     const error = validateTokenSelection(game, activePlayer.id, game.selectedTokens);
     if (error) {
@@ -1676,7 +1858,10 @@ export default function Home() {
   }
 
   function handleBuy(card, source, tier) {
+    playSound(SOUNDS.TAKE_CARD);
+
     if (!isPlayerTurn) return;
+
     if (!affordability(activePlayer, card).canBuy) {
       showError("Token belum cukup untuk membeli kartu ini.");
       return;
@@ -1695,7 +1880,10 @@ export default function Home() {
   }
 
   function handleReserve(card, tier) {
+    playSound(SOUNDS.TAKE_CARD);
+
     if (!isPlayerTurn) return;
+
     if (activePlayer.reserved.length >= 3) {
       showError("Keep maksimal 3 kartu.");
       return;
