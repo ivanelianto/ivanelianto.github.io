@@ -24,7 +24,7 @@ import {
   VStack,
   useToast
 } from "@chakra-ui/react";
-import { CheckIcon, RepeatIcon, SmallCloseIcon, createIcon } from "@chakra-ui/icons";
+import { CheckIcon, LockIcon, RepeatIcon, SmallCloseIcon, createIcon } from "@chakra-ui/icons";
 import { playSound, SOUNDS } from "./util";
 
 const GEM_TYPES = [
@@ -1236,23 +1236,6 @@ function DevelopmentCardKeep({
           _groupHover={{ opacity: 1, transform: "translateY(0)", pointerEvents: "auto" }}
           _groupFocusWithin={{ opacity: 1, transform: "translateY(0)", pointerEvents: "auto" }}
         >
-          {onReserve && (
-            <Button
-              size="sm"
-              h={compact ? "24px" : "28px"}
-              w={compact ? "24px" : "28px"}
-              bg="#111827"
-              color={KEEP_GOLD}
-              border="1px solid"
-              borderColor="#111827"
-              _hover={{ bg: "#0b1220" }}
-              _active={{ bg: "#050816" }}
-              onClick={onReserve}
-            >
-              <BookmarkIcon color={KEEP_GOLD} />
-            </Button>
-          )}
-
           {onBuy && (
             <Button
               size="sm"
@@ -1276,6 +1259,7 @@ function DevelopmentCard({
   card,
   canBuy,
   onBuy,
+  canReserve,
   onReserve,
   compact = false,
   isRemoving = false,
@@ -1312,6 +1296,11 @@ function DevelopmentCard({
             cursor: "pointer"
           }
       }
+      onDoubleClick={onBuy}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        onReserve();
+      }}
     >
       {card.bgUrl && (
         <>
@@ -1379,23 +1368,6 @@ function DevelopmentCard({
           _groupHover={{ opacity: 1, transform: "translateY(0)", pointerEvents: "auto" }}
           _groupFocusWithin={{ opacity: 1, transform: "translateY(0)", pointerEvents: "auto" }}
         >
-          {onReserve && (
-            <Button
-              size="sm"
-              h={compact ? "24px" : "28px"}
-              w={compact ? "24px" : "28px"}
-              bg="#111827"
-              color={KEEP_GOLD}
-              border="1px solid"
-              borderColor="#111827"
-              _hover={{ bg: "#0b1220" }}
-              _active={{ bg: "#050816" }}
-              onClick={onReserve}
-            >
-              <BookmarkIcon color={KEEP_GOLD} />
-            </Button>
-          )}
-
           {onBuy && (
             <Button
               size="sm"
@@ -1407,6 +1379,22 @@ function DevelopmentCard({
               onClick={onBuy}
             >
               <CheckIcon />
+            </Button>
+          )}
+
+          {onReserve && (
+            <Button
+              size="sm"
+              h={compact ? "24px" : "28px"}
+              w={compact ? "24px" : "28px"}
+              px={2}
+              bg="gray.100"
+              borderColor="gray.100"
+              border="1px solid"
+              display={canReserve ? "block" : "none"}
+              onClick={onReserve}
+            >
+              <LockIcon />
             </Button>
           )}
         </HStack>
@@ -1719,7 +1707,7 @@ export default function Home() {
   const [game, setGame] = useState(null);
   const [removingCardIds, setRemovingCardIds] = useState([]);
   const [currentTime, setCurrentTime] = useState(Date.now());
-  const [cardActionVisibility, setCardActionVisibility] = useState("hover");
+  const [cardActionVisibility, setCardActionVisibility] = useState("always");
   const toast = useToast();
 
   const activePlayer = game ? getActivePlayer(game) : null;
@@ -2136,6 +2124,7 @@ export default function Home() {
                           card={card}
                           canBuy={isPlayerTurn && affordability(activePlayer, card).canBuy}
                           onBuy={() => handleBuy(card, "market", tier)}
+                          canReserve={isPlayerTurn && activePlayer?.reserved?.length < 3 ? true : false}
                           onReserve={() => handleReserve(card, tier)}
                           isRemoving={removingCardIds.includes(card.id)}
                           actionsAlwaysVisible={actionsAlwaysVisible}
