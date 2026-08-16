@@ -4,8 +4,8 @@ import { ChakraProvider, extendTheme } from "@chakra-ui/react";
 
 const theme = extendTheme({
   fonts: {
-    heading: "Inter, system-ui, sans-serif",
-    body: "Inter, system-ui, sans-serif"
+    heading: "'Playpen Sans', Inter, system-ui, sans-serif",
+    body: "'Playpen Sans', Inter, system-ui, sans-serif"
   },
   styles: {
     global: {
