@@ -1,5 +1,6 @@
 * {
   box-sizing: border-box;
+  cursor: url("/cursor/pointer_scifi_b.png") 0 0, auto;
 }
 
 html,
@@ -16,6 +17,10 @@ input,
 select,
 textarea {
   font: inherit;
+}
+
+button, svg, .hand-cursor * {
+  cursor: url("/cursor/hand_point.png") 0 0, auto !important;
 }
 
 @keyframes cardDealIn {
