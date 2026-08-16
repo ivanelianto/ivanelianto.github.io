@@ -27,14 +27,60 @@ import {
 import { CheckIcon, RepeatIcon, SmallCloseIcon, createIcon } from "@chakra-ui/icons";
 
 const GEM_TYPES = [
-  { id: "diamond", label: "Diamond", bg: "#f8fafc", fg: "#172033", border: "#6d6d6d" },
-  { id: "onyx", label: "Onyx", bg: "#27272a", fg: "white", border: "#18181b" },
+  { id: "onyx", label: "Onyx", bg: "#9138a1", fg: "white", border: "#472e98" },
+  { id: "diamond", label: "Diamond", bg: "#fdce66 ", fg: "#172033", border: "#9b6f0f" },
   { id: "ruby", label: "Ruby", bg: "#dc2626", fg: "white", border: "#b91c1c" },
-  { id: "sapphire", label: "Sapphire", bg: "#2563eb", fg: "white", border: "#1d4ed8" },
+  { id: "sapphire", label: "Sapphire", bg: "#4493f8", fg: "white", border: "#1d4ed8" },
   { id: "emerald", label: "Emerald", bg: "#16a34a", fg: "white", border: "#15803d" },
 ];
+const GOLD = { id: "gold", label: "Gold", bg: "#cff1fa", fg: "#1d2525", border: "#383838" };
 
-const GOLD = { id: "gold", label: "Gold", bg: "#d9a441", fg: "#1d2525", border: "#ad7c1f" };
+const GEM_SPRITE = "/img/gem-sprite.png";
+
+const GEM_SPRITES = {
+  onyx: {
+    x: 22,
+    y: 10,
+    width: 183,
+    height: 241,
+  },
+  diamond: {
+    x: 1091,
+    y: 9,
+    width: 189,
+    height: 242,
+  },
+  ruby: {
+    x: 444,
+    y: 9,
+    width: 179,
+    height: 240,
+  },
+  sapphire: {
+    x: 222,
+    y: 13,
+    width: 191,
+    height: 234,
+  },
+  emerald: {
+    x: 822,
+    y: 20,
+    width: 242,
+    height: 218,
+  },
+  gold: {
+    x: 649,
+    y: 12,
+    width: 157,
+    height: 238,
+  },
+};
+
+const SPRITE_SIZE = 18;
+const SOURCE_WIDTH = 1300;
+const SOURCE_HEIGHT = 260;
+const SPRITE_SCALE = SPRITE_SIZE / SOURCE_HEIGHT;
+
 const GEM_IDS = GEM_TYPES.map((gem) => gem.id);
 const ALL_TOKEN_IDS = [...GEM_IDS, "gold"];
 const BOT_DELAY_MS = 700;
@@ -64,148 +110,150 @@ const BookmarkIcon = createIcon({
   )
 });
 const DEFAULT_PLAYER_CONFIGS = [
-  { name: "Player 1", isBot: false },
-  { name: "Player 2", isBot: true }
+  { name: "Stark", isBot: false },
+  { name: "Samson", isBot: true },
+  { name: "Shipos", isBot: true },
+  { name: "Sai", isBot: true }
 ];
 const CARD_PATTERNS = {
   onyx: {
     1: [
-      { points: 0, cost: [0, 1, 1, 1, 1] },
-      { points: 0, cost: [0, 0, 1, 0, 2] },
-      { points: 0, cost: [0, 2, 0, 0, 2] },
-      { points: 0, cost: [1, 0, 3, 0, 1] },
-      { points: 0, cost: [0, 0, 0, 0, 3] },
-      { points: 0, cost: [0, 1, 1, 2, 1] },
-      { points: 0, cost: [0, 2, 1, 2, 0] },
-      { points: 1, cost: [0, 0, 0, 4, 0] },
+      { points: 0, cost: [0, 1, 1, 1, 1], bgUrl: "/img/onyx-t1.webp" },
+      { points: 0, cost: [0, 0, 1, 0, 2], bgUrl: "/img/onyx-t1.webp" },
+      { points: 0, cost: [0, 2, 0, 0, 2], bgUrl: "/img/onyx-t1.webp" },
+      { points: 0, cost: [1, 0, 3, 0, 1], bgUrl: "/img/onyx-t1.webp" },
+      { points: 0, cost: [0, 0, 0, 0, 3], bgUrl: "/img/onyx-t1.webp" },
+      { points: 0, cost: [0, 1, 1, 2, 1], bgUrl: "/img/onyx-t1.webp" },
+      { points: 0, cost: [0, 2, 1, 2, 0], bgUrl: "/img/onyx-t1.webp" },
+      { points: 1, cost: [0, 0, 0, 4, 0], bgUrl: "/img/onyx-t1.webp" },
     ],
 
     2: [
-      { points: 1, cost: [0, 3, 0, 2, 2] },
-      { points: 1, cost: [2, 3, 0, 0, 3] },
-      { points: 2, cost: [0, 0, 2, 1, 4] },
-      { points: 2, cost: [0, 5, 0, 0, 0] },
-      { points: 2, cost: [0, 0, 3, 0, 5] },
-      { points: 3, cost: [6, 0, 0, 0, 0] },
+      { points: 1, cost: [0, 3, 0, 2, 2], bgUrl: "/img/onyx-t2.webp" },
+      { points: 1, cost: [2, 3, 0, 0, 3], bgUrl: "/img/onyx-t2.webp" },
+      { points: 2, cost: [0, 0, 2, 1, 4], bgUrl: "/img/onyx-t2.webp" },
+      { points: 2, cost: [0, 5, 0, 0, 0], bgUrl: "/img/onyx-t2.webp" },
+      { points: 2, cost: [0, 0, 3, 0, 5], bgUrl: "/img/onyx-t2.webp" },
+      { points: 3, cost: [6, 0, 0, 0, 0], bgUrl: "/img/onyx-t2.webp" },
     ],
 
     3: [
-      { points: 3, cost: [0, 3, 3, 3, 5] },
-      { points: 4, cost: [0, 0, 7, 0, 0] },
-      { points: 4, cost: [3, 0, 6, 0, 3] },
-      { points: 5, cost: [3, 0, 7, 0, 0] },
+      { points: 3, cost: [0, 3, 3, 3, 5], bgUrl: "/img/onyx-t3.webp" },
+      { points: 4, cost: [0, 0, 7, 0, 0], bgUrl: "/img/onyx-t3.webp" },
+      { points: 4, cost: [3, 0, 6, 0, 3], bgUrl: "/img/onyx-t3.webp" },
+      { points: 5, cost: [3, 0, 7, 0, 0], bgUrl: "/img/onyx-t3.webp" },
     ],
   },
   diamond: {
     1: [
-      { points: 0, cost: [1, 0, 0, 2, 2] },
-      { points: 0, cost: [1, 0, 2, 0, 0] },
-      { points: 0, cost: [1, 0, 1, 1, 1] },
-      { points: 0, cost: [0, 0, 0, 3, 0] },
-      { points: 0, cost: [0, 0, 0, 2, 2] },
-      { points: 0, cost: [1, 0, 1, 1, 2] },
-      { points: 0, cost: [1, 3, 0, 1, 0] },
-      { points: 1, cost: [0, 0, 0, 0, 4] },
+      { points: 0, cost: [1, 0, 0, 2, 2], bgUrl: "/img/diamond-t1.webp" },
+      { points: 0, cost: [1, 0, 2, 0, 0], bgUrl: "/img/diamond-t1.webp" },
+      { points: 0, cost: [1, 0, 1, 1, 1], bgUrl: "/img/diamond-t1.webp" },
+      { points: 0, cost: [0, 0, 0, 3, 0], bgUrl: "/img/diamond-t1.webp" },
+      { points: 0, cost: [0, 0, 0, 2, 2], bgUrl: "/img/diamond-t1.webp" },
+      { points: 0, cost: [1, 0, 1, 1, 2], bgUrl: "/img/diamond-t1.webp" },
+      { points: 0, cost: [1, 3, 0, 1, 0], bgUrl: "/img/diamond-t1.webp" },
+      { points: 1, cost: [0, 0, 0, 0, 4], bgUrl: "/img/diamond-t1.webp" },
     ],
 
     2: [
-      { points: 1, cost: [2, 0, 2, 0, 3] },
-      { points: 1, cost: [0, 2, 3, 3, 0] },
-      { points: 2, cost: [2, 0, 4, 0, 1] },
-      { points: 2, cost: [0, 0, 5, 0, 0] },
-      { points: 2, cost: [3, 0, 5, 0, 0] },
-      { points: 3, cost: [0, 6, 0, 0, 0] },
+      { points: 1, cost: [2, 0, 2, 0, 3], bgUrl: "/img/diamond-t2.webp" },
+      { points: 1, cost: [0, 2, 3, 3, 0], bgUrl: "/img/diamond-t2.webp" },
+      { points: 2, cost: [2, 0, 4, 0, 1], bgUrl: "/img/diamond-t2.webp" },
+      { points: 2, cost: [0, 0, 5, 0, 0], bgUrl: "/img/diamond-t2.webp" },
+      { points: 2, cost: [3, 0, 5, 0, 0], bgUrl: "/img/diamond-t2.webp" },
+      { points: 3, cost: [0, 6, 0, 0, 0], bgUrl: "/img/diamond-t2.webp" },
     ],
 
     3: [
-      { points: 3, cost: [3, 0, 5, 3, 3] },
-      { points: 4, cost: [7, 0, 0, 0, 0] },
-      { points: 4, cost: [6, 0, 3, 0, 0] },
-      { points: 5, cost: [7, 3, 0, 0, 0] },
+      { points: 3, cost: [3, 0, 5, 3, 3], bgUrl: "/img/diamond-t3.webp" },
+      { points: 4, cost: [7, 0, 0, 0, 0], bgUrl: "/img/diamond-t3.webp" },
+      { points: 4, cost: [6, 3, 3, 0, 0], bgUrl: "/img/diamond-t3.webp" },
+      { points: 5, cost: [7, 3, 0, 0, 0], bgUrl: "/img/diamond-t3.webp" },
     ],
   },
   ruby: {
     1: [
-      { points: 0, cost: [0, 3, 0, 0, 0] },
-      { points: 0, cost: [3, 1, 1, 0, 0] },
-      { points: 0, cost: [0, 0, 0, 2, 1] },
-      { points: 0, cost: [2, 2, 0, 0, 1] },
-      { points: 0, cost: [1, 2, 0, 1, 1] },
-      { points: 0, cost: [1, 1, 0, 1, 1] },
-      { points: 0, cost: [0, 2, 2, 0, 0] },
-      { points: 1, cost: [0, 4, 0, 0, 0] },
+      { points: 0, cost: [0, 3, 0, 0, 0], bgUrl: "/img/ruby-t1.webp" },
+      { points: 0, cost: [3, 1, 1, 0, 0], bgUrl: "/img/ruby-t1.webp" },
+      { points: 0, cost: [0, 0, 0, 2, 1], bgUrl: "/img/ruby-t1.webp" },
+      { points: 0, cost: [2, 2, 0, 0, 1], bgUrl: "/img/ruby-t1.webp" },
+      { points: 0, cost: [1, 2, 0, 1, 1], bgUrl: "/img/ruby-t1.webp" },
+      { points: 0, cost: [1, 1, 0, 1, 1], bgUrl: "/img/ruby-t1.webp" },
+      { points: 0, cost: [0, 2, 2, 0, 0], bgUrl: "/img/ruby-t1.webp" },
+      { points: 1, cost: [0, 4, 0, 0, 0], bgUrl: "/img/ruby-t1.webp" },
     ],
 
     2: [
-      { points: 1, cost: [3, 0, 2, 3, 0] },
-      { points: 1, cost: [3, 2, 2, 0, 0] },
-      { points: 2, cost: [0, 1, 0, 4, 2] },
-      { points: 2, cost: [5, 3, 0, 0, 0] },
-      { points: 2, cost: [5, 0, 0, 0, 0] },
-      { points: 3, cost: [0, 0, 6, 0, 0] },
+      { points: 1, cost: [3, 0, 2, 3, 0], bgUrl: "/img/ruby-t2.webp" },
+      { points: 1, cost: [3, 2, 2, 0, 0], bgUrl: "/img/ruby-t2.webp" },
+      { points: 2, cost: [0, 1, 0, 4, 2], bgUrl: "/img/ruby-t2.webp" },
+      { points: 2, cost: [5, 3, 0, 0, 0], bgUrl: "/img/ruby-t2.webp" },
+      { points: 2, cost: [5, 0, 0, 0, 0], bgUrl: "/img/ruby-t2.webp" },
+      { points: 3, cost: [0, 0, 6, 0, 0], bgUrl: "/img/ruby-t2.webp" },
     ],
 
     3: [
-      { points: 3, cost: [3, 3, 0, 5, 3] },
-      { points: 4, cost: [0, 0, 0, 0, 7] },
-      { points: 4, cost: [0, 0, 3, 3, 6] },
-      { points: 5, cost: [0, 0, 3, 0, 7] },
+      { points: 3, cost: [3, 3, 0, 5, 3], bgUrl: "/img/ruby-t3.webp" },
+      { points: 4, cost: [0, 0, 0, 0, 7], bgUrl: "/img/ruby-t3.webp" },
+      { points: 4, cost: [0, 0, 3, 3, 6], bgUrl: "/img/ruby-t3.webp" },
+      { points: 5, cost: [0, 0, 3, 0, 7], bgUrl: "/img/ruby-t3.webp" },
     ],
   },
   sapphire: {
     1: [
-      { points: 0, cost: [2, 1, 0, 0, 0] },
-      { points: 0, cost: [1, 1, 2, 0, 1] },
-      { points: 0, cost: [1, 1, 1, 0, 1] },
-      { points: 0, cost: [0, 0, 1, 1, 3] },
-      { points: 0, cost: [3, 0, 0, 0, 0] },
-      { points: 0, cost: [0, 1, 2, 0, 2] },
-      { points: 0, cost: [2, 0, 0, 0, 2] },
-      { points: 1, cost: [0, 0, 4, 0, 0] },
+      { points: 0, cost: [2, 1, 0, 0, 0], bgUrl: "/img/sapphire-t1.webp" },
+      { points: 0, cost: [1, 1, 2, 0, 1], bgUrl: "/img/sapphire-t1.webp" },
+      { points: 0, cost: [1, 1, 1, 0, 1], bgUrl: "/img/sapphire-t1.webp" },
+      { points: 0, cost: [0, 0, 1, 1, 3], bgUrl: "/img/sapphire-t1.webp" },
+      { points: 0, cost: [3, 0, 0, 0, 0], bgUrl: "/img/sapphire-t1.webp" },
+      { points: 0, cost: [0, 1, 2, 0, 2], bgUrl: "/img/sapphire-t1.webp" },
+      { points: 0, cost: [2, 0, 0, 0, 2], bgUrl: "/img/sapphire-t1.webp" },
+      { points: 1, cost: [0, 0, 4, 0, 0], bgUrl: "/img/sapphire-t1.webp" },
     ],
 
     2: [
-      { points: 1, cost: [0, 0, 3, 2, 2] },
-      { points: 1, cost: [3, 0, 0, 2, 3] },
-      { points: 2, cost: [0, 5, 0, 3, 0] },
-      { points: 2, cost: [0, 0, 0, 5, 0] },
-      { points: 2, cost: [4, 2, 1, 0, 0] },
-      { points: 3, cost: [0, 0, 0, 6, 0] },
+      { points: 1, cost: [0, 0, 3, 2, 2], bgUrl: "/img/sapphire-t2.webp" },
+      { points: 1, cost: [3, 0, 0, 2, 3], bgUrl: "/img/sapphire-t2.webp" },
+      { points: 2, cost: [0, 5, 0, 3, 0], bgUrl: "/img/sapphire-t2.webp" },
+      { points: 2, cost: [0, 0, 0, 5, 0], bgUrl: "/img/sapphire-t2.webp" },
+      { points: 2, cost: [4, 2, 1, 0, 0], bgUrl: "/img/sapphire-t2.webp" },
+      { points: 3, cost: [0, 0, 0, 6, 0], bgUrl: "/img/sapphire-t2.webp" },
     ],
 
     3: [
-      { points: 3, cost: [5, 3, 3, 0, 3] },
-      { points: 4, cost: [0, 7, 0, 0, 0] },
-      { points: 4, cost: [3, 6, 0, 3, 0] },
-      { points: 5, cost: [0, 7, 0, 3, 0] },
+      { points: 3, cost: [5, 3, 3, 0, 3], bgUrl: "/img/sapphire-t3.webp" },
+      { points: 4, cost: [0, 7, 0, 0, 0], bgUrl: "/img/sapphire-t3.webp" },
+      { points: 4, cost: [3, 6, 0, 3, 0], bgUrl: "/img/sapphire-t3.webp" },
+      { points: 5, cost: [0, 7, 0, 3, 0], bgUrl: "/img/sapphire-t3.webp" },
     ],
   },
   emerald: {
     1: [
-      { points: 0, cost: [0, 2, 0, 1, 0] },
-      { points: 0, cost: [0, 0, 2, 2, 0] },
-      { points: 0, cost: [0, 1, 0, 3, 1] },
-      { points: 0, cost: [1, 1, 1, 1, 0] },
-      { points: 0, cost: [2, 1, 1, 1, 0] },
-      { points: 0, cost: [2, 0, 2, 1, 0] },
-      { points: 0, cost: [0, 0, 3, 0, 0] },
-      { points: 1, cost: [4, 0, 0, 0, 0] },
+      { points: 0, cost: [0, 2, 0, 1, 0], bgUrl: "/img/emerald-t1.webp" },
+      { points: 0, cost: [0, 0, 2, 2, 0], bgUrl: "/img/emerald-t1.webp" },
+      { points: 0, cost: [0, 1, 0, 3, 1], bgUrl: "/img/emerald-t1.webp" },
+      { points: 0, cost: [1, 1, 1, 1, 0], bgUrl: "/img/emerald-t1.webp" },
+      { points: 0, cost: [2, 1, 1, 1, 0], bgUrl: "/img/emerald-t1.webp" },
+      { points: 0, cost: [2, 0, 2, 1, 0], bgUrl: "/img/emerald-t1.webp" },
+      { points: 0, cost: [0, 0, 3, 0, 0], bgUrl: "/img/emerald-t1.webp" },
+      { points: 1, cost: [4, 0, 0, 0, 0], bgUrl: "/img/emerald-t1.webp" },
     ],
 
     2: [
-      { points: 1, cost: [0, 3, 3, 0, 2] },
-      { points: 1, cost: [2, 2, 0, 3, 0] },
-      { points: 2, cost: [1, 4, 0, 2, 0] },
-      { points: 2, cost: [0, 0, 0, 0, 5] },
-      { points: 2, cost: [0, 0, 0, 5, 3] },
-      { points: 3, cost: [0, 0, 0, 0, 6] },
+      { points: 1, cost: [0, 3, 3, 0, 2], bgUrl: "/img/emerald-t2.webp" },
+      { points: 1, cost: [2, 2, 0, 3, 0], bgUrl: "/img/emerald-t2.webp" },
+      { points: 2, cost: [1, 4, 0, 2, 0], bgUrl: "/img/emerald-t2.webp" },
+      { points: 2, cost: [0, 0, 0, 0, 5], bgUrl: "/img/emerald-t2.webp" },
+      { points: 2, cost: [0, 0, 0, 5, 3], bgUrl: "/img/emerald-t2.webp" },
+      { points: 3, cost: [0, 0, 0, 0, 6], bgUrl: "/img/emerald-t2.webp" },
     ],
 
     3: [
-      { points: 3, cost: [3, 5, 3, 3, 0] },
-      { points: 4, cost: [0, 3, 0, 6, 3] },
-      { points: 4, cost: [0, 0, 0, 7, 0] },
-      { points: 5, cost: [3, 0, 0, 7, 3] },
+      { points: 3, cost: [3, 5, 3, 3, 0], bgUrl: "/img/emerald-t3.webp" },
+      { points: 4, cost: [0, 3, 0, 6, 3], bgUrl: "/img/emerald-t3.webp" },
+      { points: 4, cost: [0, 0, 0, 7, 0], bgUrl: "/img/emerald-t3.webp" },
+      { points: 5, cost: [0, 0, 0, 7, 3], bgUrl: "/img/emerald-t3.webp" },
     ],
   },
 };
@@ -287,6 +335,7 @@ function buildDeck(tier) {
         bonus: gem.id,
         points: pattern.points,
         cost: arrayToCost(pattern.cost),
+        bgUrl: pattern.bgUrl,
       });
     });
   });
@@ -357,7 +406,7 @@ function defaultPlayerConfig(index, isBot = index > 0) {
 
 function normalizePlayerConfigs(configs) {
   const normalized = configs.slice(0, 4).map((config, index) => ({
-    name: config.name?.trim() || `Player ${index + 1}`,
+    name: config.name || `Player ${index + 1}`,
     isBot: Boolean(config.isBot)
   }));
 
@@ -396,7 +445,7 @@ function createGame(seed = 20260813, playerConfigs = DEFAULT_PLAYER_CONFIGS) {
   const tokenPool = emptyCounts(7);
   tokenPool.gold = 5;
   const players = normalizePlayerConfigs(playerConfigs).map((config, index) =>
-    createPlayer(`p${index + 1}`, config.name, config.isBot)
+    createPlayer(`p${index + 1}`, config.name.trim(), config.isBot)
   );
 
   return {
@@ -859,30 +908,119 @@ function runBotTurn(previous) {
   return game;
 }
 
-function TokenPip({ id, amount = 0, size = "28px", shape = "token" }) {
+const TokenPip = ({
+  id,
+  amount = null,
+  size = `${SPRITE_SIZE}px`,
+  spriteUrl = null,
+  shape = "token",
+  showAmount = true,
+}) => {
   const gem = gemMeta(id);
-  const isBonus = shape === "bonus";
+
+  const sizeNumber = parseFloat(size);
+
+  if (!spriteUrl) {
+    return (
+      <Box
+        w={size}
+        h={size}
+        flexShrink={0}
+        borderRadius={shape === "round" ? "50%" : "4px"}
+        bg={gem.bg}
+        border="1px solid"
+        borderColor={gem.border}
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+      >
+        {amount !== null && amount !== undefined && (
+          <Text
+            fontSize="xs"
+            fontWeight="800"
+            color={gem.fg}
+          >
+            {amount}
+          </Text>
+        )}
+      </Box>
+    );
+  }
+
+  // =========================================================
+  // TOKEN / SPRITE
+  // =========================================================
+
+  const sprite = GEM_SPRITES[id];
+
+  let visual = null;
+
+  // Individual sprite URL
+  if (spriteUrl) {
+    const scale = Math.min(
+      sizeNumber / sprite.width,
+      sizeNumber / sprite.height
+    );
+
+    const renderedWidth = sprite.width * scale;
+    const renderedHeight = sprite.height * scale;
+
+    const offsetX = (sizeNumber - renderedWidth) / 2;
+    const offsetY = (sizeNumber - renderedHeight) / 2;
+
+    visual = (
+      <Box
+        position="absolute"
+        width={`${renderedWidth}px`}
+        height={`${renderedHeight}px`}
+        left={`${offsetX}px`}
+        top={`${offsetY}px`}
+        backgroundImage={`url(${GEM_SPRITE})`}
+        backgroundRepeat="no-repeat"
+        backgroundSize={`${SOURCE_WIDTH * scale}px ${SOURCE_HEIGHT * scale}px`}
+        backgroundPosition={`${-sprite.x * scale}px ${-sprite.y * scale}px`}
+      />
+    );
+  }
+
   return (
-    <Flex
-      align="center"
-      justify="center"
-      minW={isBonus ? size : amount > 0 ? size : size}
-      w={isBonus ? size : undefined}
+    <Box
+      w={size}
       h={size}
-      px={amount > 0 ? 2 : 0}
-      border="1px solid"
-      borderColor={gem.border}
-      bg={gem.bg}
-      color={gem.fg}
-      borderRadius={isBonus ? "6px" : "999px"}
-      fontSize="xs"
-      fontWeight="800"
-      boxShadow="inset 0 1px 0 rgba(255,255,255,.4)"
+      flexShrink={0}
+      position="relative"
+      overflow="hidden"
+      display="inline-flex"
+      alignItems="center"
+      justifyContent="center"
     >
-      {amount > 0 ? amount : ""}
-    </Flex>
+      {visual}
+
+      {showAmount &&
+        amount !== null &&
+        amount !== undefined && (
+          <Text
+            position="absolute"
+            right="-1px"
+            bottom="-1px"
+            minW="10px"
+            h="10px"
+            px="2px"
+            borderRadius="999px"
+            bg="#111827"
+            color="white"
+            fontSize="7px"
+            fontWeight="900"
+            lineHeight="10px"
+            textAlign="center"
+            zIndex={1}
+          >
+            {amount}
+          </Text>
+        )}
+    </Box>
   );
-}
+};
 
 function LogTokenBadges({ tokens, compact = false }) {
   if (!tokens) return null;
@@ -905,7 +1043,7 @@ function LogTokenBadges({ tokens, compact = false }) {
             py={compact ? 0 : 0.5}
             fontSize={compact ? "9px" : "xs"}
           >
-            {gem.label} x{tokens[id]}
+            {tokens[id]}
           </Badge>
         );
       })}
@@ -915,31 +1053,29 @@ function LogTokenBadges({ tokens, compact = false }) {
 
 function LogPanel({ game }) {
   return (
-    <Box
-      border="1px solid"
-      borderColor="#d7c9ad"
-      bg="rgba(255,255,255,.72)"
-      borderRadius="8px"
+    <BoxDarkGlass
       p={{ base: 2, xl: 2.5 }}
-      h="100%"
-      minH="0"
       overflow="hidden"
       display="flex"
       flexDirection="column"
+      flex={1}
     >
       <Heading size="sm" mb={1.5} flexShrink={0}>
         Log
       </Heading>
+
       <Box flex="1" minH="0" overflowY="auto" overflowX="hidden" pr={1}>
-        <Stack spacing={1.25} divider={<Divider borderColor="#e3d7bf" />}>
+        <VStack
+          spacing={1.5}
+          divider={<Divider borderColor="gray.100" />}
+          align={"left"}
+        >
           {game.log.map((entry, index) => {
             const normalizedEntry = typeof entry === "string" ? { id: `${entry}-${index}`, message: entry } : entry;
             return (
               <Box key={normalizedEntry.id || `${normalizedEntry.message}-${index}`} overflow="hidden">
                 <Text
-                  fontSize="11px"
-                  lineHeight="1.25"
-                  color={index === 0 ? "#1d2525" : "#66736d"}
+                  fontSize="xs"
                   noOfLines={2}
                   wordBreak="break-word"
                 >
@@ -949,19 +1085,33 @@ function LogPanel({ game }) {
               </Box>
             );
           })}
-        </Stack>
+        </VStack>
       </Box>
-    </Box>
+    </BoxDarkGlass>
   );
 }
 
-function CostRow({ cost, size = "20px" }) {
+function CostRow({ cost, size = `${SPRITE_SIZE}px` }) {
   const items = GEM_IDS.filter((id) => (cost[id] || 0) > 0);
-  if (items.length === 0) return <Text fontSize="xs">Gratis</Text>;
+
+  if (items.length === 0) {
+    return (
+      <Text fontSize="xs">
+        Gratis
+      </Text>
+    );
+  }
+
   return (
     <HStack spacing={1} wrap="wrap">
       {items.map((id) => (
-        <TokenPip key={id} id={id} amount={cost[id]} size={size} />
+        <TokenPip
+          key={id}
+          id={id}
+          amount={cost[id]}
+          size={size}
+          shape="round"
+        />
       ))}
     </HStack>
   );
@@ -974,7 +1124,7 @@ function DevelopmentCard({
   onReserve,
   compact = false,
   isRemoving = false,
-  actionsAlwaysVisible = false
+  actionsAlwaysVisible = false,
 }) {
   const tierStyle = TIER_STYLES[card.tier];
   const hasActions = Boolean(onBuy || onReserve);
@@ -984,7 +1134,9 @@ function DevelopmentCard({
       position="relative"
       border="1px solid"
       borderColor={tierStyle.border}
-      bg={tierStyle.bg}
+      position="relative"
+      overflow="hidden"
+      bg={card.bgUrl ? "transparent" : tierStyle.bg}
       p="0.25em"
       color="#172033"
       borderRadius="8px"
@@ -1006,19 +1158,46 @@ function DevelopmentCard({
           }
       }
     >
+      {card.bgUrl && (
+        <>
+          <Box
+            position="absolute"
+            inset={0}
+            backgroundImage={`url(${card.bgUrl})`}
+            backgroundPosition="center"
+            backgroundSize="cover"
+            backgroundRepeat="no-repeat"
+            zIndex={-2}
+          />
+
+          {Vignette()}
+        </>
+      )}
 
       <Flex
         align="center"
         color="#111827"
         px={compact ? { base: 2, xl: 1.5 } : { base: 2.5, xl: 2 }}
         py={compact ? { base: 1, xl: 0.75 } : { base: 1, xl: 0.75 }}
+        w={"100%"}
         minH={compact ? { base: "24px", xl: "20px" } : { base: "28px", xl: "24px" }}
       >
-        <Text fontSize={compact ? { base: "sm", xl: "xs" } : { base: "lg", xl: "md", "2xl": "lg" }} fontWeight="900" lineHeight="1">
-          {card.points}🌟
-        </Text>
+        {card.points > 0 && (
+          <Text
+            fontFamily={"'Kablammo'"}
+            fontSize="lg"
+            fontWeight="900"
+            lineHeight="1"
+            color={card.bgUrl ? "gray.100" : "gray.700"}
+            textShadow="1px 1px 2px rgba(0, 0, 0, 0.5)"
+          >
+            {card.points}
+          </Text>
+        )}
+
         <Spacer />
-        <TokenPip id={card.bonus} shape="bonus" size={compact ? "17px" : "18px"} />
+
+        <TokenPip id={card.bonus} size="24px" spriteUrl={GEM_SPRITE} />
       </Flex>
 
       <VStack
@@ -1028,7 +1207,7 @@ function DevelopmentCard({
         py={compact ? { base: 1.5, xl: 1 } : { base: 2, xl: 1.5 }}
         w={"50%"}
       >
-        <CostRow cost={card.cost} size={compact ? "16px" : "18px"} />
+        <CostRow cost={card.cost} size="1.25em" />
       </VStack>
 
       {hasActions && (
@@ -1083,17 +1262,19 @@ function DevelopmentCard({
 
 function NobleTile({ noble }) {
   return (
-    <Box border="1mm ridge #ae28d1" bg="#ae28d124" borderRadius="8px" flex={1} p="0.25em">
-      <Flex align="center" mb={1} color="white" px="0.5em">
-        <Text fontSize={{ base: "lg", xl: "md", "2xl": "lg" }} fontWeight="900" color="#111827">
-          {noble.points}🌟
+    <BoxDarkGlass p="0.25em" minH={"calc(20% - 0.35em)"} position="relative">
+      {Vignette()}
+
+      <Flex align="center" mb={1} px="0.5em">
+        <Text fontSize={{ base: "lg", xl: "md", "2xl": "lg" }} fontWeight="900">
+          {noble.points}
         </Text>
       </Flex>
 
       <Box px="0.5em">
         <CostRow cost={noble.requirement} size="18px" />
       </Box>
-    </Box>
+    </BoxDarkGlass>
   );
 }
 
@@ -1106,13 +1287,10 @@ function BankTokenPanel({
   onClearSelection
 }) {
   return (
-    <Box
-      border="1px solid"
-      borderColor="#d7c9ad"
-      bg="rgba(255,255,255,.72)"
-      borderRadius="8px"
+    <BoxDarkGlass
       p={{ base: 2, xl: 2.5 }}
-      h="100%"
+      w={{ base: "100%", xl: "164px" }}
+      h={{ base: "auto", xl: "424px" }}
       minH="0"
       overflow="hidden"
       display="flex"
@@ -1121,7 +1299,7 @@ function BankTokenPanel({
       <Flex align="center" mb={2} flexShrink={0}>
         <Heading size="sm">Token</Heading>
         <Spacer />
-        <Text fontSize="xs" color="#66736d">
+        <Text fontSize="xs" >
           Pilih: {selectedTotal}
         </Text>
       </Flex>
@@ -1136,9 +1314,8 @@ function BankTokenPanel({
               key={id}
               h={{ base: "38px", xl: "clamp(34px, 5vh, 42px)" }}
               justifyContent="flex-start"
-              // bg={isSelected ? meta.bg : "transparent"}
               bg="transparent"
-              color="#172033"
+              color={meta.bg}
               border={isSelected ? "3px solid" : "1px solid"}
               borderColor={meta.border}
               boxShadow={isSelected ? "inset 0 1px 0 rgba(255,255,255,.35)" : "none"}
@@ -1151,7 +1328,13 @@ function BankTokenPanel({
             >
               <HStack spacing={2} w="100%" justify="space-between">
                 <HStack>
-                  <Text fontSize="sm" fontWeight="900" minW="20px" textAlign="left">
+                  <Text
+                    fontSize="sm"
+                    fontWeight="900"
+                    minW="20px"
+                    textAlign="left"
+                    textShadow="0px 0px 5px rgba(255, 255, 255, 0.5)"
+                  >
                     {game.tokenPool[id]}
                   </Text>
 
@@ -1166,7 +1349,13 @@ function BankTokenPanel({
                   />
                 </HStack>
 
-                <Text fontSize="sm" fontWeight="900" minW="28px" textAlign="right">
+                <Text
+                  fontSize="sm"
+                  fontWeight="900"
+                  minW="28px"
+                  textAlign="right"
+                  textShadow="0px 0px 2px rgba(255, 255, 255, 0.5)"
+                >
                   {selected ? `${selected}x` : ""}
                 </Text>
               </HStack>
@@ -1174,6 +1363,12 @@ function BankTokenPanel({
           );
         })}
       </Stack>
+
+      {selectedTotal === 1 && (
+        <Text mt={1.5} fontSize="10px" >
+          Klik warna yang sama lagi untuk ambil 2, jika bank masih minimal 4.
+        </Text>
+      )}
 
       <HStack mt={2}>
         <Button
@@ -1186,6 +1381,7 @@ function BankTokenPanel({
         >
           Ambil
         </Button>
+
         <Tooltip label="Batal pilih token" hasArrow>
           <IconButton
             aria-label="Batal pilih token"
@@ -1196,13 +1392,7 @@ function BankTokenPanel({
           />
         </Tooltip>
       </HStack>
-
-      {selectedTotal === 1 && (
-        <Text mt={1.5} fontSize="10px" color="#66736d">
-          Klik warna yang sama lagi untuk ambil 2, jika bank masih minimal 4.
-        </Text>
-      )}
-    </Box>
+    </BoxDarkGlass>
   );
 }
 
@@ -1216,68 +1406,64 @@ function PlayerPanel({
 }) {
   const score = scoreFor(player);
   return (
-    <Box
-      border="1px solid"
+    <BoxDarkGlass
       borderColor={isActive ? "#111827" : "#d7c9ad"}
-      bg={isActive ? "#fffdf6" : "rgba(255,255,255,.72)"}
-      borderRadius="8px"
       p={{ base: 2, xl: 2.5 }}
-      boxShadow={isActive ? "0 0 0 2px rgba(242, 201, 76, .7)" : "none"}
+      boxShadow={isActive ? "0 0 3px 3px rgba(242, 201, 76, .7)" : "none"}
       h="100%"
       minH="0"
       overflow="hidden"
       display="flex"
       flexDirection="column"
+      flex={1}
     >
       <Flex align="center" mb={{ base: 1.5, xl: 1 }} flexShrink={0}>
         <Box>
-          <Text fontSize="xs" color="#66736d">
+          <Text fontSize="xs">
             {player.isBot ? "🤖 Bot" : "Pemain"}
           </Text>
           <HStack spacing={2} align="center">
             <Heading size="sm">{player.name}</Heading>
-            {isActive && (
-              <Badge bg="#111827" color={KEEP_GOLD} borderRadius="4px" paddingX="6px">
-                Turn
-              </Badge>
-            )}
           </HStack>
         </Box>
+
         <Spacer />
+
         <Box textAlign="right">
-          <Text fontSize="xs" color="#66736d">
+          <Text fontSize="xs">
             Poin
           </Text>
+
           <Text fontSize="xl" fontWeight="900" lineHeight="1">
-            {score}🌟
+            {score}
           </Text>
         </Box>
       </Flex>
 
-      <Stack flex="1" minH="0">
-        <Box>
-          <Text fontSize="10px" fontWeight="800" color="#66736d" mb={0.5}>
+      <Stack flex="1" minH="0" mt={2}>
+        <HStack>
+          <Text fontSize="10px" fontWeight="800" mb={0.5} w={"64px"}>
             Token ({sumTokens(player.tokens)}/10)
           </Text>
           <HStack spacing={1} wrap="nowrap" overflow="hidden">
             {ALL_TOKEN_IDS.map((id) => (
-              <TokenPip key={id} id={id} amount={player.tokens[id]} size="19px" />
+              <TokenPip key={id} id={id} amount={player.tokens[id]} size={`${SPRITE_SIZE}px`} shape="round" />
             ))}
           </HStack>
-        </Box>
+        </HStack>
 
-        <Box>
-          <Text fontSize="10px" fontWeight="800" color="#66736d" mb={0.5}>
+        <HStack>
+          <Text fontSize="10px" fontWeight="800" mb={0.5} w={"64px"}>
             Bonus
           </Text>
           <HStack spacing={1} wrap="nowrap" overflow="hidden">
             {GEM_IDS.map((id) => (
-              <TokenPip key={id} id={id} amount={player.bonuses[id]} shape="bonus" size="19px" />
+              <TokenPip key={id} id={id} amount={player.bonuses[id]} shape="bonus" size={`${SPRITE_SIZE}px`} />
             ))}
           </HStack>
-        </Box>
+        </HStack>
 
-        <HStack color="#66736d" fontSize="xs" justify="space-between">
+        <HStack fontSize="xs" justify="space-between">
           <Text>Kartu: {player.cards.length}</Text>
           <Text>Keep: {player.reserved.length}/3</Text>
           <Text>Bangsawan: {player.nobles.length}</Text>
@@ -1286,7 +1472,7 @@ function PlayerPanel({
         <Box minH="110px" overflow="hidden" pt="0.25em">
           <SimpleGrid columns={player.reserved.length > 0 ? 3 : 1} spacing={1}>
             {player.reserved.length === 0 && (
-              <Text fontSize="xs" color="#66736d">
+              <Text fontSize="xs" >
                 Belum ada kartu.
               </Text>
             )}
@@ -1304,8 +1490,63 @@ function PlayerPanel({
           </SimpleGrid>
         </Box>
       </Stack>
-    </Box>
+    </BoxDarkGlass>
   );
+}
+
+function blurBackground() {
+  return <>
+    <Box
+      position="fixed"
+      inset="-20px"
+      backgroundImage="url('/img/background.webp')"
+      backgroundPosition="center"
+      backgroundSize="cover"
+      backgroundRepeat="no-repeat"
+      filter="blur(10px)"
+      zIndex={-2}
+    />
+
+    {/* Optional overlay */}
+    <Box
+      position="fixed"
+      inset={0}
+      bg="rgba(0, 0, 0, 0.2)"
+      zIndex={-1}
+    />
+  </>
+}
+
+function BoxDarkGlass({ children, ...props }) {
+  return <Box
+    bg="rgba(0, 0, 0, 0.35)"
+    border="1px solid"
+    borderColor="gray.500"
+    borderRadius="8px"
+    color="gray.100"
+    {...props}
+  >
+    {children}
+  </Box>
+}
+
+function Vignette() {
+  return (<>
+    <Box
+      position="absolute"
+      inset={0}
+      bg="rgba(0, 0, 0, 0.5)"
+      zIndex={-1}
+    />
+
+    <Box
+      position="absolute"
+      inset={0}
+      height="50%"
+      bgGradient="linear(to-b, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.25) 45%, rgba(255,255,255,0) 100%)"
+      zIndex={-1}
+    />
+  </>)
 }
 
 export default function Home() {
@@ -1474,19 +1715,27 @@ export default function Home() {
 
   if (!game) {
     return (
-      <Box minH="100vh" bg="#f5f1e8">
-        <Container maxW="900px" py={{ base: 4, lg: 8 }}>
-          <Stack spacing={5}>
+      <Box
+        minH="100vh"
+        position="relative"
+        overflow="hidden"
+      >
+        {blurBackground()}
+
+        <Container maxW="900px" py={{ base: 4, lg: 8 }} minH="100vh" display="flex" justifyContent="center">
+          <Stack spacing={5} justifyContent="center">
             <Box>
-              <Heading size="lg" letterSpacing="0">
-                Offline Splendor
+              <Heading size="lg" letterSpacing="0" color="gray.200" textAlign="center">
+                Splendor by IV
               </Heading>
-              <Text color="#5f6c66" fontSize="sm">
+              <Text color="gray.200" fontSize="sm" textAlign="center">
                 Pilih komposisi pemain, maksimal 4 peserta.
               </Text>
             </Box>
 
-            <Box border="1px solid" borderColor="#d7c9ad" bg="rgba(255,255,255,.82)" borderRadius="8px" p={5}>
+            <BoxDarkGlass
+              p={5}
+            >
               <Stack spacing={4}>
                 <FormControl>
                   <FormLabel fontSize="sm" fontWeight="800">
@@ -1501,9 +1750,12 @@ export default function Home() {
                   </Select>
                 </FormControl>
 
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                <HStack spacing={4}>
                   {playerConfigs.map((config, index) => (
-                    <Box key={index} border="1px solid" borderColor="#d7c9ad" bg="white" borderRadius="8px" p={4}>
+                    <BoxDarkGlass
+                      key={index}
+                      p={4}
+                    >
                       <Stack spacing={3}>
                         <Heading size="sm">Slot {index + 1}</Heading>
                         <FormControl>
@@ -1529,15 +1781,15 @@ export default function Home() {
                           </Select>
                         </FormControl>
                       </Stack>
-                    </Box>
+                    </BoxDarkGlass>
                   ))}
-                </SimpleGrid>
+                </HStack>
 
                 <Button colorScheme="green" alignSelf="flex-start" leftIcon={<CheckIcon />} onClick={startGame}>
                   Build Game
                 </Button>
               </Stack>
-            </Box>
+            </BoxDarkGlass>
           </Stack>
         </Container>
       </Box>
@@ -1554,18 +1806,26 @@ export default function Home() {
       : `Giliran ${activePlayer?.name}`;
 
   return (
-    <Box minH="100vh" bg="#f5f1e8">
-      <Container maxW="1600px" py={{ base: 2, lg: 3 }}>
+    <Box
+      minH="100vh"
+      position="relative"
+      overflow="hidden"
+    >
+      {blurBackground()}
+
+      <Container maxW="1200px" py={{ base: 2, lg: 3 }}>
         <Flex align={{ base: "stretch", md: "center" }} direction={{ base: "column", md: "row" }} gap={3} mb={2}>
           <Box>
-            <Heading size="lg" letterSpacing="0">
-              Offline Splendor
+            <Heading size="lg" letterSpacing="0" color="gray.200">
+              Splendor by IV
             </Heading>
-            <Text color="#5f6c66" fontSize="sm">
+            <Text color="gray.200" fontSize="sm">
               Target {WIN_SCORE} poin. {game.players.length} peserta aktif.
             </Text>
           </Box>
+
           <Spacer />
+
           <HStack wrap="wrap" justify={{ base: "flex-start", md: "flex-end" }}>
             <Select
               value={cardActionVisibility}
@@ -1606,44 +1866,32 @@ export default function Home() {
         )}
 
         <Stack spacing={3}>
-          <Grid
-            templateColumns={{ base: "1fr", xl: "minmax(0, 1fr) 300px" }}
+          <Flex
+            direction={{ base: "column", xl: "row" }}
             gap={3}
-            alignItems="stretch"
-            maxW="1400px"
-            mx="auto"
-            w="100%"
+            h={"310px"}
           >
-            <SimpleGrid columns={{ base: 1, md: 2, xl: Math.min(game.players.length, 4) }} spacing={3}>
-              {game.players.map((player) => (
-                <PlayerPanel
-                  key={player.id}
-                  player={player}
-                  isActive={player.id === game.activePlayerId}
-                  canControl={isPlayerTurn && player.id === game.activePlayerId}
-                  onBuyReserved={(card) => handleBuy(card, "reserved", card.tier)}
-                  removingCardIds={removingCardIds}
-                  actionsAlwaysVisible={actionsAlwaysVisible}
-                />
-              ))}
-            </SimpleGrid>
-            <LogPanel game={game} />
-          </Grid>
+            {game.players.map((player) => (
+              <PlayerPanel
+                key={player.id}
+                player={player}
+                isActive={player.id === game.activePlayerId}
+                canControl={isPlayerTurn && player.id === game.activePlayerId}
+                onBuyReserved={(card) => handleBuy(card, "reserved", card.tier)}
+                removingCardIds={removingCardIds}
+                actionsAlwaysVisible={actionsAlwaysVisible}
+              />
+            ))}
 
-          <Grid
-            templateColumns={{ base: "1fr", xl: "164px minmax(0, 1fr) 240px" }}
+            <LogPanel game={game} />
+          </Flex>
+
+          <Flex
+            direction={{ base: "column", xl: "row" }}
             gap={3}
-            alignItems="stretch"
-            maxW="1500px"
-            mx="auto"
-            w="100%"
           >
-            <VStack align="stretch" spacing={3}>
-              <Box
-                border="1px solid"
-                borderColor="#d7c9ad"
-                bg="rgba(255,255,255,.72)"
-                borderRadius="8px"
+            <VStack align="stretch" spacing={3} w={{ base: "100%", xl: "164px" }}>
+              <BoxDarkGlass
                 p={2.5}
                 h={{ base: "auto", xl: "424px" }}
                 display="flex"
@@ -1658,18 +1906,16 @@ export default function Home() {
                     <NobleTile key={noble.id} noble={noble} />
                   ))}
                 </VStack>
-              </Box>
+              </BoxDarkGlass>
             </VStack>
 
-            <Box
-              border="1px solid"
-              borderColor="#d7c9ad"
-              bg="rgba(255,255,255,.42)"
-              borderRadius="8px"
+            <BoxDarkGlass
               p={2.5}
               h={{ base: "auto", xl: "424px" }}
               display="flex"
               flexDirection="column"
+              flex="1"
+              minW={0}
             >
               <Heading size="sm" mb={2} flexShrink={0}>
                 Pasar Kartu
@@ -1687,7 +1933,7 @@ export default function Home() {
                       <Heading size="sm">Tier {tier}</Heading>
                       <Spacer />
 
-                      <Text fontSize="xs" color="#66736d">
+                      <Text fontSize="xs" >
                         Deck: {game.decks[tier].length}
                       </Text>
                     </Flex>
@@ -1711,7 +1957,7 @@ export default function Home() {
                   </Box>
                 ))}
               </VStack>
-            </Box>
+            </BoxDarkGlass>
 
             <BankTokenPanel
               game={game}
@@ -1721,7 +1967,7 @@ export default function Home() {
               onTakeTokens={takeSelectedTokens}
               onClearSelection={clearSelection}
             />
-          </Grid>
+          </Flex>
         </Stack>
       </Container>
     </Box>
