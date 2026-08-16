@@ -24,7 +24,7 @@ import {
   VStack,
   useToast
 } from "@chakra-ui/react";
-import { CheckIcon, LockIcon, RepeatIcon, SmallCloseIcon, createIcon } from "@chakra-ui/icons";
+import { CheckIcon, LockIcon, RepeatClockIcon, RepeatIcon, SmallCloseIcon, TimeIcon, createIcon } from "@chakra-ui/icons";
 import { playSound, SOUNDS } from "./util";
 
 const GEM_TYPES = [
@@ -283,10 +283,10 @@ function formatDuration(ms) {
   const remainingMinutes = minutes % 60;
 
   if (hours > 0) {
-    return `${hours}:${String(remainingMinutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+    return `${hours}:${String(remainingMinutes).padStart(2, "00")}:${String(seconds).padStart(2, "00")}`;
   }
 
-  return `${remainingMinutes}:${String(seconds).padStart(2, "0")}`;
+  return `${String(remainingMinutes).padStart(2, "00")}:${String(seconds).padStart(2, "00")}`;
 }
 
 function scoreFor(player) {
@@ -1717,7 +1717,7 @@ export default function Home() {
   const totalScoreText = game
     ? game.players.map((player) => `${player.name} ${scoreFor(player)}`).join(" - ")
     : "";
-  const gameDurationText = game ? formatDuration(currentTime - (game.startedAt || game.seed || currentTime)) : "0:00";
+  const gameDurationText = game ? formatDuration(currentTime - (game.startedAt || game.seed || currentTime)) : "00:00";
   const gameRoundText = game ? game.round || 1 : 1;
   const actionsAlwaysVisible = cardActionVisibility === "always";
 
@@ -2017,15 +2017,33 @@ export default function Home() {
               <option value="hover">Aksi: hover</option>
               <option value="always">Aksi: tampil</option>
             </Select>
-            <Badge bg="rgba(255,255,255,.82)" color="#172033" border="1px solid" borderColor="#d7c9ad" px={3} py={2} borderRadius="999px">
-              Durasi {gameDurationText}
+            
+            <Badge
+              bg="rgba(255,255,255,.82)"
+              borderColor="#d7c9ad"
+              border="1px solid"
+              px={3} py={2} borderRadius="999px"
+              minW="80px"
+            >
+              <Flex align="center" justify={"space-between"}>
+                <Box flex={1}>
+                  <TimeIcon />:
+                </Box>
+                
+                <Box flex={2}>
+                  {gameDurationText}
+                </Box>
+              </Flex>
             </Badge>
+            
             <Badge bg="rgba(255,255,255,.82)" color="#172033" border="1px solid" borderColor="#d7c9ad" px={3} py={2} borderRadius="999px">
               Turn {gameRoundText}
             </Badge>
+            
             <Badge colorScheme={activePlayer?.isBot ? "purple" : "green"} px={3} py={2} borderRadius="999px">
               {statusText}
             </Badge>
+            
             <Tooltip label="Setup game baru" hasArrow>
               <IconButton aria-label="Setup game baru" icon={<RepeatIcon />} onClick={resetToSetup} />
             </Tooltip>
